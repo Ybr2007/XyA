@@ -1,9 +1,9 @@
 #pragma once
 #include <SyntaxAnalysis/SyntaxTree.hpp>
-#include <Runtime/Instruction.hpp>
-#include <Runtime/CodeObject.hpp>
-#include <Runtime/Builtin/Int.hpp>
-#include <Runtime/Builtin/String.hpp>
+#include <Runtime/Instruction.h>
+#include <Runtime/CodeObject.h>
+#include <Runtime/Builtin/Int.h>
+#include <Runtime/Builtin/String.h>
 #include <Utils/StringUtils.hpp>
 
 

@@ -1,9 +1,10 @@
+#pragma once
 #include <iostream>
 #include <string>
 #include <LexicalAnalysis/TokenAnalyzer.hpp>
 #include <SyntaxAnalysis/SyntaxParser.hpp>
 #include <Compiler/Compiler.hpp>
-#include <Runtime/VirtualMachine.hpp>
+#include <Runtime/VirtualMachine.h>
 #include <Config.hpp>
 
 
