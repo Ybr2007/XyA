@@ -1,0 +1,7 @@
+.vscode
+.xmake
+build
+
+*.py
+*.json
+*.xya

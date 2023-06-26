@@ -1,0 +1,20 @@
+unit           -> block | if | line | function_definiton
+
+block          -> "{" unit* "}"
+line           -> (assignment | expression) ";"
+
+if             -> "if" expression block ("else" (if | block))?
+
+assignment     -> Identifier "=" expression
+expression     -> comparison
+comparison     -> addition ( ( "!=" | "==" | ">" | ">=" | "<" | "<=" ) addition )?
+addition       -> multiplication ( ( "-" | "+" ) multiplication )*
+multiplication -> unary ( ( "/" | "*" ) unary )*
+unary          -> ( "!" | "-" ) unary | primary
+primary        -> Literal | Identifier | "(" expression ")" | call
+
+call           -> expression "(" call_argument_list? ")"
+call_argument_list -> expression ("," expression)*
+
+function_definition -> "fn" Identifier "(" argument_list_definition? ")" block
+argument_list_definition -> Identifier ("," Identifier)*
