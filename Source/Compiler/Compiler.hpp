@@ -37,7 +37,7 @@ namespace XyA
         Runtime::CodeObject* Compiler::compile(SyntaxAnalysis::SyntaxTreeNode* syntax_tree_root)
         {
             // delete于Runtime::Context::~Context
-            Runtime::CodeObject* global_code_object = new Runtime::CodeObject;
+            Runtime::CodeObject* global_code_object = Runtime::XyA_Allocate_(Runtime::CodeObject);
 
             global_code_object->add_variable_name("print");
             global_code_object->add_variable_name("_get_ref_count");

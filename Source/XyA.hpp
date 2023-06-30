@@ -132,32 +132,32 @@ namespace XyA
         delete syntax_tree;
 
         // 构建全局Context
-        Runtime::Context* globle_context = new Runtime::Context(code_object);
+        Runtime::Context* global_context = new Runtime::Context(code_object);
 
         // 启动虚拟机
-        this->virtual_machine.execute(globle_context);
+        this->virtual_machine.execute(global_context);
 
         #ifdef DebugMode
         printf("\nVariables:\n");
-        for (auto item : globle_context->code_obj->variable_name_indices)
+        for (auto item : global_context->code_obj->variable_name_indices)
         {
-            if (globle_context->local_variables[item.second] == nullptr)
+            if (global_context->local_variables[item.second] == nullptr)
             {
                 printf("<NULL>\n");
                 continue;
             }
-            Runtime::Builtin::StringObject* str_obj = dynamic_cast<Runtime::Builtin::StringObject*>(globle_context->local_variables[item.second]);
+            Runtime::Builtin::StringObject* str_obj = dynamic_cast<Runtime::Builtin::StringObject*>(global_context->local_variables[item.second]);
             if (str_obj == nullptr)
             {
                 Runtime::BaseFunction* str_method = dynamic_cast<Runtime::BaseFunction*>(
-                    globle_context->local_variables[item.second]->type->attrs[Runtime::MagicMethodNames::str_method_name]);
-                Runtime::Object** args = new Runtime::Object*[1]{globle_context->local_variables[item.second]};
+                    global_context->local_variables[item.second]->type->attrs[Runtime::MagicMethodNames::str_method_name]);
+                Runtime::Object** args = new Runtime::Object*[1]{global_context->local_variables[item.second]};
                 bool exception_thrown = false;
                 str_obj = dynamic_cast<Runtime::Builtin::StringObject*>(str_method->call(args, 1, exception_thrown));
             }
 
             printf("index: %d  name: %s  value: %s  ref_count: %d\n", 
-                item.second, item.first.c_str(), str_obj->value.c_str(), globle_context->local_variables[item.second]->ref_count);
+                item.second, item.first.c_str(), str_obj->value.c_str(), global_context->local_variables[item.second]->ref_count);
         }
         printf("\n");
         #endif

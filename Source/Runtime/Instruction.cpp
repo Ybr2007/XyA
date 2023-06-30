@@ -82,6 +82,11 @@ namespace XyA
                 str += "Load Variable";
                 str += " " + std::to_string(this->parameter);
                 break;
+            
+            case InstructionType::LoadGlobal:
+                str += "Load Global";
+                str += " " + std::to_string(this->parameter);
+                break;
 
             case InstructionType::StroeVariable:
                 str += "Stroe Variable";

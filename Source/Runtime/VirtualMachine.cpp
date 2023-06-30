@@ -18,15 +18,16 @@ namespace XyA
             return instance;
         }
 
-        void VirtualMachine::execute(Context* globle_context)
+        void VirtualMachine::execute(Context* global_context)
         {
-            this->globle_context = globle_context;
-            this->cur_context = globle_context;
+            this->global_context = global_context;
+            this->cur_context = global_context;
+            CodeObject* global_code_object = this->global_context->code_obj;
 
             this->__init_global_context();
             this->execute_context();
 
-            delete this->globle_context->code_obj;
+            XyA_Deallocate(global_code_object);
         }
 
         void VirtualMachine::execute_context()
@@ -34,7 +35,6 @@ namespace XyA
             while (this->cur_context->instruction_ptr < this->cur_context->code_obj->instructions.size())
             {
                 Instruction* cur_instruction = this->cur_context->cur_instruction();
-                // printf("Context: %d  Instruction: %s\n", (size_t)this->cur_context, cur_instruction->to_string().c_str());
                 this->__excute_instruction(cur_instruction);
                 this->cur_context->instruction_ptr ++;
             }
@@ -43,15 +43,15 @@ namespace XyA
 
         void VirtualMachine::__init_global_context()
         {
-            Object*& builtin_print_function = this->globle_context->local_variables[0]; // 0: globle_context->code_obj->variable_name_indices["print"]
+            Object*& builtin_print_function = this->global_context->local_variables[0]; // 0: global_context->code_obj->variable_name_indices["print"]
             builtin_print_function = XyA_Allocate(Builtin::BuiltinFunction, Builtin::print);
             builtin_print_function->reference();
 
-            Object*& builtin__get_ref_count_function = this->globle_context->local_variables[1]; // 1: globle_context->code_obj->variable_name_indices["_get_ref_count"]
+            Object*& builtin__get_ref_count_function = this->global_context->local_variables[1]; // 1: global_context->code_obj->variable_name_indices["_get_ref_count"]
             builtin__get_ref_count_function = XyA_Allocate(Builtin::BuiltinFunction, Builtin::_get_ref_count);
             builtin__get_ref_count_function->reference();
 
-            Object*& builtin__get_id_function = this->globle_context->local_variables[2];  // 2: globle_context->code_obj->variable_name_indices["_get_id"]
+            Object*& builtin__get_id_function = this->global_context->local_variables[2];  // 2: global_context->code_obj->variable_name_indices["_get_id"]
             builtin__get_id_function = XyA_Allocate(Builtin::BuiltinFunction, Builtin::_get_id);
             builtin__get_id_function->reference();
         }

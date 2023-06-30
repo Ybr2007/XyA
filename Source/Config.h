@@ -4,11 +4,6 @@
 #define Debug_Display_Literals
 #define Debug_Display_Memory_Leaks
 
-#ifdef Debug_Display_Literals
-#define Debug_Display_Object
-#endif
-
-
-#ifdef Debug_Display_Memory_Leaks
+#ifdef Debug_Display_Literals || #ifdef Debug_Display_Memory_Leaks
 #define Debug_Display_Object
 #endif

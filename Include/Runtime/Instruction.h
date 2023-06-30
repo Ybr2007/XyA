@@ -29,6 +29,7 @@ namespace XyA
             /* 有参数 */
             LoadLiteral,
             LoadVariable,
+            LoadGlobal,
 
             StroeVariable,
 

@@ -15,7 +15,7 @@ namespace XyA
     {
         class Function;
         
-        class CodeObject
+        class CodeObject : public Object
         {
         public:
             std::vector<Instruction*> instructions;  
@@ -35,6 +35,10 @@ namespace XyA
             size_t add_literal_object(Object* literal_object);
 
             size_t add_variable_name(const std::string& variable_name);
+            
+            #ifdef Debug_Display_Object
+            virtual std::string to_string() const;
+            #endif
         };
         
     }

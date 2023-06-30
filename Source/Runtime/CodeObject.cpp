@@ -9,6 +9,7 @@ namespace XyA
     {
         CodeObject::~CodeObject()
         {
+            return;
             for (size_t i = 0; i < this->literals.size(); i ++)
             {
                 if (!XyA_Check_If_Deallocated(this->literals[i]))
@@ -130,5 +131,12 @@ namespace XyA
             this->variable_name_indices[variable_name] = index;
             return index;
         }
+
+        #ifdef Debug_Display_Object
+        std::string CodeObject::to_string() const
+        {
+            return "Code Object";
+        }
+        #endif
     }
 }

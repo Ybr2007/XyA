@@ -19,11 +19,11 @@ namespace XyA
         public:
             std::vector<std::function<void(std::string_view)>> exception_callbacks;
 
-            Context* globle_context = nullptr;
+            Context* global_context = nullptr;
             Context* cur_context = nullptr;
 
             static VirtualMachine& get_instance();
-            void execute(Context* globle_context);
+            void execute(Context* global_context);
             void execute_context();
 
         private:

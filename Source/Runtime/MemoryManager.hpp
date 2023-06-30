@@ -60,8 +60,9 @@ namespace XyA
                 for (auto iter = this->allocated_objects.begin(); iter != this->allocated_objects.end(); iter ++)
                 {
                     printf(
-                        "%s Allocation Location: %s\n", 
+                        "%s %d Allocation Location: %s\n", 
                         ((Runtime::Object*)*iter)->to_string().c_str(),
+                        (size_t)(*iter),
                         this->allocation_locations[*iter].c_str()
                     );
                 }
@@ -108,7 +109,7 @@ namespace XyA
                 bool ok = false;
                 for (auto iter = this->allocated_objects.begin(); iter != this->allocated_objects.end(); iter ++)
                 {
-                    if (*iter == (void*)object)
+                    if (*iter == object)
                     {
                         this->allocated_objects.erase(iter);
                         ok = true;
@@ -118,10 +119,11 @@ namespace XyA
 
                 if (!ok)
                 {
+                    printf("!OK\n");
                     auto iter = this->deallocation_locations.find(object);
                     if (iter == this->deallocation_locations.end())
                     {
-                        printf("\nERROR: The object %s was not allocated by the memory pool\n", object->to_string().c_str());
+                        printf("\nERROR: The object was not allocated by the memory pool\n");
                         printf("ERROR Location: %s\n", location.c_str());
                         exit(-1);
                     }
