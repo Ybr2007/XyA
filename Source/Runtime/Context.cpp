@@ -16,13 +16,18 @@ namespace XyA
             {
                 this->local_variables[i] = nullptr;
             }
+
+            for (const auto& iter : this->code_obj->functions)
+            {
+                this->local_variables[this->code_obj->variable_name_indices[iter.first]] = (Runtime::Object*)iter.second;
+            }
         }
 
         Context::~Context()
         {
             if (!this->operand_stack.empty())
             {
-                printf("WARNING: Stack is not empty when the context exits.");
+                printf("WARNING: The stack was not empty when the context exits.");
             }
 
             /* 离开作用域，所有变量引用计数减一 */
@@ -30,20 +35,12 @@ namespace XyA
             {
                 if (this->local_variables[i] != nullptr)
                 {
-                    // printf("Variable: %s\n", this->local_variables[i]->to_string().c_str());
+                    printf("Deallocate Variable: %s\n", this->local_variables[i]->to_string().c_str());
                     this->local_variables[i]->dereference();
-                }
-            }
-            for (size_t i = 0; i < this->code_obj->literals.size(); i ++)
-            {
-                if (!XyA_Check_If_Deallocated(this->code_obj->literals[i]))
-                {
-                    deallocate_if_no_ref(this->code_obj->literals[i]);
                 }
             }
 
             delete this->local_variables;
-            delete this->code_obj;
         }
 
         Instruction* Context::cur_instruction() const
@@ -79,6 +76,11 @@ namespace XyA
 
         Object* Context::pop_operand()
         {
+            if (this->operand_stack.empty())
+            {
+                printf("EMPTY Stack");
+                exit(-1);
+            }
             Object* top_obj = this->operand_stack.top();
             this->operand_stack.pop();
             return top_obj;
@@ -86,6 +88,11 @@ namespace XyA
 
         Object* Context::top_operand() const
         {
+            if (this->operand_stack.empty())
+            {
+                printf("EMPTY Stack");
+                exit(-1);
+            }
             return this->operand_stack.top();
         }
     }

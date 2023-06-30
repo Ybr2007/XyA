@@ -1,0 +1,41 @@
+#pragma once
+#include <Runtime/Function.h>
+#include <Runtime/VirtualMachine.h>
+
+#include <Runtime/Builtin/Null.h>
+#include <Runtime/MemoryManager.hpp>
+
+
+namespace XyA
+{
+    namespace Runtime
+    {
+        Function::Function()
+        {
+            this->code_object = new CodeObject;
+        }
+
+        Function::~Function()
+        {
+            delete this->code_object;
+        }
+
+        Object* Function::call(Object** args, size_t arg_num, bool& exception_thrown) const
+        {
+            Context* function_context = new Context(this->code_object);
+            function_context->back = VirtualMachine::get_instance().cur_context;
+            VirtualMachine::get_instance().cur_context = function_context;
+            VirtualMachine::get_instance().execute_context();
+            function_context->returned_obj = XyA_Allocate_(Builtin::NullObject);
+
+            return function_context->returned_obj;
+        }
+
+        #ifdef Debug_Display_Object
+        std::string Function::to_string() const
+        {
+            return "<Funtion Object at " + std::to_string((size_t)this) + ">";
+        }
+        #endif
+    }
+}

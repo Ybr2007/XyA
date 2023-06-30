@@ -17,6 +17,7 @@ namespace XyA
             std::stack<Object*> operand_stack;
             size_t instruction_ptr = 0;
 
+            Object* returned_obj = nullptr;
             Object* thrown_obj = nullptr;
 
             Context(CodeObject* code_obj);

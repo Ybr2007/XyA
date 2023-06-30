@@ -7,13 +7,38 @@ namespace XyA
 {
     namespace Runtime
     {
+        VirtualMachine::VirtualMachine()  // private
+        {
+            
+        }
+
+        VirtualMachine& VirtualMachine::get_instance()
+        {
+            static VirtualMachine instance;
+            return instance;
+        }
+
         void VirtualMachine::execute(Context* globle_context)
         {
             this->globle_context = globle_context;
             this->cur_context = globle_context;
 
             this->__init_global_context();
-            this->__execute_context();
+            this->execute_context();
+
+            delete this->globle_context->code_obj;
+        }
+
+        void VirtualMachine::execute_context()
+        {
+            while (this->cur_context->instruction_ptr < this->cur_context->code_obj->instructions.size())
+            {
+                Instruction* cur_instruction = this->cur_context->cur_instruction();
+                // printf("Context: %d  Instruction: %s\n", (size_t)this->cur_context, cur_instruction->to_string().c_str());
+                this->__excute_instruction(cur_instruction);
+                this->cur_context->instruction_ptr ++;
+            }
+            this->__back_context();
         }
 
         void VirtualMachine::__init_global_context()
@@ -29,22 +54,6 @@ namespace XyA
             Object*& builtin__get_id_function = this->globle_context->local_variables[2];  // 2: globle_context->code_obj->variable_name_indices["_get_id"]
             builtin__get_id_function = XyA_Allocate(Builtin::BuiltinFunction, Builtin::_get_id);
             builtin__get_id_function->reference();
-        }
-
-        void VirtualMachine::__execute_context()
-        {
-            while (this->cur_context->instruction_ptr < this->cur_context->code_obj->instructions.size())
-            {
-                Instruction* cur_instruction = this->cur_context->cur_instruction();
-                this->__excute_instruction(cur_instruction);
-                this->cur_context->instruction_ptr ++;
-            }
-            this->__back_context();
-
-            if (this->cur_context != nullptr)
-            {
-                this->__execute_context();
-            }
         }
 
         void VirtualMachine::__excute_instruction(Instruction* instruction)

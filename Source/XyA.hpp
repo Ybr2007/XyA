@@ -17,7 +17,7 @@ namespace XyA
         LexicalAnalysis::TokenAnalyzer token_analyzer;
         SyntaxAnalysis::SyntaxParser syntax_parser;
         Compiler::Compiler compiler;
-        Runtime::VirtualMachine virtual_machine;
+        Runtime::VirtualMachine virtual_machine = Runtime::VirtualMachine::get_instance();
 
         Core();
         void execute(std::string_view source);
@@ -78,13 +78,27 @@ namespace XyA
         // 编译，生成CodeObject
         Runtime::CodeObject* code_object = this->compiler.compile(syntax_tree);
 
-        // #ifdef DebugMode
-        printf("Instructions:\n");
+        #ifdef Debug_Display_Instructions
+        printf("Global Instructions:\n");
         for (size_t i = 0; i < code_object->instructions.size(); i ++)
         {
             printf("%d %s\n", (int)i, code_object->instructions[i]->to_string().c_str());
         }
         printf("\n");
+        
+        printf("Function Instructions:\n");
+        for (const auto& iter : code_object->functions)
+        {
+            printf("Function Name: %s\n", iter.first.c_str());
+            for (size_t i = 0; i < iter.second->code_object->instructions.size(); i ++)
+            {
+                printf("%d %s\n", (int)i, iter.second->code_object->instructions[i]->to_string().c_str());
+            }
+            printf("\n");
+        }
+        printf("\n");
+        #endif
+
         // printf("Literals:\n");
         // for (size_t i = 0; i < code_object->literals.size(); i ++)
         // {

@@ -1,5 +1,6 @@
 #pragma once
 #include <Runtime/CodeObject.h>
+#include <Runtime/MemoryManager.hpp>
 
 
 namespace XyA
@@ -8,6 +9,15 @@ namespace XyA
     {
         CodeObject::~CodeObject()
         {
+            for (size_t i = 0; i < this->literals.size(); i ++)
+            {
+                if (!XyA_Check_If_Deallocated(this->literals[i]))
+                {
+                    printf("Deallocate Literal: %s\n", this->literals[i]->to_string().c_str());
+                    deallocate_if_no_ref(this->literals[i]);
+                }
+            }
+
             for (Instruction* instruction : this->instructions)
             {
                 delete instruction;

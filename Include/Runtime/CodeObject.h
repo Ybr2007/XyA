@@ -13,11 +13,14 @@ namespace XyA
 {
     namespace Runtime
     {
+        class Function;
+        
         class CodeObject
         {
         public:
             std::vector<Instruction*> instructions;  
             std::vector<Object*> literals;
+            std::unordered_map<std::string, Function*> functions;
             std::unordered_map<std::string, size_t> variable_name_indices;
 
             ~CodeObject();

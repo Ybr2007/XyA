@@ -22,11 +22,14 @@ namespace XyA
             Context* globle_context = nullptr;
             Context* cur_context = nullptr;
 
+            static VirtualMachine& get_instance();
             void execute(Context* globle_context);
+            void execute_context();
 
         private:
+            VirtualMachine();
+
             void __init_global_context();
-            void __execute_context();
             void __excute_instruction(Instruction* instruction);
             void __back_context();
 

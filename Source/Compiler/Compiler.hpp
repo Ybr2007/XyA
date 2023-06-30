@@ -3,7 +3,10 @@
 #include <Runtime/Instruction.h>
 #include <Runtime/CodeObject.h>
 #include <Runtime/Builtin/Int.h>
+#include <Runtime/Builtin/Float.h>
 #include <Runtime/Builtin/String.h>
+#include <Runtime/Builtin/Bool.h>
+#include <Runtime/Function.h>
 #include <Runtime/MemoryManager.hpp>
 #include <Utils/StringUtils.hpp>
 
@@ -18,139 +21,154 @@ namespace XyA
             Runtime::CodeObject* compile(SyntaxAnalysis::SyntaxTreeNode* syntax_tree_root);
 
         private:
-            Runtime::CodeObject* __compiling_code_obj;
-
             /* 
             在以下__compile_xxx中new的Instructions都会在Runtime::CodeObject::~CodeObject释放
             在以下__compile_xxx中new的Literals会被GC机制删除
              */
-            void __compile_unit(SyntaxAnalysis::SyntaxTreeNode* unit_root);
-            void __compile_line(SyntaxAnalysis::SyntaxTreeNode* line_root);
-            void __compile_block(SyntaxAnalysis::SyntaxTreeNode* block_root);
-            void __compile_if(SyntaxAnalysis::SyntaxTreeNode* if_root);
-            void __compile_assignment(SyntaxAnalysis::SyntaxTreeNode* assignment_root);
-            void __compile_expression(SyntaxAnalysis::SyntaxTreeNode* expression_root, bool pop=false);
+            void __compile_unit(Runtime::CodeObject* code_object, SyntaxAnalysis::SyntaxTreeNode* unit_root);
+            void __compile_line(Runtime::CodeObject* code_object, SyntaxAnalysis::SyntaxTreeNode* line_root);
+            void __compile_block(Runtime::CodeObject* code_object, SyntaxAnalysis::SyntaxTreeNode* block_root);
+            void __compile_if(Runtime::CodeObject* code_object, SyntaxAnalysis::SyntaxTreeNode* if_root);
+            void __compile_assignment(Runtime::CodeObject* code_object, SyntaxAnalysis::SyntaxTreeNode* assignment_root);
+            void __compile_expression(Runtime::CodeObject* code_object, SyntaxAnalysis::SyntaxTreeNode* expression_root, bool pop=false);
+            void __compile_function_definition(Runtime::CodeObject* code_object, SyntaxAnalysis::SyntaxTreeNode* assignment_root);
         };
 
         Runtime::CodeObject* Compiler::compile(SyntaxAnalysis::SyntaxTreeNode* syntax_tree_root)
         {
             // delete于Runtime::Context::~Context
-            this->__compiling_code_obj = new Runtime::CodeObject;
+            Runtime::CodeObject* global_code_object = new Runtime::CodeObject;
 
-            this->__compiling_code_obj->add_variable_name("print");
-            this->__compiling_code_obj->add_variable_name("_get_ref_count");
-            this->__compiling_code_obj->add_variable_name("_get_id");
+            global_code_object->add_variable_name("print");
+            global_code_object->add_variable_name("_get_ref_count");
+            global_code_object->add_variable_name("_get_id");
             
             for (auto unit : syntax_tree_root->children)
             {
-                this->__compile_unit(unit);
+                this->__compile_unit(global_code_object, unit);
             }
 
-            return this->__compiling_code_obj;
+            return global_code_object;
         }
 
-        void Compiler::__compile_unit(SyntaxAnalysis::SyntaxTreeNode* unit_root)
+        void Compiler::__compile_unit(Runtime::CodeObject* code_object, SyntaxAnalysis::SyntaxTreeNode* unit_root)
         {
             switch (unit_root->type)
             {
             case SyntaxAnalysis::SyntaxTreeNodeType::Block:
-                this->__compile_block(unit_root);
+                this->__compile_block(code_object, unit_root);
                 break;
 
             case SyntaxAnalysis::SyntaxTreeNodeType::If:
-                this->__compile_if(unit_root);
+                this->__compile_if(code_object, unit_root);
                 break;
 
+            case SyntaxAnalysis::SyntaxTreeNodeType::Function_Definition:
+            {
+                Runtime::Function* function = Runtime::XyA_Allocate_(Runtime::Function);
+                function->reference();
+
+                this->__compile_function_definition(function->code_object, unit_root);
+
+                size_t function_variable_index;
+                if (!code_object->try_get_variable_index(unit_root->token->value, function_variable_index))
+                {
+                    function_variable_index = code_object->add_variable_name(unit_root->token->value);
+                    code_object->functions[unit_root->token->value] = function;
+                }
+                break;
+            }
+
             default:
-                this->__compile_line(unit_root);
+                this->__compile_line(code_object, unit_root);
             }
         }
 
-        void Compiler::__compile_block(SyntaxAnalysis::SyntaxTreeNode* block_root)
+        void Compiler::__compile_block(Runtime::CodeObject* code_object, SyntaxAnalysis::SyntaxTreeNode* block_root)
         {
             for (auto unit : block_root->children)
             {
-                this->__compile_unit(unit);
+                this->__compile_unit(code_object, unit);
             }
         }
 
-        void Compiler::__compile_if(SyntaxAnalysis::SyntaxTreeNode* if_root)
+        void Compiler::__compile_if(Runtime::CodeObject* code_object, SyntaxAnalysis::SyntaxTreeNode* if_root)
         {
-            this->__compile_expression(if_root->children[0]);
+            this->__compile_expression(code_object, if_root->children[0]);
 
             Runtime::Instruction* jump_if_false_instruction = new Runtime::Instruction(Runtime::InstructionType::PopJumpIfFalse);
-            this->__compiling_code_obj->instructions.push_back(jump_if_false_instruction);
+            code_object->instructions.push_back(jump_if_false_instruction);
 
-            this->__compile_block(if_root->children[1]);
-            jump_if_false_instruction->parameter = this->__compiling_code_obj->instructions.size();
+            this->__compile_block(code_object, if_root->children[1]);
+            jump_if_false_instruction->parameter = code_object->instructions.size();
 
             if (if_root->children.size() == 3)  // 有else语块
             {
                 jump_if_false_instruction->parameter ++;
 
                 Runtime::Instruction* jump_forward_instruction = new Runtime::Instruction(Runtime::InstructionType::JumpForward);
-                this->__compiling_code_obj->instructions.push_back(jump_forward_instruction);
+                code_object->instructions.push_back(jump_forward_instruction);
 
                 if (if_root->children[2]->type == SyntaxAnalysis::SyntaxTreeNodeType::If)
                 {
-                    this->__compile_if(if_root->children[2]);
+                    this->__compile_if(code_object, if_root->children[2]);
                 }                
                 else  // if_root->children[2]->type == SyntaxAnalysis::SyntaxTreeNodeType::Block
                 {
-                    this->__compile_block(if_root->children[2]);
+                    this->__compile_block(code_object, if_root->children[2]);
                 }
 
-                jump_forward_instruction->parameter = this->__compiling_code_obj->instructions.size();
+                jump_forward_instruction->parameter = code_object->instructions.size();
             }
         }
 
-        void Compiler::__compile_line(SyntaxAnalysis::SyntaxTreeNode* line_root)
+        void Compiler::__compile_line(Runtime::CodeObject* code_object, SyntaxAnalysis::SyntaxTreeNode* line_root)
         {
             if (line_root->type == SyntaxAnalysis::SyntaxTreeNodeType::Assignment)
             {
-                this->__compile_assignment(line_root);
+                this->__compile_assignment(code_object, line_root);
                 return;
             }
             if (line_root->is_expression())
             {
-                this->__compile_expression(line_root, true);
+                this->__compile_expression(code_object, line_root, true);
                 return;
             }
         }
 
-        void Compiler::__compile_assignment(SyntaxAnalysis::SyntaxTreeNode* assignment_root)
+        void Compiler::__compile_assignment(Runtime::CodeObject* code_object, SyntaxAnalysis::SyntaxTreeNode* assignment_root)
         {
-            this->__compile_expression(assignment_root->children[0]);
+            this->__compile_expression(code_object, assignment_root->children[0]);
 
             Runtime::Instruction* store_variable_instruction = new Runtime::Instruction(Runtime::InstructionType::StroeVariable);;                
 
-            if (!this->__compiling_code_obj->try_get_variable_index(assignment_root->token->value, store_variable_instruction->parameter))
+            if (!code_object->try_get_variable_index(assignment_root->token->value, store_variable_instruction->parameter))
             {
-                store_variable_instruction->parameter = this->__compiling_code_obj->add_variable_name(assignment_root->token->value);
+                store_variable_instruction->parameter = code_object->add_variable_name(assignment_root->token->value);
             }
 
-            this->__compiling_code_obj->instructions.push_back(store_variable_instruction);
+            code_object->instructions.push_back(store_variable_instruction);
         }
 
-        void Compiler::__compile_expression(SyntaxAnalysis::SyntaxTreeNode* expression_root, bool pop)
+        void Compiler::__compile_expression(Runtime::CodeObject* code_object, SyntaxAnalysis::SyntaxTreeNode* expression_root, bool pop)
         {
             expression_root->try_fold_literal();
 
             if (expression_root->type == SyntaxAnalysis::SyntaxTreeNodeType::Call)
             {
-                this->__compile_expression(expression_root->children[0]);  // 计算callee的值
+                this->__compile_expression(code_object, expression_root->children[0]);  // 计算callee的值
                 for (auto arg : expression_root->children[1]->children)  // expression_root->children[1]: Argument List
                 {
-                    this->__compile_expression(arg);
+                    this->__compile_expression(code_object, arg);
                 }
                 Runtime::Instruction* call_function_instruction = new Runtime::Instruction(Runtime::InstructionType::CallFunction);
                 call_function_instruction->parameter = expression_root->children[1]->children.size();
-                this->__compiling_code_obj->instructions.push_back(call_function_instruction);
+                code_object->instructions.push_back(call_function_instruction);
 
                 if (pop)
                 {
                     Runtime::Instruction* pop_top_instruction = new Runtime::Instruction(Runtime::InstructionType::PopTop);
-                    this->__compiling_code_obj->instructions.push_back(pop_top_instruction);
+                    code_object->instructions.push_back(pop_top_instruction);
                 }
                 return;
             }
@@ -165,9 +183,9 @@ namespace XyA
                 {
                     Runtime::Builtin::IntObject* int_obj = Runtime::XyA_Allocate_(Runtime::Builtin::IntObject);
                     int_obj->value = std::stoll(expression_root->token->value);
-                    if (!this->__compiling_code_obj->try_get_literal_index(int_obj, load_literal_instruction->parameter))
+                    if (!code_object->try_get_literal_index(int_obj, load_literal_instruction->parameter))
                     {
-                        load_literal_instruction->parameter = this->__compiling_code_obj->add_literal_object(int_obj);
+                        load_literal_instruction->parameter = code_object->add_literal_object(int_obj);
                     }
                     else  // 已经有了该对象，则需要释放掉多余的
                     {
@@ -180,9 +198,9 @@ namespace XyA
                 {
                     Runtime::Builtin::FloatObject* float_obj = Runtime::XyA_Allocate_(Runtime::Builtin::FloatObject);
                     float_obj->value = std::stod(expression_root->token->value);
-                    if (!this->__compiling_code_obj->try_get_literal_index(float_obj, load_literal_instruction->parameter))
+                    if (!code_object->try_get_literal_index(float_obj, load_literal_instruction->parameter))
                     {
-                        load_literal_instruction->parameter = this->__compiling_code_obj->add_literal_object(float_obj);
+                        load_literal_instruction->parameter = code_object->add_literal_object(float_obj);
                     }
                     else  // 已经有了该对象，则需要释放掉多余的
                     {
@@ -195,9 +213,9 @@ namespace XyA
                 {
                     Runtime::Builtin::StringObject* str_obj = Runtime::XyA_Allocate_(Runtime::Builtin::StringObject);
                     str_obj->value.assign(expression_root->token->value.begin() + 1, expression_root->token->value.end() - 1);
-                    if (!this->__compiling_code_obj->try_get_literal_index(str_obj, load_literal_instruction->parameter))
+                    if (!code_object->try_get_literal_index(str_obj, load_literal_instruction->parameter))
                     {
-                        load_literal_instruction->parameter = this->__compiling_code_obj->add_literal_object(str_obj);
+                        load_literal_instruction->parameter = code_object->add_literal_object(str_obj);
                     }   
                     else  // 已经有了该对象，则需要释放掉多余的
                     {
@@ -210,9 +228,9 @@ namespace XyA
                 {
                     Runtime::Builtin::BoolObject* bool_obj = Runtime::XyA_Allocate_(Runtime::Builtin::BoolObject);
                     bool_obj->value = expression_root->token->value == "true" ? true : false;
-                    if (!this->__compiling_code_obj->try_get_literal_index(bool_obj, load_literal_instruction->parameter))
+                    if (!code_object->try_get_literal_index(bool_obj, load_literal_instruction->parameter))
                     {
-                        load_literal_instruction->parameter = this->__compiling_code_obj->add_literal_object(bool_obj);
+                        load_literal_instruction->parameter = code_object->add_literal_object(bool_obj);
                     }   
                     else  // 已经有了该对象，则需要释放掉多余的
                     {
@@ -230,12 +248,12 @@ namespace XyA
                     break;
                 }
 
-                this->__compiling_code_obj->instructions.push_back(load_literal_instruction);
+                code_object->instructions.push_back(load_literal_instruction);
 
                 if (pop)
                 {
                     Runtime::Instruction* pop_top_instruction = new Runtime::Instruction(Runtime::InstructionType::PopTop);
-                    this->__compiling_code_obj->instructions.push_back(pop_top_instruction);
+                    code_object->instructions.push_back(pop_top_instruction);
                 }
                 return;
             }
@@ -244,25 +262,25 @@ namespace XyA
             {
                 Runtime::Instruction* load_variable_instruction = new Runtime::Instruction(Runtime::InstructionType::LoadVariable);          
 
-                if (!this->__compiling_code_obj->try_get_variable_index(expression_root->token->value, load_variable_instruction->parameter))
+                if (!code_object->try_get_variable_index(expression_root->token->value, load_variable_instruction->parameter))
                 {
-                    load_variable_instruction->parameter = this->__compiling_code_obj->add_variable_name(expression_root->token->value);
+                    load_variable_instruction->parameter = code_object->add_variable_name(expression_root->token->value);
                 }
 
-                this->__compiling_code_obj->instructions.push_back(load_variable_instruction);
+                code_object->instructions.push_back(load_variable_instruction);
 
                 if (pop)
                 {
                     Runtime::Instruction* pop_top_instruction = new Runtime::Instruction(Runtime::InstructionType::PopTop);
-                    this->__compiling_code_obj->instructions.push_back(pop_top_instruction);
+                    code_object->instructions.push_back(pop_top_instruction);
                 }
                 return;
             }
 
-            this->__compile_expression(expression_root->children[0]);
+            this->__compile_expression(code_object, expression_root->children[0]);
             if (expression_root->children.size() == 2)  // 二元运算符
             {
-                this->__compile_expression(expression_root->children[1]);
+                this->__compile_expression(code_object, expression_root->children[1]);
             }
 
             Runtime::Instruction* operation_instruction = new Runtime::Instruction;
@@ -317,15 +335,23 @@ namespace XyA
                 break;
             }
             
-            this->__compiling_code_obj->instructions.push_back(operation_instruction);
+            code_object->instructions.push_back(operation_instruction);
 
             if (pop)
             {
                 Runtime::Instruction* pop_top_instruction = new Runtime::Instruction(Runtime::InstructionType::PopTop);
-                this->__compiling_code_obj->instructions.push_back(pop_top_instruction);
+                code_object->instructions.push_back(pop_top_instruction);
             }
 
             return;
+        }
+
+        void Compiler::__compile_function_definition(Runtime::CodeObject* code_object, SyntaxAnalysis::SyntaxTreeNode* expression_root)
+        {
+            for (auto unit : expression_root->children)
+            {
+                this->__compile_unit(code_object, unit);
+            }
         }
 
     }  // namespace Compiler
