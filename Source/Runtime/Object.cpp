@@ -1,5 +1,6 @@
 #pragma once
 #include <Runtime/Object.h>
+#include <Runtime/MemoryManager.hpp>
 
 
 namespace XyA
@@ -8,16 +9,29 @@ namespace XyA
     {
         Object::~Object()
         {
-            // printf("Delete %s\n", this->type == nullptr ? dynamic_cast<Type*>(this)->name.c_str() : this->type->name.c_str());
+            for (const auto& iter : this->attrs)
+            {
+                iter.second->dereference();
+            }
         }
 
-        bool Object::dwindle_ref_count()
+        void Object::reference()
         {
-            if (-- this->ref_count <= 0)
+            this->ref_count ++;
+        }
+
+        bool Object::dereference()
+        {
+            if (this->ref_count == 0)
             {
-                #ifndef DebugMode
-                delete this;
-                #endif
+                printf("ERROR: ref_count < 0\n");
+                printf("Object: %s\n", this->to_string().c_str());
+                exit(-1);
+            }
+            
+            if (-- this->ref_count == 0)
+            {
+                XyA_Deallocate(this);
                 return true;
             }
             return false;
@@ -42,5 +56,14 @@ namespace XyA
             result = result_buffer;
             return TryGetMethodResult::OK;
         }
+
+        #ifdef Debug_Display_Object
+        std::string Object::to_string() const
+        {
+            return this->type == nullptr ? 
+                "<XyA Object at " + std::to_string((size_t)this) + ">" : 
+                "<" + this->type->name + " Object at " + std::to_string((size_t)this) + ">" ;
+        }
+        #endif
     }
 }

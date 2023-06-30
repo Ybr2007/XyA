@@ -7,7 +7,7 @@
 #include <Runtime/MagicMethodNames.hpp>
 #include <Runtime/Builtin/BuiltinFunctions.h>
 
-#include <Config.hpp>
+#include <Config.h>
 
 
 namespace XyA

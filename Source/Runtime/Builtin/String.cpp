@@ -1,5 +1,6 @@
 #pragma once
 #include <Runtime/Builtin/String.h>
+#include <Runtime/MemoryManager.hpp>
 
 
 namespace XyA
@@ -12,15 +13,20 @@ namespace XyA
             {
                 this->name = "string";
                 this->type = nullptr;
-                this->attrs[MagicMethodNames::add_method_name] = new BuiltinFunction(string_object_add);
-                this->attrs[MagicMethodNames::equal_method_name] = new BuiltinFunction(string_object_equal);
-                this->attrs[MagicMethodNames::bool_method_name] = new BuiltinFunction(string_object_bool);
+                this->attrs[MagicMethodNames::add_method_name] = XyA_Allocate(BuiltinFunction, string_object_add);
+                this->attrs[MagicMethodNames::equal_method_name] = XyA_Allocate(BuiltinFunction, string_object_equal);
+                this->attrs[MagicMethodNames::bool_method_name] = XyA_Allocate(BuiltinFunction, string_object_bool);
+
+                for (const auto& iter : this->attrs)
+                {
+                    iter.second->reference();
+                }
             }
 
             StringType* StringType::get_instance()
             {
-                static StringType* instance = new StringType;
-                return instance;
+                static StringType instance;
+                return &instance;
             }
 
 

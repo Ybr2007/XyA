@@ -2,8 +2,8 @@
 #include <vector>
 #include <sstream>
 #include <LexicalAnalysis/Token.hpp>
-#include <Config.hpp>
-#ifdef DebugMode
+#include <Config.h>
+#ifdef Debug_Write_AST_To_Json_File
 #include <YJson/YJson.hpp>
 #endif
 
@@ -28,7 +28,7 @@ namespace XyA
             Call,                   // chilren: 数量为2，children[0] 为callee表达式，children[1] 为实参列表(Argument_List)
         };
 
-        #ifdef DebugMode
+        #ifdef Debug_Write_AST_To_Json_File
         std::string to_string(SyntaxTreeNodeType type)
         {
             switch (type)
@@ -83,7 +83,7 @@ namespace XyA
             */
             bool try_fold_literal();
             
-            #ifdef DebugMode
+            #ifdef Debug_Write_AST_To_Json_File
             YJson::Object* to_json() const;
             #endif
 
@@ -249,7 +249,7 @@ namespace XyA
             return false;
         }
 
-        #ifdef DebugMode
+        #ifdef Debug_Write_AST_To_Json_File
         YJson::Object* SyntaxTreeNode::to_json() const
         {
             YJson::Dict dict;

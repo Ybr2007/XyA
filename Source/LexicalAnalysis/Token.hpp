@@ -50,6 +50,7 @@ namespace XyA
             FloatLiteral,                   // 浮点数字面量
             StringLiteral,                  // 字符串字面量
             BoolLiteral,                    // 布尔字面量
+            NullLiteral,                    // null字面量
             Identifier,                     // 标识符
 
             Unknown,                        // 占位
@@ -131,7 +132,9 @@ namespace XyA
             case TokenType::StringLiteral:
                 return "<Token: String Literal, Value: '" + value +"'>";  
             case TokenType::BoolLiteral:
-                return "<Token: Bool Literal, Value: '" + value +"'>";            
+                return "<Token: Bool Literal, Value: '" + value +"'>"; 
+            case TokenType::NullLiteral:
+                return "<Token: Null Literal>";            
             case TokenType::Identifier:
                 return "<Token: Identifier, Value: '" + value +"'>";
             
@@ -143,7 +146,8 @@ namespace XyA
         bool Token::is_literal() const
         {
             return this->type == TokenType::IntLiteral || this->type == TokenType::FloatLiteral || 
-                this->type == TokenType::StringLiteral || this->type == TokenType::BoolLiteral;
+                this->type == TokenType::StringLiteral || this->type == TokenType::BoolLiteral ||
+                this->type == TokenType::NullLiteral;
         }
     }  // namespace LexicalAnalysis
 }  // namespace XyA

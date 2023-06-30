@@ -1,4 +1,5 @@
 #pragma once
+#include <Runtime/MemoryManager.hpp>
 #include <Runtime/VirtualMachine.h>
 
 
@@ -17,28 +18,33 @@ namespace XyA
 
         void VirtualMachine::__init_global_context()
         {
-            Object*& builtin_print_function = this->globle_context->local_variables[globle_context->code_obj->variable_name_indices["print"]];
-            builtin_print_function = new Builtin::BuiltinFunction(Builtin::print);
-            builtin_print_function->ref_count ++;
+            Object*& builtin_print_function = this->globle_context->local_variables[0]; // 0: globle_context->code_obj->variable_name_indices["print"]
+            builtin_print_function = XyA_Allocate(Builtin::BuiltinFunction, Builtin::print);
+            builtin_print_function->reference();
 
-            Object*& builtin__get_ref_count_function = this->globle_context->local_variables[globle_context->code_obj->variable_name_indices["_get_ref_count"]];
-            builtin__get_ref_count_function = new Builtin::BuiltinFunction(Builtin::_get_ref_count);
-            builtin__get_ref_count_function->ref_count ++;
+            Object*& builtin__get_ref_count_function = this->globle_context->local_variables[1]; // 1: globle_context->code_obj->variable_name_indices["_get_ref_count"]
+            builtin__get_ref_count_function = XyA_Allocate(Builtin::BuiltinFunction, Builtin::_get_ref_count);
+            builtin__get_ref_count_function->reference();
 
-            Object*& builtin__get_id_function = this->globle_context->local_variables[globle_context->code_obj->variable_name_indices["_get_id"]];
-            builtin__get_id_function = new Builtin::BuiltinFunction(Builtin::_get_id);
-            builtin__get_id_function->ref_count ++;
+            Object*& builtin__get_id_function = this->globle_context->local_variables[2];  // 2: globle_context->code_obj->variable_name_indices["_get_id"]
+            builtin__get_id_function = XyA_Allocate(Builtin::BuiltinFunction, Builtin::_get_id);
+            builtin__get_id_function->reference();
         }
 
         void VirtualMachine::__execute_context()
         {
             while (this->cur_context->instruction_ptr < this->cur_context->code_obj->instructions.size())
             {
-                Instruction* instruction_to_be_run = this->cur_context->cur_instruction();
-                this->__excute_instruction(instruction_to_be_run);
+                Instruction* cur_instruction = this->cur_context->cur_instruction();
+                this->__excute_instruction(cur_instruction);
                 this->cur_context->instruction_ptr ++;
             }
             this->__back_context();
+
+            if (this->cur_context != nullptr)
+            {
+                this->__execute_context();
+            }
         }
 
         void VirtualMachine::__excute_instruction(Instruction* instruction)
@@ -67,14 +73,14 @@ namespace XyA
 
             case InstructionType::StroeVariable:
             {
-                Object* old_variable = this->cur_context->local_variables[instruction->parameter];
+                Object*& old_variable = this->cur_context->local_variables[instruction->parameter];
                 if (old_variable != nullptr)
                 {
-                    old_variable->dwindle_ref_count();
+                    old_variable->dereference();
                 }
 
                 this->cur_context->local_variables[instruction->parameter] = this->cur_context->pop_operand();
-                this->cur_context->local_variables[instruction->parameter]->ref_count ++;
+                this->cur_context->local_variables[instruction->parameter]->reference();
 
                 break;
             }
@@ -215,6 +221,7 @@ namespace XyA
                     
                     Object** args = new Object*[1]{top_object};
                     Object* result = bool_method->call(args, 1, exception_thrown);
+                    delete[] args;
 
                     if (exception_thrown)
                     {
@@ -236,6 +243,12 @@ namespace XyA
                     // 所以要减去一以在下一轮循环中跳转到正确位置
                     this->cur_context->instruction_ptr = instruction->parameter - 1;
                 }
+
+                if (bool_result->ref_count == 0)
+                {
+                    XyA_Deallocate(bool_result);
+                }
+
                 break;
             }
 
@@ -249,7 +262,8 @@ namespace XyA
 
             case InstructionType::PopTop:
             {
-                this->cur_context->pop_operand();
+                Object* top_object = this->cur_context->pop_operand();
+                deallocate_if_no_ref(top_object);
                 break;
             }
 
@@ -259,7 +273,6 @@ namespace XyA
                 for (size_t i = 0; i < instruction->parameter; i ++)
                 {
                     args[instruction->parameter - i - 1] = this->cur_context->pop_operand();
-                    args[instruction->parameter - i - 1]->ref_count ++;
                 }
                 BaseFunction* callee = dynamic_cast<BaseFunction*>(this->cur_context->pop_operand());
                 bool exception_thrown = false; 
@@ -283,17 +296,7 @@ namespace XyA
         void VirtualMachine::__back_context()
         {
             Context* back = this->cur_context->back;
-
-            #ifdef DebugMode
-            for (size_t i = 0; i < this->cur_context->code_obj->variable_name_indices.size(); i ++)
-            {
-                this->cur_context->local_variables[i]->dwindle_ref_count();
-            }
-            #endif
-
-            #ifndef DebugMode
             delete this->cur_context;
-            #endif
             this->cur_context = back;
         }
 

@@ -1,6 +1,7 @@
 #pragma once
 #include <Runtime/Builtin/Bool.h>
 #include <Runtime/Builtin/Int.h>
+#include <Runtime/MemoryManager.hpp>
 
 
 namespace XyA
@@ -33,11 +34,11 @@ namespace XyA
 
                 if (bool_other != nullptr)
                 {
-                    return new BoolObject(self->value == bool_other->value);
+                    return XyA_Allocate(BoolObject, self->value == bool_other->value);
                 }
                 else  // int_other != nullptr
                 {
-                    return new BoolObject(self->value == int_other->value);
+                    return XyA_Allocate(BoolObject, self->value == int_other->value);
                 }
             }
             
@@ -56,7 +57,7 @@ namespace XyA
                     return new BuiltinException("The type of argument 'self' must be int." + std::to_string(arg_num));
                 }
 
-                StringObject* str = new StringObject;
+                StringObject* str = XyA_Allocate_(StringObject);
                 str->value = self->value ? "true" : "false";
 
                 return str;
@@ -66,14 +67,19 @@ namespace XyA
             {
                 this->name = "bool";
                 this->type = nullptr;
-                this->attrs[MagicMethodNames::equal_method_name] = new BuiltinFunction(bool_object_equal);
-                this->attrs[MagicMethodNames::str_method_name] = new BuiltinFunction(bool_object_str);
+                this->attrs[MagicMethodNames::equal_method_name] = XyA_Allocate(BuiltinFunction, bool_object_equal);
+                this->attrs[MagicMethodNames::str_method_name] = XyA_Allocate(BuiltinFunction, bool_object_str);
+
+                for (const auto& iter : this->attrs)
+                {
+                    iter.second->reference();
+                }
             }
 
             BoolType* BoolType::get_instance()
             {
-                static BoolType* instance = new BoolType;
-                return instance;
+                static BoolType instance;
+                return &instance;
             }
 
             BoolObject::BoolObject(bool value)

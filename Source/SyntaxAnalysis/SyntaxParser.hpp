@@ -396,6 +396,7 @@ namespace XyA
             case LexicalAnalysis::TokenType::FloatLiteral:
             case LexicalAnalysis::TokenType::StringLiteral:
             case LexicalAnalysis::TokenType::BoolLiteral:
+            case LexicalAnalysis::TokenType::NullLiteral:
             case LexicalAnalysis::TokenType::Identifier:
             {
                 SyntaxTreeNode* node = new SyntaxTreeNode(SyntaxTreeNodeType::Primary);

@@ -5,7 +5,8 @@
 #include <SyntaxAnalysis/SyntaxParser.hpp>
 #include <Compiler/Compiler.hpp>
 #include <Runtime/VirtualMachine.h>
-#include <Config.hpp>
+#include <Config.h>
+#include <Runtime/MemoryManager.hpp>
 
 
 namespace XyA
@@ -56,53 +57,53 @@ namespace XyA
         // 词法分析，生成Tokens
         std::vector<LexicalAnalysis::Token*>* tokens = this->token_analyzer.analyze_source(source);
 
-        #ifdef DebugMode
-        printf("Tokens:\n");
-        for (auto token : *tokens)
-        {
-            printf("%s ", token->to_string().c_str());
-        }
-        printf("\n\n");
-        #endif
+        // #ifdef DebugMode
+        // printf("Tokens:\n");
+        // for (auto token : *tokens)
+        // {
+        //     printf("%s ", token->to_string().c_str());
+        // }
+        // printf("\n\n");
+        // #endif
 
         // 语法分析，生成语法树
         SyntaxAnalysis::SyntaxTreeNode* syntax_tree = this->syntax_parser.parse_tokens(tokens);
 
-        #ifdef DebugMode
-        YJson::Object* syntax_tree_json = syntax_tree->to_json();
-        YJson::dump("Y:\\C++\\XyA\\syntax_tree.json", syntax_tree_json, 2);
-        delete syntax_tree_json;
-        #endif
+        // #ifdef DebugMode
+        // YJson::Object* syntax_tree_json = syntax_tree->to_json();
+        // YJson::dump("Y:\\C++\\XyA\\syntax_tree.json", syntax_tree_json, 2);
+        // delete syntax_tree_json;
+        // #endif
 
         // 编译，生成CodeObject
         Runtime::CodeObject* code_object = this->compiler.compile(syntax_tree);
 
-        #ifdef DebugMode
+        // #ifdef DebugMode
         printf("Instructions:\n");
         for (size_t i = 0; i < code_object->instructions.size(); i ++)
         {
             printf("%d %s\n", (int)i, code_object->instructions[i]->to_string().c_str());
         }
         printf("\n");
-        printf("Literals:\n");
-        for (size_t i = 0; i < code_object->literals.size(); i ++)
-        {
-            Runtime::Builtin::StringObject* str_obj = dynamic_cast<Runtime::Builtin::StringObject*>(code_object->literals[i]);
-            if (str_obj == nullptr)
-            {
-                Runtime::BaseFunction* str_method = dynamic_cast<Runtime::BaseFunction*>(
-                    code_object->literals[i]->type->attrs[Runtime::MagicMethodNames::str_method_name]);
+        // printf("Literals:\n");
+        // for (size_t i = 0; i < code_object->literals.size(); i ++)
+        // {
+        //     Runtime::Builtin::StringObject* str_obj = dynamic_cast<Runtime::Builtin::StringObject*>(code_object->literals[i]);
+        //     if (str_obj == nullptr)
+        //     {
+        //         Runtime::BaseFunction* str_method = dynamic_cast<Runtime::BaseFunction*>(
+        //             code_object->literals[i]->type->attrs[Runtime::MagicMethodNames::str_method_name]);
 
-                Runtime::Object** args = new Runtime::Object*[1]{code_object->literals[i]};
-                bool exception_thrown = false;
-                str_obj = dynamic_cast<Runtime::Builtin::StringObject*>(str_method->call(args, 1, exception_thrown));
-            }
-            printf("index: %d  value: %s  ref_count: %d\n", (int)i, str_obj->value.c_str(), code_object->literals[i]->ref_count);
-        }
-        printf("\n");
-        #endif
+        //         Runtime::Object** args = new Runtime::Object*[1]{code_object->literals[i]};
+        //         bool exception_thrown = false;
+        //         str_obj = dynamic_cast<Runtime::Builtin::StringObject*>(str_method->call(args, 1, exception_thrown));
+        //     }
+        //     printf("index: %d  value: %s  ref_count: %d\n", (int)i, str_obj->value.c_str(), code_object->literals[i]->ref_count);
+        // }
+        // printf("\n");
+        // #endif
 
-        #ifdef DebugMode
+        #ifdef Debug_Write_AST_To_Json_File
         YJson::Object* optimized_syntax_tree_json = syntax_tree->to_json();
         YJson::dump("Y:\\C++\\XyA\\syntax_tree_optimized.json", optimized_syntax_tree_json, 2);
         delete optimized_syntax_tree_json;

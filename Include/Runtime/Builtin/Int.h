@@ -40,6 +40,10 @@ namespace XyA
                 long long value;
 
                 IntObject();
+
+                #ifdef Debug_Display_Object
+                std::string to_string() const;
+                #endif
             };
 
         }  // namespace Builtin

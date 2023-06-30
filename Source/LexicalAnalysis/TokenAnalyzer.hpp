@@ -289,7 +289,13 @@ namespace XyA
                 this->__try_move_ptr(5);
                 return token;
             }
-
+            if (this->__match("null", true))
+            {
+                token->type = TokenType::NullLiteral;
+                token->end_pos = this->__pos + 3;
+                this->__try_move_ptr(4);
+                return token;
+            }
             if (Utils::is_digit(this->__cur_char()))  // Number Literal，由于负号已经被事先识别，所以只考虑首字符为数字
             {
                 bool is_float = false;
@@ -311,7 +317,8 @@ namespace XyA
                     this->__throw_exception("Invalid syntax", this->__pos);
                 }
             }   
-            else if (this->__cur_char() == '"')  // String Literal
+            
+            if (this->__cur_char() == '"')  // String Literal
             {
                 token->type = TokenType::StringLiteral;
                 bool success = this->__get_string_literal(token->value);
@@ -391,10 +398,9 @@ namespace XyA
             }
 
             size_t firstCharPos = this->__pos;
-            bool escape = false;
 
             result.push_back('"');
-            while (this->__cur_char() != '"' || escape)
+            while (this->__cur_char() != '"')
             {  
                 if (this->__cur_char() == '\n')
                 {
@@ -402,16 +408,33 @@ namespace XyA
                 }
                 if (this->__cur_char() == '\\')
                 {
-                    escape = true;
+                    if (!this->__at_end())
+                    {
+                        switch (this->__next_char())
+                        {
+                        case 'n':
+                            result.push_back('\n');
+                            this->__try_move_ptr();
+                            break;
+
+                        case '"':
+                            result.push_back('"');
+                            this->__try_move_ptr();
+                            break;
+                        
+                        default:
+                            result.push_back('\\');
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        result.push_back('\\');
+                    }
                 }
                 else
                 {
                     result.push_back(this->__cur_char());
-                }
-
-                if (this->__cur_char() != '\\' && escape)
-                {
-                    escape = false;
                 }
 
                 if (!this->__try_move_ptr())  // 从左引号的下一个字符开始
@@ -428,7 +451,7 @@ namespace XyA
 
         bool TokenAnalyzer::__get_identifier(std::string& result)
         {
-            if (!Utils::is_letter(this->__cur_char()) && ! this->__cur_char() == '_')
+            if (!Utils::is_letter(this->__cur_char()) && this->__cur_char() != '_')
             {
                 this->__throw_exception("SyntaxError: invalid syntax", this->__pos);
                 return false;

@@ -1,5 +1,6 @@
 #pragma once
 #include <Runtime/Builtin/Null.h>
+#include <Runtime/MemoryManager.hpp>
 
 
 namespace XyA
@@ -12,14 +13,19 @@ namespace XyA
             {
                 this->name = "null";
                 this->type = nullptr;
-                this->attrs[MagicMethodNames::equal_method_name] = new BuiltinFunction(null_object_equal);
-                this->attrs[MagicMethodNames::str_method_name] = new BuiltinFunction(null_object_str);
+                this->attrs[MagicMethodNames::equal_method_name] = XyA_Allocate(BuiltinFunction, null_object_equal);
+                this->attrs[MagicMethodNames::str_method_name] = XyA_Allocate(BuiltinFunction, null_object_str);
+
+                for (const auto& iter : this->attrs)
+                {
+                    iter.second->reference();
+                }
             }
             
             NullType* NullType::get_instance()
             {
-                static NullType* instance = new NullType;
-                return instance;
+                static NullType instance;
+                return &instance;
             }
 
             NullObject::NullObject(bool value)
@@ -29,7 +35,7 @@ namespace XyA
 
             NullObject* NullObject::get_instance()
             {
-                static NullObject* instance = new NullObject;
+                static NullObject* instance = XyA_Allocate_(NullObject);
                 return instance;
             }
 

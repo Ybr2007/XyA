@@ -4,6 +4,7 @@
 #include <Runtime/CodeObject.h>
 #include <Runtime/Builtin/Int.h>
 #include <Runtime/Builtin/String.h>
+#include <Runtime/MemoryManager.hpp>
 #include <Utils/StringUtils.hpp>
 
 
@@ -19,7 +20,10 @@ namespace XyA
         private:
             Runtime::CodeObject* __compiling_code_obj;
 
-            /* 在以下__compile_xxx中new的Instruction和Literal Object都会在Runtime::CodeObject::~CodeObject释放 */
+            /* 
+            在以下__compile_xxx中new的Instructions都会在Runtime::CodeObject::~CodeObject释放
+            在以下__compile_xxx中new的Literals会被GC机制删除
+             */
             void __compile_unit(SyntaxAnalysis::SyntaxTreeNode* unit_root);
             void __compile_line(SyntaxAnalysis::SyntaxTreeNode* line_root);
             void __compile_block(SyntaxAnalysis::SyntaxTreeNode* block_root);
@@ -30,7 +34,7 @@ namespace XyA
 
         Runtime::CodeObject* Compiler::compile(SyntaxAnalysis::SyntaxTreeNode* syntax_tree_root)
         {
-            // 在Runtime::Context::~Context释放
+            // delete于Runtime::Context::~Context
             this->__compiling_code_obj = new Runtime::CodeObject;
 
             this->__compiling_code_obj->add_variable_name("print");
@@ -155,41 +159,75 @@ namespace XyA
             {
                 Runtime::Instruction* load_literal_instruction = new Runtime::Instruction(Runtime::InstructionType::LoadLiteral);
 
-                if (expression_root->token->type == LexicalAnalysis::TokenType::IntLiteral)
+                switch (expression_root->token->type)
                 {
-                    Runtime::Builtin::IntObject* int_obj = new Runtime::Builtin::IntObject;
+                case LexicalAnalysis::TokenType::IntLiteral:
+                {
+                    Runtime::Builtin::IntObject* int_obj = Runtime::XyA_Allocate_(Runtime::Builtin::IntObject);
                     int_obj->value = std::stoll(expression_root->token->value);
                     if (!this->__compiling_code_obj->try_get_literal_index(int_obj, load_literal_instruction->parameter))
                     {
                         load_literal_instruction->parameter = this->__compiling_code_obj->add_literal_object(int_obj);
                     }
+                    else  // 已经有了该对象，则需要释放掉多余的
+                    {
+                        Runtime::XyA_Deallocate(int_obj);
+                    }
+                    break;
                 }
-                else if (expression_root->token->type == LexicalAnalysis::TokenType::FloatLiteral)
+
+                case LexicalAnalysis::TokenType::FloatLiteral:
                 {
-                    Runtime::Builtin::FloatObject* float_obj = new Runtime::Builtin::FloatObject;
+                    Runtime::Builtin::FloatObject* float_obj = Runtime::XyA_Allocate_(Runtime::Builtin::FloatObject);
                     float_obj->value = std::stod(expression_root->token->value);
                     if (!this->__compiling_code_obj->try_get_literal_index(float_obj, load_literal_instruction->parameter))
                     {
                         load_literal_instruction->parameter = this->__compiling_code_obj->add_literal_object(float_obj);
                     }
+                    else  // 已经有了该对象，则需要释放掉多余的
+                    {
+                        Runtime::XyA_Deallocate(float_obj);
+                    }
+                    break;
                 }
-                else if (expression_root->token->type == LexicalAnalysis::TokenType::StringLiteral)
+
+                case LexicalAnalysis::TokenType::StringLiteral:
                 {
-                    Runtime::Builtin::StringObject* str_obj = new Runtime::Builtin::StringObject;
+                    Runtime::Builtin::StringObject* str_obj = Runtime::XyA_Allocate_(Runtime::Builtin::StringObject);
                     str_obj->value.assign(expression_root->token->value.begin() + 1, expression_root->token->value.end() - 1);
                     if (!this->__compiling_code_obj->try_get_literal_index(str_obj, load_literal_instruction->parameter))
                     {
                         load_literal_instruction->parameter = this->__compiling_code_obj->add_literal_object(str_obj);
                     }   
+                    else  // 已经有了该对象，则需要释放掉多余的
+                    {
+                        Runtime::XyA_Deallocate(str_obj);
+                    }
+                    break;
                 }
-                else if (expression_root->token->type == LexicalAnalysis::TokenType::BoolLiteral)
+
+                case LexicalAnalysis::TokenType::BoolLiteral:
                 {
-                    Runtime::Builtin::BoolObject* bool_obj = new Runtime::Builtin::BoolObject;
+                    Runtime::Builtin::BoolObject* bool_obj = Runtime::XyA_Allocate_(Runtime::Builtin::BoolObject);
                     bool_obj->value = expression_root->token->value == "true" ? true : false;
                     if (!this->__compiling_code_obj->try_get_literal_index(bool_obj, load_literal_instruction->parameter))
                     {
                         load_literal_instruction->parameter = this->__compiling_code_obj->add_literal_object(bool_obj);
                     }   
+                    else  // 已经有了该对象，则需要释放掉多余的
+                    {
+                        Runtime::XyA_Deallocate(bool_obj);
+                    }
+                    break;
+                }
+
+                case LexicalAnalysis::TokenType::NullLiteral:
+                {
+                    // TODO   
+                }
+                
+                default:
+                    break;
                 }
 
                 this->__compiling_code_obj->instructions.push_back(load_literal_instruction);
@@ -213,11 +251,6 @@ namespace XyA
 
                 this->__compiling_code_obj->instructions.push_back(load_variable_instruction);
 
-                if (pop)
-                {
-                    Runtime::Instruction* pop_top_instruction = new Runtime::Instruction(Runtime::InstructionType::PopTop);
-                    this->__compiling_code_obj->instructions.push_back(pop_top_instruction);
-                }
                 if (pop)
                 {
                     Runtime::Instruction* pop_top_instruction = new Runtime::Instruction(Runtime::InstructionType::PopTop);

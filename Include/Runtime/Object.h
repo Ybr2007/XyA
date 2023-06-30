@@ -1,7 +1,7 @@
 #pragma once
 #include <string>
 #include <unordered_map>
-#include <Config.hpp>
+#include <Config.h>
 
 
 namespace XyA
@@ -21,13 +21,19 @@ namespace XyA
         class Object
         {
         public:
-            Type* type;
+            Type* type = nullptr;
             long long ref_count = 0;
             std::unordered_map<std::string, Object*> attrs;
 
-            bool dwindle_ref_count();
+            void reference();
+
+            bool dereference();
             TryGetMethodResult try_get_method(const std::string& method_name, BaseFunction*& result) const;
             virtual ~Object();
+
+            #ifdef Debug_Display_Object
+            virtual std::string to_string() const;
+            #endif
         };
 
         class Type : public Object
