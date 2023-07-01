@@ -44,7 +44,7 @@ namespace XyA
                 if (arg_num != 2)
                 {
                     exception_thrown = true;
-                    return new BuiltinException("Expected 2 arguments, got " + std::to_string(arg_num));
+                    return XyA_Allocate(BuiltinException, "Expected 2 arguments, got " + std::to_string(arg_num));
                 }
                 NullObject* self = dynamic_cast<NullObject*>(args[0]);
 
@@ -53,7 +53,7 @@ namespace XyA
                 if (self == nullptr)
                 {
                     exception_thrown = true;
-                    return new BuiltinException("Type Error");
+                    return XyA_Allocate(BuiltinException, "Type Error");
                 }
 
                 if (other != nullptr)
@@ -71,14 +71,14 @@ namespace XyA
                 if (arg_num != 1)
                 {
                     exception_thrown = true;
-                    return new BuiltinException("Excepted 1 argument, got " + std::to_string(arg_num));
+                    return XyA_Allocate(BuiltinException, "Excepted 1 argument, got " + std::to_string(arg_num));
                 }
 
                 NullObject* self = dynamic_cast<NullObject*>(args[0]);
                 if (self == nullptr)
                 {
                     exception_thrown = true;
-                    return new BuiltinException("The type of argument 'self' must be int." + std::to_string(arg_num));
+                    return XyA_Allocate(BuiltinException, "The type of argument 'self' must be int." + std::to_string(arg_num));
                 }
 
                 StringObject* str = new StringObject;

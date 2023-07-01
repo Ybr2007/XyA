@@ -58,7 +58,7 @@ namespace XyA
                 if (int_other == nullptr && float_other == nullptr)
                 {
                     exception_thrown = true;
-                    return new BuiltinException("Type Error");
+                    return XyA_Allocate(BuiltinException, "Type Error");
                 }
 
                 if (int_other != nullptr)
@@ -91,7 +91,7 @@ namespace XyA
                 if (int_other == nullptr && float_other == nullptr)
                 {
                     exception_thrown = true;
-                    return new BuiltinException("Type Error");
+                    return XyA_Allocate(BuiltinException, "Type Error");
                 }
 
                 if (int_other != nullptr)
@@ -123,7 +123,7 @@ namespace XyA
                 if (int_other == nullptr && float_other == nullptr)
                 {
                     exception_thrown = true;
-                    return new BuiltinException("Type Error");
+                    return XyA_Allocate(BuiltinException, "Type Error");
                 }
 
                 if (int_other != nullptr)
@@ -155,12 +155,12 @@ namespace XyA
                 if (int_other == nullptr && float_other == nullptr)
                 {
                     exception_thrown = true;
-                    return new BuiltinException("Type Error");
+                    return XyA_Allocate(BuiltinException, "Type Error");
                 }
                 if ((int_other && int_other->value == 0) || (float_other && float_other->value == 0))
                 {
                     exception_thrown = true;
-                    return new BuiltinException("Division by zero");
+                    return XyA_Allocate(BuiltinException, "Division by zero");
                 }
 
                 if (int_other != nullptr)
@@ -180,7 +180,7 @@ namespace XyA
                 }
                 else  // float_other != nullptr
                 {
-                    FloatObject* result_obj = new FloatObject;
+                    FloatObject* result_obj = XyA_Allocate_(FloatObject);
                     result_obj->value = self->value / float_other->value;
                     return result_obj;
                 }   
@@ -201,7 +201,7 @@ namespace XyA
                 if (int_other == nullptr && float_other == nullptr)
                 {
                     exception_thrown = true;
-                    return new BuiltinException("Type Error");
+                    return XyA_Allocate(BuiltinException, "Type Error");
                 }
 
                 if (int_other != nullptr)
@@ -248,7 +248,7 @@ namespace XyA
                 if (int_other == nullptr && float_other == nullptr)
                 {
                     exception_thrown = true;
-                    return new BuiltinException("Type Error");
+                    return XyA_Allocate(BuiltinException, "Type Error");
                 }
 
                 if (int_other != nullptr)
@@ -276,7 +276,7 @@ namespace XyA
                 if (int_other == nullptr && float_other == nullptr)
                 {
                     exception_thrown = true;
-                    return new BuiltinException("Type Error");
+                    return XyA_Allocate(BuiltinException, "Type Error");
                 }
 
                 if (int_other != nullptr)
@@ -304,7 +304,7 @@ namespace XyA
                 if (int_other == nullptr && float_other == nullptr)
                 {
                     exception_thrown = true;
-                    return new BuiltinException("Type Error");
+                    return XyA_Allocate(BuiltinException, "Type Error");
                 }
 
                 if (int_other != nullptr)
@@ -332,7 +332,7 @@ namespace XyA
                 if (int_other == nullptr && float_other == nullptr)
                 {
                     exception_thrown = true;
-                    return new BuiltinException("Type Error");
+                    return XyA_Allocate(BuiltinException, "Type Error");
                 }
 
                 if (int_other != nullptr)

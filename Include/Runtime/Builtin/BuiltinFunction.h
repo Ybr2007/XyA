@@ -15,7 +15,7 @@ namespace XyA
                 if (self == nullptr) \
                 { \
                     exception_thrown = true; \
-                    return new BuiltinException("Type Error"); \
+                    return XyA_Allocate(BuiltinException, "Type Error"); \
                 }
                 
             Object* builtin_function_str(Object** args, size_t arg_num, bool& exception_thrown);  

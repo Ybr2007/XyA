@@ -12,12 +12,8 @@ namespace XyA
         {
             Object* bool_object_equal(Object** args, size_t arg_num, bool& exception_thrown)
             {
-                if (arg_num != 2)
-                {
-                    exception_thrown = true;
-                    return new BuiltinException("Expected 2 arguments, got " + std::to_string(arg_num));
-                }
-                BoolObject* self = dynamic_cast<BoolObject*>(args[0]);
+                XyA_Function_Check_Arg_Num(2)
+                XyA_Method_Get_Self(BoolObject)
 
                 BoolObject* bool_other = dynamic_cast<BoolObject*>(args[1]);
                 IntObject* int_other = nullptr;
@@ -26,10 +22,10 @@ namespace XyA
                     int_other = dynamic_cast<IntObject*>(args[1]);
                 }
 
-                if (self == nullptr || (bool_other == nullptr && int_other == nullptr))
+                if (bool_other == nullptr && int_other == nullptr)
                 {
                     exception_thrown = true;
-                    return new BuiltinException("Type Error");
+                    return XyA_Allocate(BuiltinException, "Type Error");
                 }
 
                 if (bool_other != nullptr)
@@ -44,18 +40,8 @@ namespace XyA
             
             Object* bool_object_str(Object** args, size_t arg_num, bool& exception_thrown)
             {
-                if (arg_num != 1)
-                {
-                    exception_thrown = true;
-                    return new BuiltinException("Excepted 1 argument, got " + std::to_string(arg_num));
-                }
-
-                BoolObject* self = dynamic_cast<BoolObject*>(args[0]);
-                if (self == nullptr)
-                {
-                    exception_thrown = true;
-                    return new BuiltinException("The type of argument 'self' must be int." + std::to_string(arg_num));
-                }
+                XyA_Function_Check_Arg_Num(1)
+                XyA_Method_Get_Self(BoolObject)
 
                 StringObject* str = XyA_Allocate_(StringObject);
                 str->value = self->value ? "true" : "false";

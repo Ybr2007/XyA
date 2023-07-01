@@ -1,5 +1,6 @@
 #pragma once
 #include <Runtime/Builtin/Float.h>
+#include <Runtime/Builtin/Int.h>
 #include <Runtime/MemoryManager.hpp>
 
 
@@ -47,16 +48,23 @@ namespace XyA
             {
                 XyA_Function_Check_Arg_Num(2)
                 XyA_Method_Get_Self(FloatObject)
-                
-                FloatObject* other = dynamic_cast<FloatObject*>(args[1]);
-                if (other == nullptr)
+
+                IntObject* int_other = dynamic_cast<IntObject*>(args[1]);
+                FloatObject* float_other = nullptr;
+                if (int_other == nullptr)
+                {
+                    float_other = dynamic_cast<FloatObject*>(args[1]);
+                }
+
+                if (int_other == nullptr && float_other == nullptr)
                 {
                     exception_thrown = true;
-                    return new BuiltinException("Type Error");
+                    return XyA_Allocate(BuiltinException, "Type Error");
                 }
+
                 FloatObject* result_obj = XyA_Allocate_(FloatObject);
-                result_obj->value = self->value + other->value;
-                return result_obj;
+                result_obj->value = self->value + ((int_other != nullptr) ? int_other->value : float_other->value);
+                return result_obj; 
             }
 
             Object* float_object_subtract(Object** args, size_t arg_num, bool& exception_thrown)
@@ -64,15 +72,22 @@ namespace XyA
                 XyA_Function_Check_Arg_Num(2)
                 XyA_Method_Get_Self(FloatObject)
 
-                FloatObject* other = dynamic_cast<FloatObject*>(args[1]);
-                if (other == nullptr)
+                IntObject* int_other = dynamic_cast<IntObject*>(args[1]);
+                FloatObject* float_other = nullptr;
+                if (int_other == nullptr)
+                {
+                    float_other = dynamic_cast<FloatObject*>(args[1]);
+                }
+
+                if (int_other == nullptr && float_other == nullptr)
                 {
                     exception_thrown = true;
-                    return new BuiltinException("Type Error");
+                    return XyA_Allocate(BuiltinException, "Type Error");
                 }
+
                 FloatObject* result_obj = XyA_Allocate_(FloatObject);
-                result_obj->value = self->value - other->value;
-                return result_obj;
+                result_obj->value = self->value - ((int_other != nullptr) ? int_other->value : float_other->value);
+                return result_obj;             
             }
 
             Object* float_object_multiply(Object** args, size_t arg_num, bool& exception_thrown)
@@ -80,14 +95,21 @@ namespace XyA
                 XyA_Function_Check_Arg_Num(2)
                 XyA_Method_Get_Self(FloatObject)
 
-                FloatObject* other = dynamic_cast<FloatObject*>(args[1]);
-                if (other == nullptr)
+                IntObject* int_other = dynamic_cast<IntObject*>(args[1]);
+                FloatObject* float_other = nullptr;
+                if (int_other == nullptr)
+                {
+                    float_other = dynamic_cast<FloatObject*>(args[1]);
+                }
+
+                if (int_other == nullptr && float_other == nullptr)
                 {
                     exception_thrown = true;
-                    return new BuiltinException("Type Error");
+                    return XyA_Allocate(BuiltinException, "Type Error");
                 }
+
                 FloatObject* result_obj = XyA_Allocate_(FloatObject);
-                result_obj->value = self->value * other->value;
+                result_obj->value = self->value * ((int_other != nullptr) ? int_other->value : float_other->value);
                 return result_obj;
             }
 
@@ -96,19 +118,26 @@ namespace XyA
                 XyA_Function_Check_Arg_Num(2)
                 XyA_Method_Get_Self(FloatObject)
 
-                FloatObject* other = dynamic_cast<FloatObject*>(args[1]);
-                if (other == nullptr)
+                IntObject* int_other = dynamic_cast<IntObject*>(args[1]);
+                FloatObject* float_other = nullptr;
+                if (int_other == nullptr)
+                {
+                    float_other = dynamic_cast<FloatObject*>(args[1]);
+                }
+
+                if (int_other == nullptr && float_other == nullptr)
                 {
                     exception_thrown = true;
-                    return new BuiltinException("Type Error");
+                    return XyA_Allocate(BuiltinException, "Type Error");
                 }
-                if (other->value == 0)
+                if ((int_other && int_other->value == 0) || (float_other && float_other->value == 0))
                 {
                     exception_thrown = true;
-                    return new BuiltinException("Division by zero");
+                    return XyA_Allocate(BuiltinException, "Division by zero");
                 }
+
                 FloatObject* result_obj = XyA_Allocate_(FloatObject);
-                result_obj->value = self->value / other->value;
+                result_obj->value = self->value / ((int_other != nullptr) ? int_other->value : float_other->value);
                 return result_obj;
             }
 
@@ -117,12 +146,27 @@ namespace XyA
                 XyA_Function_Check_Arg_Num(2)
                 XyA_Method_Get_Self(FloatObject)
 
-                FloatObject* other = dynamic_cast<FloatObject*>(args[1]);
-                if (other == nullptr)
+                IntObject* int_other = dynamic_cast<IntObject*>(args[1]);
+                FloatObject* float_other = nullptr;
+                if (int_other == nullptr)
                 {
-                    return XyA_Allocate(BoolObject, false);
+                    float_other = dynamic_cast<FloatObject*>(args[1]);
                 }
-                return XyA_Allocate(BoolObject, self->value == other->value);
+
+                if (int_other == nullptr && float_other == nullptr)
+                {
+                    exception_thrown = true;
+                    return XyA_Allocate(BuiltinException, "Type Error");
+                }
+
+                if (int_other != nullptr)
+                {
+                    return XyA_Allocate(BoolObject, self->value == int_other->value);
+                }
+                else  // float_other != nullptr
+                {
+                    return XyA_Allocate(BoolObject, self->value == float_other->value);
+                }   
             }
 
             Object* float_object_str(Object** args, size_t arg_num, bool& exception_thrown)
@@ -130,12 +174,8 @@ namespace XyA
                 XyA_Function_Check_Arg_Num(1)
                 XyA_Method_Get_Self(FloatObject)
 
-                StringObject* str = XyA_Allocate_(StringObject);
-
-                std::stringstream ss;
-                ss.precision(20);
-                ss << self->value;
-                str->value = ss.str();
+                StringObject* str = XyA_Allocate_(StringObject);                
+                str->value = std::to_string(self->value);
 
                 return str;
             }
@@ -153,13 +193,27 @@ namespace XyA
                 XyA_Function_Check_Arg_Num(2)
                 XyA_Method_Get_Self(FloatObject)
 
-                FloatObject* other = dynamic_cast<FloatObject*>(args[1]);
-                if (other == nullptr)
+                IntObject* int_other = dynamic_cast<IntObject*>(args[1]);
+                FloatObject* float_other = nullptr;
+                if (int_other == nullptr)
+                {
+                    float_other = dynamic_cast<FloatObject*>(args[1]);
+                }
+
+                if (int_other == nullptr && float_other == nullptr)
                 {
                     exception_thrown = true;
-                    return new BuiltinException("Types of arguments must be float, but not " + args[1]->type->name);
+                    return XyA_Allocate(BuiltinException, "Type Error");
                 }
-                return XyA_Allocate(BoolObject, self->value > other->value);
+
+                if (int_other != nullptr)
+                {
+                    return XyA_Allocate(BoolObject, self->value > int_other->value);
+                }
+                else  // float_other != nullptr
+                {
+                    return XyA_Allocate(BoolObject, self->value > float_other->value);
+                }   
             }
 
             Object* float_object_compare_if_less(Object** args, size_t arg_num, bool& exception_thrown)
@@ -167,40 +221,85 @@ namespace XyA
                 XyA_Function_Check_Arg_Num(2)
                 XyA_Method_Get_Self(FloatObject)
 
-                FloatObject* other = dynamic_cast<FloatObject*>(args[1]);
-                if (other == nullptr)
+                IntObject* int_other = dynamic_cast<IntObject*>(args[1]);
+                FloatObject* float_other = nullptr;
+                if (int_other == nullptr)
+                {
+                    float_other = dynamic_cast<FloatObject*>(args[1]);
+                }
+
+                if (int_other == nullptr && float_other == nullptr)
                 {
                     exception_thrown = true;
-                    return new BuiltinException("Types of arguments must be int, but not " + args[1]->type->name);
+                    return XyA_Allocate(BuiltinException, "Type Error");
                 }
-                return XyA_Allocate(BoolObject, self->value < other->value);
+
+                if (int_other != nullptr)
+                {
+                    return XyA_Allocate(BoolObject, self->value < int_other->value);
+                }
+                else  // float_other != nullptr
+                {
+                    return XyA_Allocate(BoolObject, self->value < float_other->value);
+                }  
             }
 
             Object* float_object_compare_if_greater_equal(Object** args, size_t arg_num, bool& exception_thrown)
             {
                 XyA_Function_Check_Arg_Num(2)
                 XyA_Method_Get_Self(FloatObject)
-                FloatObject* other = dynamic_cast<FloatObject*>(args[1]);
-                if (other == nullptr)
+
+                IntObject* int_other = dynamic_cast<IntObject*>(args[1]);
+                FloatObject* float_other = nullptr;
+                if (int_other == nullptr)
+                {
+                    float_other = dynamic_cast<FloatObject*>(args[1]);
+                }
+
+                if (int_other == nullptr && float_other == nullptr)
                 {
                     exception_thrown = true;
-                    return new BuiltinException("Types of arguments must be int, but not " + args[1]->type->name);
+                    return XyA_Allocate(BuiltinException, "Type Error");
                 }
-                return XyA_Allocate(BoolObject, self->value >= other->value);
+
+                if (int_other != nullptr)
+                {
+                    return XyA_Allocate(BoolObject, self->value >= int_other->value);
+                }
+                else  // float_other != nullptr
+                {
+                    return XyA_Allocate(BoolObject, self->value >= float_other->value);
+                }  
             }
 
             Object* float_object_compare_if_less_equal(Object** args, size_t arg_num, bool& exception_thrown)
             {
                 XyA_Function_Check_Arg_Num(2)
                 XyA_Method_Get_Self(FloatObject)
-                FloatObject* other = dynamic_cast<FloatObject*>(args[1]);
-                if (other == nullptr)
+
+                IntObject* int_other = dynamic_cast<IntObject*>(args[1]);
+                FloatObject* float_other = nullptr;
+                if (int_other == nullptr)
+                {
+                    float_other = dynamic_cast<FloatObject*>(args[1]);
+                }
+
+                if (int_other == nullptr && float_other == nullptr)
                 {
                     exception_thrown = true;
-                    return new BuiltinException("Types of arguments must be int, but not " + args[1]->type->name);
+                    return XyA_Allocate(BuiltinException, "Type Error");
                 }
-                return XyA_Allocate(BoolObject, self->value <= other->value);
+
+                if (int_other != nullptr)
+                {
+                    return XyA_Allocate(BoolObject, self->value < int_other->value);
+                }
+                else  // float_other != nullptr
+                {
+                    return XyA_Allocate(BoolObject, self->value < float_other->value);
+                }  
             }
+            
         }
     }
 }
