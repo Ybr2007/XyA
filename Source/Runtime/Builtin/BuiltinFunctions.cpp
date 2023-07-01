@@ -54,11 +54,7 @@ namespace XyA
 
             Object* _get_ref_count(Object** args, size_t arg_num, bool& exception_thrown)
             {
-                if (arg_num != 1)
-                {
-                    exception_thrown = true;
-                    return new BuiltinException("Excepted 1 argument, got " + std::to_string(arg_num));
-                }
+                XyA_Function_Check_Arg_Num(1)
 
                 IntObject* result = XyA_Allocate_(IntObject);
                 result->value = args[0]->ref_count;
@@ -69,11 +65,7 @@ namespace XyA
 
             Object* _get_id(Object** args, size_t arg_num, bool& exception_thrown)
             {
-                if (arg_num != 1)
-                {
-                    exception_thrown = true;
-                    return new BuiltinException("Excepted 1 argument, got " + std::to_string(arg_num));
-                }
+                XyA_Function_Check_Arg_Num(1)
 
                 IntObject* result = XyA_Allocate_(IntObject);
                 result->value = (long long)args[0];

@@ -146,15 +146,5 @@ namespace XyA
                 return iter == this->allocated_objects.end();
             }
         };
-
-        inline bool deallocate_if_no_ref(Object* object)
-        {
-            if (object->ref_count == 0)
-            {
-                XyA_Deallocate(object);
-                return true;
-            }
-            return false;
-        }
     }
 }

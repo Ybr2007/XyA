@@ -17,7 +17,7 @@ namespace XyA
         LexicalAnalysis::TokenAnalyzer token_analyzer;
         SyntaxAnalysis::SyntaxParser syntax_parser;
         Compiler::Compiler compiler;
-        Runtime::VirtualMachine virtual_machine = Runtime::VirtualMachine::get_instance();
+        Runtime::VirtualMachine* virtual_machine = Runtime::VirtualMachine::get_instance();
 
         Core();
         void execute(std::string_view source);
@@ -39,7 +39,7 @@ namespace XyA
             }
         );
 
-        this->virtual_machine.exception_callbacks.push_back(
+        this->virtual_machine->exception_callbacks.push_back(
             [](std::string_view msg){
                 printf("Runtime Error: %s\n", std::string(msg).c_str());
                 exit(-1);
@@ -135,7 +135,7 @@ namespace XyA
         Runtime::Context* global_context = new Runtime::Context(code_object);
 
         // 启动虚拟机
-        this->virtual_machine.execute(global_context);
+        this->virtual_machine->execute(global_context);
 
         #ifdef DebugMode
         printf("\nVariables:\n");

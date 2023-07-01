@@ -11,6 +11,7 @@ namespace XyA
         {
         public:
             CodeObject* code_object;
+            size_t expected_arg_num;
 
             Function();
             ~Function();

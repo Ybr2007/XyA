@@ -10,14 +10,7 @@ namespace XyA
     {
         namespace Builtin
         {          
-            #define XyA_Builtin_Function_Check_Arg_Num(expected_arg_num) \
-                if (arg_num != expected_arg_num) \
-                { \
-                    exception_thrown = true; \
-                    return new BuiltinException("Expected" + std::string(#expected_arg_num) + "arguments, got " + std::to_string(arg_num)); \
-                }
-
-            #define XyA_Builtin_Function_Get_Self(T) \
+            #define XyA_Method_Get_Self(T) \
                 T* self = dynamic_cast<T*>(args[0]); \
                 if (self == nullptr) \
                 { \

@@ -1,7 +1,7 @@
 #pragma once
 #include <Runtime/Function.h>
+#include <Runtime/Builtin/BuiltinException.h>
 #include <Runtime/VirtualMachine.h>
-
 #include <Runtime/Builtin/Null.h>
 #include <Runtime/MemoryManager.hpp>
 
@@ -22,10 +22,19 @@ namespace XyA
 
         Object* Function::call(Object** args, size_t arg_num, bool& exception_thrown) const
         {
+            XyA_Function_Check_Arg_Num(this->expected_arg_num)
+
             Context* function_context = new Context(this->code_object);
-            function_context->back = VirtualMachine::get_instance().cur_context;
-            VirtualMachine::get_instance().cur_context = function_context;
-            VirtualMachine::get_instance().execute_context();
+            function_context->back = VirtualMachine::get_instance()->cur_context;
+            VirtualMachine::get_instance()->cur_context = function_context;
+
+            for (size_t i = 0; i < arg_num; i ++)
+            {
+                function_context->local_variables[i] = args[i];
+                args[i]->reference();
+            }
+
+            VirtualMachine::get_instance()->execute_context();
             function_context->returned_obj = XyA_Allocate_(Builtin::NullObject);
 
             return function_context->returned_obj;

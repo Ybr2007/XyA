@@ -15,7 +15,7 @@ namespace XyA
                 if (!XyA_Check_If_Deallocated(this->literals[i]))
                 {
                     printf("Deallocate Literal: %s\n", this->literals[i]->to_string().c_str());
-                    deallocate_if_no_ref(this->literals[i]);
+                    this->literals[i]->deallocate_if_no_ref();
                 }
             }
 

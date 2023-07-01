@@ -22,7 +22,7 @@ namespace XyA
             Context* global_context = nullptr;
             Context* cur_context = nullptr;
 
-            static VirtualMachine& get_instance();
+            static VirtualMachine* get_instance();
             void execute(Context* global_context);
             void execute_context();
 

@@ -26,14 +26,15 @@ namespace XyA
             std::unordered_map<std::string, Object*> attrs;
 
             void reference();
-
             bool dereference();
+            bool deallocate_if_no_ref();
+
             TryGetMethodResult try_get_method(const std::string& method_name, BaseFunction*& result) const;
             virtual ~Object();
 
             #ifdef Debug_Display_Object
             virtual std::string to_string() const;
-            #endif
+            #endif        
         };
 
         class Type : public Object
@@ -41,6 +42,13 @@ namespace XyA
         public:
             std::string name;
         };
+
+        #define XyA_Function_Check_Arg_Num(expected_arg_num_) \
+                if (arg_num != expected_arg_num_) \
+                { \
+                    exception_thrown = true; \
+                    return new Builtin::BuiltinException("Expected" + std::string(#expected_arg_num_) + "arguments, got " + std::to_string(arg_num)); \
+                }
 
         class BaseFunction : public Object
         {

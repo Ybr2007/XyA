@@ -36,6 +36,24 @@ namespace XyA
             }
             return false;
         }
+
+        bool Object::deallocate_if_no_ref()
+        {
+            if (this->ref_count < 0)
+            {
+                printf("ERROR: ref_count < 0\n");
+                printf("Object: %s\n", this->to_string().c_str());
+                exit(-1);
+            }
+
+            if (this->ref_count == 0)
+            {
+                XyA_Deallocate(this);
+                return true;
+            }
+
+            return false;
+        }
         
         TryGetMethodResult Object::try_get_method(const std::string& method_name, BaseFunction*& result) const
         {

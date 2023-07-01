@@ -9,13 +9,13 @@ namespace XyA
     {
         VirtualMachine::VirtualMachine()  // private
         {
-            
+        
         }
 
-        VirtualMachine& VirtualMachine::get_instance()
+        VirtualMachine* VirtualMachine::get_instance()
         {
             static VirtualMachine instance;
-            return instance;
+            return &instance;
         }
 
         void VirtualMachine::execute(Context* global_context)
@@ -35,6 +35,7 @@ namespace XyA
             while (this->cur_context->instruction_ptr < this->cur_context->code_obj->instructions.size())
             {
                 Instruction* cur_instruction = this->cur_context->cur_instruction();
+                // printf("Instruction %d, %s\n", (size_t)VirtualMachine::get_instance()->cur_context, cur_instruction->to_string().c_str());
                 this->__excute_instruction(cur_instruction);
                 this->cur_context->instruction_ptr ++;
             }
@@ -74,6 +75,18 @@ namespace XyA
                 {
                     std::string variable_name = this->cur_context->get_variable_name(instruction->parameter);
 
+                    this->__throw_exception("The variable '" + variable_name + "' is not defined or already deleted.");
+                }
+                this->cur_context->push_operand(variable);
+                break;
+            }
+
+            case InstructionType::LoadGlobal:
+            {
+                Object* variable = this->global_context->get_variable_at(instruction->parameter);
+                if (variable == nullptr)
+                {
+                    std::string variable_name = this->global_context->get_variable_name(instruction->parameter);
                     this->__throw_exception("The variable '" + variable_name + "' is not defined or already deleted.");
                 }
                 this->cur_context->push_operand(variable);
@@ -272,7 +285,7 @@ namespace XyA
             case InstructionType::PopTop:
             {
                 Object* top_object = this->cur_context->pop_operand();
-                deallocate_if_no_ref(top_object);
+                top_object->deallocate_if_no_ref();
                 break;
             }
 

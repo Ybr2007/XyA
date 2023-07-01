@@ -25,30 +25,31 @@ namespace XyA
             在以下__compile_xxx中new的Instructions都会在Runtime::CodeObject::~CodeObject释放
             在以下__compile_xxx中new的Literals会被GC机制删除
              */
+            Runtime::CodeObject* __global_code_object;
+
             void __compile_unit(Runtime::CodeObject* code_object, SyntaxAnalysis::SyntaxTreeNode* unit_root);
             void __compile_line(Runtime::CodeObject* code_object, SyntaxAnalysis::SyntaxTreeNode* line_root);
             void __compile_block(Runtime::CodeObject* code_object, SyntaxAnalysis::SyntaxTreeNode* block_root);
             void __compile_if(Runtime::CodeObject* code_object, SyntaxAnalysis::SyntaxTreeNode* if_root);
             void __compile_assignment(Runtime::CodeObject* code_object, SyntaxAnalysis::SyntaxTreeNode* assignment_root);
             void __compile_expression(Runtime::CodeObject* code_object, SyntaxAnalysis::SyntaxTreeNode* expression_root, bool pop=false);
-            void __compile_function_definition(Runtime::CodeObject* code_object, SyntaxAnalysis::SyntaxTreeNode* assignment_root);
         };
 
         Runtime::CodeObject* Compiler::compile(SyntaxAnalysis::SyntaxTreeNode* syntax_tree_root)
         {
             // delete于Runtime::Context::~Context
-            Runtime::CodeObject* global_code_object = Runtime::XyA_Allocate_(Runtime::CodeObject);
+            this->__global_code_object = Runtime::XyA_Allocate_(Runtime::CodeObject);
 
-            global_code_object->add_variable_name("print");
-            global_code_object->add_variable_name("_get_ref_count");
-            global_code_object->add_variable_name("_get_id");
+            this->__global_code_object->add_variable_name("print");
+            this->__global_code_object->add_variable_name("_get_ref_count");
+            this->__global_code_object->add_variable_name("_get_id");
             
             for (auto unit : syntax_tree_root->children)
             {
-                this->__compile_unit(global_code_object, unit);
+                this->__compile_unit(this->__global_code_object, unit);
             }
 
-            return global_code_object;
+            return this->__global_code_object;
         }
 
         void Compiler::__compile_unit(Runtime::CodeObject* code_object, SyntaxAnalysis::SyntaxTreeNode* unit_root)
@@ -68,7 +69,13 @@ namespace XyA
                 Runtime::Function* function = Runtime::XyA_Allocate_(Runtime::Function);
                 function->reference();
 
-                this->__compile_function_definition(function->code_object, unit_root);
+                function->expected_arg_num = unit_root->children[0]->children.size();
+                for (auto arg : unit_root->children[0]->children)
+                {
+                    function->code_object->add_variable_name(arg->token->value);
+                }
+
+                this->__compile_block(function->code_object, unit_root->children[1]);
 
                 size_t function_variable_index;
                 if (!code_object->try_get_variable_index(unit_root->token->value, function_variable_index))
@@ -264,7 +271,13 @@ namespace XyA
 
                 if (!code_object->try_get_variable_index(expression_root->token->value, load_variable_instruction->parameter))
                 {
-                    load_variable_instruction->parameter = code_object->add_variable_name(expression_root->token->value);
+                    load_variable_instruction->type = Runtime::InstructionType::LoadGlobal;
+                    
+                    if (!this->__global_code_object->try_get_variable_index(
+                        expression_root->token->value, load_variable_instruction->parameter))
+                    {
+                        load_variable_instruction->parameter = this->__global_code_object->add_variable_name(expression_root->token->value);
+                    }
                 }
 
                 code_object->instructions.push_back(load_variable_instruction);
@@ -344,14 +357,6 @@ namespace XyA
             }
 
             return;
-        }
-
-        void Compiler::__compile_function_definition(Runtime::CodeObject* code_object, SyntaxAnalysis::SyntaxTreeNode* expression_root)
-        {
-            for (auto unit : expression_root->children)
-            {
-                this->__compile_unit(code_object, unit);
-            }
         }
 
     }  // namespace Compiler
