@@ -12,12 +12,12 @@ namespace XyA
     {
         Function::Function()
         {
-            this->code_object = new CodeObject;
+            this->code_object = XyA_Allocate_(CodeObject);
         }
 
         Function::~Function()
         {
-            delete this->code_object;
+            XyA_Deallocate(this->code_object);
         }
 
         Object* Function::call(Object** args, size_t arg_num, bool& exception_thrown) const
@@ -33,9 +33,16 @@ namespace XyA
                 function_context->local_variables[i] = args[i];
                 args[i]->reference();
             }
-
             VirtualMachine::get_instance()->execute_context();
-            function_context->returned_obj = XyA_Allocate_(Builtin::NullObject);
+
+            if (function_context->returned_obj == nullptr)
+            {
+                function_context->returned_obj = XyA_Allocate_(Builtin::NullObject);
+            }
+            else
+            {
+                function_context->returned_obj->ref_count --;  // 不能使用dereference()，防止返回值被释放
+            }
 
             return function_context->returned_obj;
         }

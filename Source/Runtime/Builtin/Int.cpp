@@ -337,11 +337,11 @@ namespace XyA
 
                 if (int_other != nullptr)
                 {
-                    return XyA_Allocate(BoolObject, self->value < int_other->value);
+                    return XyA_Allocate(BoolObject, self->value <= int_other->value);
                 }
                 else  // float_other != nullptr
                 {
-                    return XyA_Allocate(BoolObject, self->value < float_other->value);
+                    return XyA_Allocate(BoolObject, self->value <= float_other->value);
                 }  
             }
 

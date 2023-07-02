@@ -1,5 +1,6 @@
 #pragma once
 #include <Runtime/Builtin/BuiltinFunctions.h>
+#include <time.h>
 #include <Runtime/MemoryManager.hpp>
 
 
@@ -15,7 +16,7 @@ namespace XyA
                 {
                     Builtin::StringObject* str_obj = dynamic_cast<Runtime::Builtin::StringObject*>(args[i]);
 
-                    bool object_is_string = str_obj != nullptr;
+                    bool object_is_string = (str_obj != nullptr);
                     if (!object_is_string)
                     {
                         Runtime::BaseFunction* str_method; 
@@ -40,7 +41,7 @@ namespace XyA
                             str_obj = dynamic_cast<Builtin::StringObject*>(result);
                         }
                     }
-                    printf("%s", str_obj->value.c_str());
+                    printf("%s%s", str_obj->value.c_str(), i == arg_num - 1 ? "" : " ");
                     
                     if (!object_is_string)
                     {
@@ -69,6 +70,16 @@ namespace XyA
 
                 IntObject* result = XyA_Allocate_(IntObject);
                 result->value = (long long)args[0];
+                
+                return result;
+            }
+
+            Object* clock_(Object** args, size_t arg_num, bool& exception_thrown)
+            {
+                XyA_Function_Check_Arg_Num(0)
+
+                IntObject* result = XyA_Allocate_(IntObject);
+                result->value = clock();
                 
                 return result;
             }

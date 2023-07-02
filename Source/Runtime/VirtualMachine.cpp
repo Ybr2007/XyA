@@ -55,6 +55,10 @@ namespace XyA
             Object*& builtin__get_id_function = this->global_context->local_variables[2];  // 2: global_context->code_obj->variable_name_indices["_get_id"]
             builtin__get_id_function = XyA_Allocate(Builtin::BuiltinFunction, Builtin::_get_id);
             builtin__get_id_function->reference();
+
+            Object*& builtin_clock_function = this->global_context->local_variables[3];  // 3: global_context->code_obj->variable_name_indices["clock"]
+            builtin_clock_function = XyA_Allocate(Builtin::BuiltinFunction, Builtin::clock_);
+            builtin_clock_function->reference();
         }
 
         void VirtualMachine::__excute_instruction(Instruction* instruction)
@@ -286,6 +290,13 @@ namespace XyA
             {
                 Object* top_object = this->cur_context->pop_operand();
                 top_object->deallocate_if_no_ref();
+                break;
+            }
+
+            case InstructionType::Return:
+            {
+                this->cur_context->returned_obj = this->cur_context->pop_operand();
+                this->cur_context->returned_obj->reference();
                 break;
             }
 

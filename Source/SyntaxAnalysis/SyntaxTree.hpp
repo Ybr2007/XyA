@@ -26,6 +26,7 @@ namespace XyA
             Argument_List,          // children: 数量不限，每一个child是一个参数（对于Definition_Argument_List，是形参标识符；对于Call_Argument_List，是实参表达式）
             Argument,               // value: 形参名称标识符
             Call,                   // chilren: 数量为2，children[0] 为callee表达式，children[1] 为实参列表(Argument_List)
+            Return,                 // children: 数量为1，chilren[0] 为返回值表达式
         };
 
         #ifdef Debug_Write_AST_To_Json_File

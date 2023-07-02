@@ -33,6 +33,7 @@ namespace XyA
             void __compile_if(Runtime::CodeObject* code_object, SyntaxAnalysis::SyntaxTreeNode* if_root);
             void __compile_assignment(Runtime::CodeObject* code_object, SyntaxAnalysis::SyntaxTreeNode* assignment_root);
             void __compile_expression(Runtime::CodeObject* code_object, SyntaxAnalysis::SyntaxTreeNode* expression_root, bool pop=false);
+            void __compile_return(Runtime::CodeObject* code_object, SyntaxAnalysis::SyntaxTreeNode* return_root);
         };
 
         Runtime::CodeObject* Compiler::compile(SyntaxAnalysis::SyntaxTreeNode* syntax_tree_root)
@@ -43,6 +44,7 @@ namespace XyA
             this->__global_code_object->add_variable_name("print");
             this->__global_code_object->add_variable_name("_get_ref_count");
             this->__global_code_object->add_variable_name("_get_id");
+            this->__global_code_object->add_variable_name("clock");
             
             for (auto unit : syntax_tree_root->children)
             {
@@ -69,6 +71,12 @@ namespace XyA
                 Runtime::Function* function = Runtime::XyA_Allocate_(Runtime::Function);
                 function->reference();
 
+                size_t function_variable_index;
+                if (!code_object->try_get_variable_index(unit_root->token->value, function_variable_index))
+                {
+                    function_variable_index = code_object->add_variable_name(unit_root->token->value);
+                }
+
                 function->expected_arg_num = unit_root->children[0]->children.size();
                 for (auto arg : unit_root->children[0]->children)
                 {
@@ -76,13 +84,13 @@ namespace XyA
                 }
 
                 this->__compile_block(function->code_object, unit_root->children[1]);
+                code_object->functions[unit_root->token->value] = function;
+                break;
+            }
 
-                size_t function_variable_index;
-                if (!code_object->try_get_variable_index(unit_root->token->value, function_variable_index))
-                {
-                    function_variable_index = code_object->add_variable_name(unit_root->token->value);
-                    code_object->functions[unit_root->token->value] = function;
-                }
+            case SyntaxAnalysis::SyntaxTreeNodeType::Return:
+            {
+                this->__compile_return(code_object, unit_root);
                 break;
             }
 
@@ -357,6 +365,14 @@ namespace XyA
             }
 
             return;
+        }
+
+        void Compiler::__compile_return(Runtime::CodeObject* code_object, SyntaxAnalysis::SyntaxTreeNode* return_root)
+        {
+            this->__compile_expression(code_object, return_root->children[0]);
+
+            Runtime::Instruction* return_instruction = new Runtime::Instruction(Runtime::InstructionType::Return);
+            code_object->instructions.push_back(return_instruction);
         }
 
     }  // namespace Compiler

@@ -18,3 +18,7 @@ call_argument_list -> expression ("," expression)*
 
 function_definition -> "fn" Identifier "(" argument_list_definition? ")" block
 argument_list_definition -> Identifier ("," Identifier)*
+
+return         -> "return" expression? ";"
+function_unit  -> block | if | line | function_definiton | return
+function_block -> "{" function_unit* "}"

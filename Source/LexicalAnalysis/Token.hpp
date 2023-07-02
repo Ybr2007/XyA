@@ -43,6 +43,7 @@ namespace XyA
             Kw_For,                         // for
             Kw_While,                       // while
             Kw_Fn,                          // fn
+            Kw_Return,                      // return
             Kw_Import,                      // import
 
             /* Values */
@@ -122,6 +123,8 @@ namespace XyA
                 return "<Token: Key Word 'while'>";
             case TokenType::Kw_Fn:
                 return "<Token: Key Word 'fn'>";
+            case TokenType::Kw_Return:
+                return "<Token: Key Word 'return'>";
             case TokenType::Kw_Import:
                 return "<Token: Key Word 'import'>";
 

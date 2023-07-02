@@ -25,7 +25,9 @@ namespace XyA
             if (this->ref_count == 0)
             {
                 printf("ERROR: ref_count < 0\n");
+                #ifdef Debug_Display_Object
                 printf("Object: %s\n", this->to_string().c_str());
+                #endif
                 exit(-1);
             }
             
@@ -42,7 +44,9 @@ namespace XyA
             if (this->ref_count < 0)
             {
                 printf("ERROR: ref_count < 0\n");
+                #ifdef Debug_Display_Object
                 printf("Object: %s\n", this->to_string().c_str());
+                #endif
                 exit(-1);
             }
 
@@ -60,6 +64,11 @@ namespace XyA
             auto iter = this->attrs.find(method_name);
             if (iter == this->attrs.end())
             {
+                if (this->type == nullptr)
+                {
+                    return TryGetMethodResult::NotFound;
+                }
+
                 iter = this->type->attrs.find(method_name);
                 if (iter == this->type->attrs.end())
                 {

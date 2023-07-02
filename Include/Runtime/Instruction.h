@@ -25,6 +25,7 @@ namespace XyA
             UnaryNot,
 
             PopTop,
+            Return,
 
             /* 有参数 */
             LoadLiteral,

@@ -35,7 +35,7 @@ namespace XyA
             {
                 if (this->local_variables[i] != nullptr)
                 {
-                    printf("Deallocate Variable: %s\n", this->local_variables[i]->to_string().c_str());
+                    // printf("Dereference Variable: %s\n", this->local_variables[i]->to_string().c_str());
                     this->local_variables[i]->dereference();
                 }
             }

@@ -265,6 +265,13 @@ namespace XyA
                 this->__try_move_ptr(2);
                 return token;
             }
+            if (this->__match("return", true))
+            {
+                token->type = TokenType::Kw_Return;
+                token->end_pos = this->__pos + 5;
+                this->__try_move_ptr(6);
+                return token;
+            }
             if (this->__match("import", true))
             {
                 token->type = TokenType::Kw_Import;

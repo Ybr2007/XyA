@@ -73,6 +73,10 @@ namespace XyA
                 str += "Pop Top";
                 break;
 
+            case InstructionType::Return:
+                str += "Return";
+                break;
+
             case InstructionType::LoadLiteral:
                 str += "Load Literal";
                 str += " " + std::to_string(this->parameter);

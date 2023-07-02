@@ -21,6 +21,7 @@ namespace XyA
             bool __finished;
             std::vector<LexicalAnalysis::Token*>* __parsing_tokens;
             SyntaxTreeNode* __parsing_root;
+            bool __inside_function;
 
             LexicalAnalysis::Token* __cur_token() const;
 
@@ -55,6 +56,7 @@ namespace XyA
             SyntaxTreeNode* __parse_call_argument_list();
             SyntaxTreeNode* __parse_function_definition();
             SyntaxTreeNode* __parse_argument_list_definition();
+            SyntaxTreeNode* __parse_return();
 
             void __throw_exception(std::string_view message, size_t pos) const;
         };
@@ -65,6 +67,7 @@ namespace XyA
             this->__finished = false;
             this->__parsing_tokens = tokens;
             this->__parsing_root = new SyntaxTreeNode(SyntaxTreeNodeType::Root);
+            this->__inside_function = false;
 
             do
             {
@@ -107,20 +110,29 @@ namespace XyA
         SyntaxTreeNode* SyntaxParser::__parse_unit()
         {
             // unit -> block | if | line | function_definiton
-            if (this->__cur_token()->type == LexicalAnalysis::TokenType::S_LBrace)
+            switch (this->__cur_token()->type)
             {
+            case LexicalAnalysis::TokenType::S_LBrace:
                 return this->__parse_block();
-            }
-            else if (this->__cur_token()->type == LexicalAnalysis::TokenType::Kw_If)
-            {
+
+            case LexicalAnalysis::TokenType::Kw_If:
                 return this->__parse_if();
-            }
-            else if (this->__cur_token()->type == LexicalAnalysis::TokenType::Kw_Fn)
-            {
+
+            case LexicalAnalysis::TokenType::Kw_Fn:
                 return this->__parse_function_definition();
-            }
-            else
-            {
+
+            case LexicalAnalysis::TokenType::Kw_Return:
+                if (!this->__inside_function)
+                {
+                    this->__throw_exception("'return' outside function", this->__cur_token()->start_pos);
+                    return nullptr;
+                }
+                else
+                {
+                    return this->__parse_return();
+                }
+            
+            default:
                 return this->__parse_line();
             }
         }
@@ -499,6 +511,8 @@ namespace XyA
         SyntaxTreeNode* SyntaxParser::__parse_function_definition()
         {
             // function_definition -> "fn" Identifier "(" argument_list_definition? ")" block
+            this->__inside_function = true;
+
             if (!this->__try_move_ptr())
             {
                 this->__throw_exception("Expected function name", this->__cur_token()->start_pos);
@@ -550,6 +564,9 @@ namespace XyA
             function_defintion->children.reserve(2);
             function_defintion->children.push_back(argument_list);
             function_defintion->children.push_back(function_body);
+
+            this->__inside_function = false;
+
             return function_defintion;
         }
 
@@ -592,6 +609,26 @@ namespace XyA
             }
             this->__cur_pos --;
             return argument_list;
+        }
+
+        SyntaxTreeNode* SyntaxParser::__parse_return()
+        {
+            // return -> "return" expression? ";"
+            if (!this->__try_move_ptr())
+            {
+                this->__throw_exception("Expected expression", this->__cur_token()->start_pos);
+            }
+            
+            SyntaxTreeNode* return_node = new SyntaxTreeNode(SyntaxTreeNodeType::Return);
+            SyntaxTreeNode* expression = this->__parse_expression();
+            return_node->children.reserve(1);
+            return_node->children.push_back(expression);
+
+            if (!this->__try_move_ptr() || this->__cur_token()->type != LexicalAnalysis::TokenType::S_Semicolon)
+            {
+                this->__throw_exception("Expected ';'", this->__cur_token()->start_pos);
+            }
+            return return_node;
         }
 
         void SyntaxParser::__throw_exception(std::string_view message, size_t pos) const

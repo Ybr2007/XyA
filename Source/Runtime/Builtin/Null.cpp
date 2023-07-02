@@ -41,47 +41,27 @@ namespace XyA
 
             Object* null_object_equal(Object** args, size_t arg_num, bool& exception_thrown)
             {
-                if (arg_num != 2)
-                {
-                    exception_thrown = true;
-                    return XyA_Allocate(BuiltinException, "Expected 2 arguments, got " + std::to_string(arg_num));
-                }
-                NullObject* self = dynamic_cast<NullObject*>(args[0]);
+                XyA_Function_Check_Arg_Num(2)
+                XyA_Method_Get_Self(NullObject);
 
                 NullObject* other = dynamic_cast<NullObject*>(args[1]);
 
-                if (self == nullptr)
-                {
-                    exception_thrown = true;
-                    return XyA_Allocate(BuiltinException, "Type Error");
-                }
-
                 if (other != nullptr)
                 {
-                    return new BoolObject(true);
+                    return XyA_Allocate(BoolObject, true);
                 }
                 else  // other == nullptr
                 {
-                    return new BoolObject(false);
+                    return XyA_Allocate(BoolObject, false);
                 }
             }
 
             Object* null_object_str(Object** args, size_t arg_num, bool& exception_thrown)
             {
-                if (arg_num != 1)
-                {
-                    exception_thrown = true;
-                    return XyA_Allocate(BuiltinException, "Excepted 1 argument, got " + std::to_string(arg_num));
-                }
+                XyA_Function_Check_Arg_Num(1)
+                XyA_Method_Get_Self(NullObject);
 
-                NullObject* self = dynamic_cast<NullObject*>(args[0]);
-                if (self == nullptr)
-                {
-                    exception_thrown = true;
-                    return XyA_Allocate(BuiltinException, "The type of argument 'self' must be int." + std::to_string(arg_num));
-                }
-
-                StringObject* str = new StringObject;
+                StringObject* str = XyA_Allocate_(StringObject);
                 str->value = "null";
 
                 return str;

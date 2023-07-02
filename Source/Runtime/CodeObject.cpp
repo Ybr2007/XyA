@@ -9,13 +9,12 @@ namespace XyA
     {
         CodeObject::~CodeObject()
         {
-            return;
             for (size_t i = 0; i < this->literals.size(); i ++)
             {
                 if (!XyA_Check_If_Deallocated(this->literals[i]))
                 {
-                    printf("Deallocate Literal: %s\n", this->literals[i]->to_string().c_str());
-                    this->literals[i]->deallocate_if_no_ref();
+                    // printf("Deallocate Literal XXX: %s\n", this->literals[i]->to_string().c_str());
+                    this->literals[i]->dereference();
                 }
             }
 
@@ -122,6 +121,7 @@ namespace XyA
         size_t CodeObject::add_literal_object(Object* literal_object)
         {
             this->literals.push_back(literal_object);
+            literal_object->ref_count = 1;
             return this->literals.size() - 1;
         }
 

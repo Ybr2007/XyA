@@ -75,7 +75,10 @@ namespace XyA
             {
                 static_assert(std::is_base_of<Object, T>::value);
 
-                return new T(std::forward<Args>(args)...);
+                T* object = new T(std::forward<Args>(args)...);
+                this->allocated_objects.insert(object);
+
+                return object;
             }
             #endif
 
@@ -98,6 +101,15 @@ namespace XyA
             template <typename T>
             void deallocate(T *object)
             {
+                for (auto iter = this->allocated_objects.begin(); iter != this->allocated_objects.end(); iter ++)
+                {
+                    if (*iter == object)
+                    {
+                        this->allocated_objects.erase(iter);
+                        break;
+                    }
+                }
+
                 delete object;
             }
             #endif
