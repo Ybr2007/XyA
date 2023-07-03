@@ -1,5 +1,6 @@
 #pragma once
 #include <Runtime/Builtin/String.h>
+#include <Runtime/Builtin/Int.h>
 #include <Runtime/MemoryManager.hpp>
 
 
@@ -14,6 +15,7 @@ namespace XyA
                 this->name = "string";
                 this->type = nullptr;
                 this->attrs[MagicMethodNames::add_method_name] = XyA_Allocate(BuiltinFunction, string_object_add);
+                this->attrs[MagicMethodNames::multiply_method_name] = XyA_Allocate(BuiltinFunction, string_object_multiply);
                 this->attrs[MagicMethodNames::equal_method_name] = XyA_Allocate(BuiltinFunction, string_object_equal);
                 this->attrs[MagicMethodNames::bool_method_name] = XyA_Allocate(BuiltinFunction, string_object_bool);
 
@@ -48,6 +50,26 @@ namespace XyA
                 }
                 StringObject* result_obj = XyA_Allocate_(StringObject);
                 result_obj->value = self->value + other->value;
+                return result_obj;
+            }
+
+            Object* string_object_multiply(Object** args, size_t arg_num, bool& exception_thrown)
+            {
+                XyA_Function_Check_Arg_Num(2)
+                XyA_Method_Get_Self(StringObject)
+
+                IntObject* other = dynamic_cast<IntObject*>(args[1]);
+                if (other == nullptr)
+                {
+                    exception_thrown = true;
+                    return XyA_Allocate(BuiltinException, "Type Error");
+                }
+                StringObject* result_obj = XyA_Allocate_(StringObject);
+                result_obj->value = "";
+                for (size_t i = 0; i < other->value; i ++)
+                {
+                    result_obj->value += self->value;
+                }
                 return result_obj;
             }
 

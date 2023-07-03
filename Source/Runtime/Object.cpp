@@ -58,6 +58,11 @@ namespace XyA
 
             return false;
         }
+
+        bool Object::is_instance(Type* type) const
+        {
+            return this->type == type;
+        }
         
         TryGetMethodResult Object::try_get_method(const std::string& method_name, BaseFunction*& result) const
         {

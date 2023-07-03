@@ -30,7 +30,8 @@ namespace XyA
             void __compile_unit(Runtime::CodeObject* code_object, SyntaxAnalysis::SyntaxTreeNode* unit_root);
             void __compile_line(Runtime::CodeObject* code_object, SyntaxAnalysis::SyntaxTreeNode* line_root);
             void __compile_block(Runtime::CodeObject* code_object, SyntaxAnalysis::SyntaxTreeNode* block_root);
-            void __compile_if(Runtime::CodeObject* code_object, SyntaxAnalysis::SyntaxTreeNode* if_root);
+            void __compile_if(Runtime::CodeObject* code_object, SyntaxAnalysis::SyntaxTreeNode* while_root);
+            void __compile_while(Runtime::CodeObject* code_object, SyntaxAnalysis::SyntaxTreeNode* if_root);
             void __compile_assignment(Runtime::CodeObject* code_object, SyntaxAnalysis::SyntaxTreeNode* assignment_root);
             void __compile_expression(Runtime::CodeObject* code_object, SyntaxAnalysis::SyntaxTreeNode* expression_root, bool pop=false);
             void __compile_return(Runtime::CodeObject* code_object, SyntaxAnalysis::SyntaxTreeNode* return_root);
@@ -45,6 +46,7 @@ namespace XyA
             this->__global_code_object->add_variable_name("_get_ref_count");
             this->__global_code_object->add_variable_name("_get_id");
             this->__global_code_object->add_variable_name("clock");
+            this->__global_code_object->add_variable_name("sizeof");
             
             for (auto unit : syntax_tree_root->children)
             {
@@ -64,6 +66,10 @@ namespace XyA
 
             case SyntaxAnalysis::SyntaxTreeNodeType::If:
                 this->__compile_if(code_object, unit_root);
+                break;
+
+            case SyntaxAnalysis::SyntaxTreeNodeType::While:
+                this->__compile_while(code_object, unit_root);
                 break;
 
             case SyntaxAnalysis::SyntaxTreeNodeType::Function_Definition:
@@ -121,7 +127,7 @@ namespace XyA
             {
                 jump_if_false_instruction->parameter ++;
 
-                Runtime::Instruction* jump_forward_instruction = new Runtime::Instruction(Runtime::InstructionType::JumpForward);
+                Runtime::Instruction* jump_forward_instruction = new Runtime::Instruction(Runtime::InstructionType::JumpTo);
                 code_object->instructions.push_back(jump_forward_instruction);
 
                 if (if_root->children[2]->type == SyntaxAnalysis::SyntaxTreeNodeType::If)
@@ -135,6 +141,22 @@ namespace XyA
 
                 jump_forward_instruction->parameter = code_object->instructions.size();
             }
+        }
+
+        void Compiler::__compile_while(Runtime::CodeObject* code_object, SyntaxAnalysis::SyntaxTreeNode* while_root)
+        {
+            size_t start_pos = code_object->instructions.size();
+            this->__compile_expression(code_object, while_root->children[0]);
+
+            Runtime::Instruction* jump_if_false_instruction = new Runtime::Instruction(Runtime::InstructionType::PopJumpIfFalse);
+            code_object->instructions.push_back(jump_if_false_instruction);
+
+            this->__compile_block(code_object, while_root->children[1]);
+            jump_if_false_instruction->parameter = code_object->instructions.size() + 1;  // +1是因为由Jump backward
+
+            Runtime::Instruction* jump_backward_instruction = new Runtime::Instruction(Runtime::InstructionType::JumpTo);
+            jump_backward_instruction->parameter = start_pos;
+            code_object->instructions.push_back(jump_backward_instruction);
         }
 
         void Compiler::__compile_line(Runtime::CodeObject* code_object, SyntaxAnalysis::SyntaxTreeNode* line_root)

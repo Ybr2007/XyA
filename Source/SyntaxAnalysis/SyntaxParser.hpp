@@ -45,6 +45,7 @@ namespace XyA
             SyntaxTreeNode* __parse_line();
             SyntaxTreeNode* __parse_block();
             SyntaxTreeNode* __parse_if();
+            SyntaxTreeNode* __parse_while();
             SyntaxTreeNode* __parse_assignment();
             SyntaxTreeNode* __parse_expression();
             SyntaxTreeNode* __parse_comparison();
@@ -117,6 +118,9 @@ namespace XyA
 
             case LexicalAnalysis::TokenType::Kw_If:
                 return this->__parse_if();
+
+            case LexicalAnalysis::TokenType::Kw_While:
+                return this->__parse_while();
 
             case LexicalAnalysis::TokenType::Kw_Fn:
                 return this->__parse_function_definition();
@@ -231,6 +235,29 @@ namespace XyA
             {
                 if_node->children.push_back(else_indented_block);
             }
+            
+            return if_node;
+        }
+
+        SyntaxTreeNode* SyntaxParser::__parse_while()
+        {
+            // while -> "while" expression block
+            if (!this->__try_move_ptr())
+            {
+                this->__throw_exception("Expected expression", this->__cur_token()->start_pos);
+            }
+            SyntaxTreeNode* expression = this->__parse_expression();
+
+            if (!this->__try_move_ptr())
+            {
+                this->__throw_exception("Expected indented block", this->__cur_token()->start_pos);
+            }
+            SyntaxTreeNode* indented_block = this->__parse_block();
+
+            SyntaxTreeNode* if_node = new SyntaxTreeNode(SyntaxTreeNodeType::While);
+            if_node->children.reserve(2);
+            if_node->children.push_back(expression);
+            if_node->children.push_back(indented_block);
             
             return if_node;
         }

@@ -59,6 +59,10 @@ namespace XyA
             Object*& builtin_clock_function = this->global_context->local_variables[3];  // 3: global_context->code_obj->variable_name_indices["clock"]
             builtin_clock_function = XyA_Allocate(Builtin::BuiltinFunction, Builtin::clock_);
             builtin_clock_function->reference();
+
+            Object*& builtin_sizeof_function = this->global_context->local_variables[4];  // 4: global_context->code_obj->variable_name_indices["clock"]
+            builtin_sizeof_function = XyA_Allocate(Builtin::BuiltinFunction, Builtin::sizeof_);
+            builtin_sizeof_function->reference();
         }
 
         void VirtualMachine::__excute_instruction(Instruction* instruction)
@@ -278,7 +282,7 @@ namespace XyA
                 break;
             }
 
-            case InstructionType::JumpForward:
+            case InstructionType::JumpTo:
             {
                 // 在执行完该函数后有this->cur_context->instruction_ptr ++语句
                 // 所以要减去一以在下一轮循环中跳转到正确位置

@@ -1,10 +1,7 @@
 #pragma once
 #include <stddef.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <list>
-#include <unordered_set>
 #include <utility>
+#include <unordered_set>
 #include <Runtime/Object.h>
 #include <Config.h>
 
@@ -30,14 +27,86 @@ namespace XyA
         #define STRINGIFY(x) #x
         #define TOSTRING(x) STRINGIFY(x)
         #define FILE_LINE std::string(__FILE__) + ": " + std::string(TOSTRING(__LINE__))
-        #define XyA_Allocate_(T) MemoryPool::get_instance()->allocate_<T>(FILE_LINE)
-        #define XyA_Allocate(T, args) MemoryPool::get_instance()->allocate_<T>(FILE_LINE, args)
-        #define XyA_Deallocate(object) MemoryPool::get_instance()->deallocate_(FILE_LINE, object)
-        #endif
+        #define XyA_Allocate_(T) MemoryPool::get_instance()->allocate<T>(FILE_LINE)
+        #define XyA_Allocate(T, args) MemoryPool::get_instance()->allocate<T>(FILE_LINE, args)
+        #define XyA_Deallocate(object) MemoryPool::get_instance()->deallocate(FILE_LINE, object)
+        #endif        
+
+        struct Block
+        {
+            Block* next_block;
+        };
+
+        class Chunk
+        {
+        public:
+            static constexpr size_t chunk_batch_allocate_size = 4096;  // 每次分配新的block的总大小
+
+            Block* free_block_head = nullptr;  // 未分配的Block链表的链表头
+            size_t size;  // 该Chunk中Block的大小
+            std::unordered_set<char*> allocated_memory_heads;  // 使用malloc分配的地址, 记录以供后续free
+
+            Chunk(size_t size)
+            {
+                this->size = size;
+            }
+
+            ~Chunk()
+            {
+                this->clear();
+            }
+
+            void new_blocks()
+            {
+                size_t new_block_num = chunk_batch_allocate_size / size;
+                char* allocated_memory_head = (char*)malloc(new_block_num * size);
+                this->allocated_memory_heads.insert(allocated_memory_head);
+                for (size_t i = 0; i < new_block_num; i ++)
+                {
+                    Block* new_block = reinterpret_cast<Block*>(allocated_memory_head + size * i);
+                    this->push_block(new_block);
+                }
+            }
+
+            Block* pop_free_block()
+            {
+                if (this->free_block_head == nullptr)
+                {
+                    this->new_blocks();
+                }
+
+                Block* block = this->free_block_head;
+                this->free_block_head = block->next_block;
+                return block;
+            }
+
+            void push_block(Block* block)
+            {
+                if (block == nullptr) 
+                {
+                    return;
+                }
+
+                block->next_block = this->free_block_head;
+                this->free_block_head = block;
+            }
+
+            void clear()
+            {
+                for (auto iter = this->allocated_memory_heads.begin(); 
+                    iter != this->allocated_memory_heads.end(); iter ++)
+                {
+                    free(*iter);
+                }
+            }
+        };
 
         class MemoryPool
         {
         public:
+            static constexpr size_t cpp_new_and_del_threshold_size = 512;  // 当对象的大小超过该阈值时, 直接使用new/delete进行分配/释放
+            static constexpr size_t alignment = 8;  // Block大小与alignment对齐
+
             #ifdef Debug_Display_Memory_Leaks
             std::unordered_set<void*> allocated_objects;
             std::map<void*, std::string> allocation_locations;
@@ -54,58 +123,39 @@ namespace XyA
             template <typename T, typename... Args>
             T* allocate(Args&&... args)
             {
-                static_assert(std::constructible_from<T, Args...>, "Can not construct object from given arguments");
+                size_t aligned_size = this->__get_aligned_size(sizeof(T));
 
-                unsigned short aligned_size = this->__get_aligned_size(sizeof(T));
-
-                if (aligned_size > 512)
+                if (aligned_size > cpp_new_and_del_threshold_size)
                 {
                     return new T(std::forward<Args>(args)...);
                 }
 
-                unsigned char chunk_index = aligned_size / 8 - 1;
-                Chunk* chunk = this->__chunks[chunk_index];
-
-                if (chunk->free_block_head == nullptr)
-                {
-                    chunk->new_blocks();
-                }
-
-                Block* block = chunk->free_block_head;
-                chunk->free_block_head = block->next_free;
-
-                T* object = new(block)T(std::forward<Args>(args)...);
-                return object;
+                size_t chunk_index = aligned_size / alignment;
+                Block* block = this->__chunks[chunk_index]->pop_free_block();
+                return new(block) T(std::forward<Args>(args)...);
             }
             #endif
 
             #ifdef Debug_Display_Memory_Leaks
             template <typename T, typename... Args>
-            T* allocate_(std::string location, Args&&... args)
+            T* allocate(std::string location, Args&&... args)
             {
-                static_assert(std::constructible_from<T, Args...>, "Can not construct object from given arguments");
+                size_t aligned_size = this->__get_aligned_size(sizeof(T));
 
-                unsigned short aligned_size = this->__get_aligned_size(sizeof(T));
-
-                if (aligned_size > 512)
+                if (aligned_size > cpp_new_and_del_threshold_size)
                 {
-                    return new T(std::forward<Args>(args)...);
+                    T* object = new T(std::forward<Args>(args)...);
+                    this->allocated_objects.insert(object);
+                    this->allocation_locations[object] = location;
                 }
 
-                unsigned char chunk_index = aligned_size / 8 - 1;
-                Chunk* chunk = this->__chunks[chunk_index];
-
-                if (chunk->free_block_head == nullptr)
-                {
-                    chunk->new_blocks();
-                }
-
-                Block* block = chunk->free_block_head;
-                chunk->free_block_head = block->next_free;
-
-                T* object = new(block)T(std::forward<Args>(args)...);
+                size_t chunk_index = aligned_size / alignment;
+                Block* block = this->__chunks[chunk_index]->pop_free_block();
+                T* object = new(block) T(std::forward<Args>(args)...);
+                
                 this->allocated_objects.insert(object);
                 this->allocation_locations[object] = location;
+
                 return object;
             }
             #endif
@@ -114,27 +164,26 @@ namespace XyA
             template <typename T>
             void deallocate(T* object)
             {
-                object->~T();
+                size_t aligned_size = this->__get_aligned_size(sizeof(T));
 
-                unsigned short aligned_size = this->__get_aligned_size(sizeof(T));
-
-                if (aligned_size > 512)
+                if (aligned_size > cpp_new_and_del_threshold_size)
                 {
-                    return delete object;
+                    delete object;
+                    return;
                 }
 
-                unsigned char chunk_index = aligned_size / 8 - 1;
-                Chunk* chunk = this->__chunks[chunk_index];
-
+                object->~T();
+                
+                size_t chunk_index = aligned_size / alignment;
                 Block* block = reinterpret_cast<Block*>(object);
-                block->next_free = chunk->free_block_head;
-                chunk->free_block_head = block;
+                
+                this->__chunks[chunk_index]->push_block(block);
             }
             #endif
 
             #ifdef Debug_Display_Memory_Leaks
             template <typename T>
-            void deallocate_(std::string location, T* object)
+            void deallocate(std::string location, T* object)
             {
                 bool ok = false;
                 for (auto iter = this->allocated_objects.begin(); iter != this->allocated_objects.end(); iter ++)
@@ -149,7 +198,6 @@ namespace XyA
 
                 if (!ok)
                 {
-                    printf("!OK\n");
                     auto iter = this->deallocation_locations.find(object);
                     if (iter == this->deallocation_locations.end())
                     {
@@ -164,76 +212,24 @@ namespace XyA
                         exit(-1);
                     }
                 }
+                this->deallocation_locations[object] = location;
+
+                size_t aligned_size = this->__get_aligned_size(sizeof(T));
+
+                if (aligned_size > cpp_new_and_del_threshold_size)
+                {
+                    delete object;
+                    return;
+                }
 
                 object->~T();
-
-                unsigned short aligned_size = this->__get_aligned_size(sizeof(T));
-
-                if (aligned_size > 512)
-                {
-                    return delete object;
-                }
                 
-                unsigned char chunk_index = aligned_size / 8 - 1;
-                Chunk* chunk = this->__chunks[chunk_index];
-
+                size_t chunk_index = aligned_size / alignment;
                 Block* block = reinterpret_cast<Block*>(object);
-                block->next_free = chunk->free_block_head;
-                chunk->free_block_head = block;
-
-                this->deallocation_locations[object] = location;
+                
+                this->__chunks[chunk_index]->push_block(block);
             }
             #endif
-        
-        
-        private:
-            struct Block
-            {
-                Block* next_free;
-            };
-
-            class Chunk
-            {
-            public:
-                Block* free_block_head = nullptr;
-                std::unordered_set<char*> allocated_memories;  
-                unsigned short size;
-
-                Chunk(unsigned short size)
-                {
-                    this->size = size;
-                }
-
-                ~Chunk()
-                {     
-                    for (const auto& memory : this->allocated_memories)
-                    {
-                        free(memory);
-                    }
-                }
-
-                void new_blocks()
-                {
-                    char* data = (char*)malloc(this->size * (4096 / this->size));
-                    this->allocated_memories.insert(data);
-                    for (unsigned int i = 0; i < 4096 / this->size; i ++)
-                    {
-                        Block* block = (Block*)(data + i * this->size);
-                        block->next_free = this->free_block_head;
-                        this->free_block_head = block;
-                    }
-                }
-            };
-
-            Chunk* __chunks[64];
-
-            MemoryPool()
-            {
-                for (unsigned char i = 1; i <= 64; i ++)
-                {
-                    this->__chunks[i - 1] = new Chunk(i * 8);
-                }   
-            }
 
             ~MemoryPool()
             {
@@ -251,15 +247,26 @@ namespace XyA
                 }
                 #endif
 
-                for (unsigned char i = 1; i <= 64; i ++)
+                for (size_t i = 0; i < cpp_new_and_del_threshold_size / alignment; i ++)
                 {
-                    delete this->__chunks[i - 1];
-                } 
+                    delete this->__chunks[i];
+                }
             }
 
-            unsigned short __get_aligned_size(unsigned short object_size) const
+        private:
+            Chunk* __chunks[cpp_new_and_del_threshold_size / alignment];
+
+            MemoryPool()
             {
-                return object_size % 8 == 0 ? object_size : (object_size / 8 + 1) * 8;
+                for (size_t i = 0; i < cpp_new_and_del_threshold_size / alignment; i ++)
+                {
+                    this->__chunks[i] = new Chunk(i * alignment);
+                }
+            }
+
+            static size_t __get_aligned_size(size_t size)
+            {
+                return size % alignment == 0 ? size : (size / alignment + 1) * alignment;
             }
         };
     }

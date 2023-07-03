@@ -6,5 +6,12 @@ target("XyA")
     add_files("main.cpp", "Source/**.cpp")
     add_includedirs("Source", "Include")  -- 设置include目录
 
-    add_cxflags("-w")  -- 隐藏警告
-    set_optimize("fastest")
+    if is_mode("debug") then
+        print("debug")
+        set_optimize("none")
+    end
+
+    if is_mode("release") then 
+        print("release")
+        set_optimize("fastest")
+    end

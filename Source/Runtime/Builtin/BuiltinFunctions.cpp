@@ -83,6 +83,16 @@ namespace XyA
                 
                 return result;
             }
+
+            Object* sizeof_(Object** args, size_t arg_num, bool& exception_thrown)
+            {
+                XyA_Function_Check_Arg_Num(1)
+
+                IntObject* result = XyA_Allocate_(IntObject);
+                result->value = sizeof(*args[0]);
+                
+                return result;
+            }
         }
     }
 }

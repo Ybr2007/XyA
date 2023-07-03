@@ -15,7 +15,8 @@ namespace XyA
         {
             Root,                   // children: 数量不限，每个child是一个语句（块）
             Block,                  // children: 数量不限，每个child是一个语句（块）
-            If,                     // children: 数量为2，children[0] 是判断条件表达式，children[1] 是如果为真执行的语句块
+            If,                     // children: 数量为2或3，children[0] 是判断条件表达式，children[1] 是如果为真执行的语句块，children[2] 是如果为假执行的语句块（可选）
+            While,                  // children: 数量为2，children[0] 是判断条件表达式，children[1] 是如果为真执行的语句块
             Assignment,             // value: 赋值目标 children: 数量为1，值的表达式
             Comparison,             // value: 运算符 chilren: 数量为2，为两个运算数
             Addition,               // value: 运算符 chilren: 数量为2，为两个运算数
@@ -40,6 +41,8 @@ namespace XyA
                 return "<SyntaxTreeNodeType: Block>";
             case SyntaxTreeNodeType::If:
                 return "<SyntaxTreeNodeType: If>";
+            case SyntaxTreeNodeType::While:
+                return "<SyntaxTreeNodeType: While>";
             case SyntaxTreeNodeType::Assignment:
                 return "<SyntaxTreeNodeType: Assignment>";
             case SyntaxTreeNodeType::Comparison:

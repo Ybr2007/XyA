@@ -28,7 +28,8 @@ namespace XyA
             void reference();
             bool dereference();
             bool deallocate_if_no_ref();
-
+            bool is_instance(Type* type) const;
+            
             TryGetMethodResult try_get_method(const std::string& method_name, BaseFunction*& result) const;
             virtual ~Object();
 

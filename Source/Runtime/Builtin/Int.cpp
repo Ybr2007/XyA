@@ -48,14 +48,17 @@ namespace XyA
                 XyA_Function_Check_Arg_Num(2)
                 XyA_Method_Get_Self(IntObject)
 
-                IntObject* int_other = dynamic_cast<IntObject*>(args[1]);
+                IntObject* int_other = nullptr;
                 FloatObject* float_other = nullptr;
-                if (int_other == nullptr)
+                if (args[1]->is_instance(IntType::get_instance()))
                 {
-                    float_other = dynamic_cast<FloatObject*>(args[1]);
+                    int_other = static_cast<IntObject*>(args[1]);
                 }
-
-                if (int_other == nullptr && float_other == nullptr)
+                else if (args[1]->is_instance(FloatType::get_instance()))
+                {
+                    float_other = static_cast<FloatObject*>(args[1]);
+                }
+                else
                 {
                     exception_thrown = true;
                     return XyA_Allocate(BuiltinException, "Type Error");

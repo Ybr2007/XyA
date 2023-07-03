@@ -102,8 +102,8 @@ namespace XyA
                 str += " " + std::to_string(this->parameter);
                 break;
 
-            case InstructionType::JumpForward:
-                str += "Jump Forward";
+            case InstructionType::JumpTo:
+                str += "Jump To";
                 str += " " + std::to_string(this->parameter);
                 break;
 

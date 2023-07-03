@@ -35,7 +35,7 @@ namespace XyA
             StroeVariable,
 
             PopJumpIfFalse,
-            JumpForward,
+            JumpTo,
 
 
             CallFunction,
