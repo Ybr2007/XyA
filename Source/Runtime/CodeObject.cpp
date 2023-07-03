@@ -11,11 +11,7 @@ namespace XyA
         {
             for (size_t i = 0; i < this->literals.size(); i ++)
             {
-                if (!XyA_Check_If_Deallocated(this->literals[i]))
-                {
-                    // printf("Deallocate Literal XXX: %s\n", this->literals[i]->to_string().c_str());
-                    this->literals[i]->dereference();
-                }
+                this->literals[i]->dereference();
             }
 
             for (Instruction* instruction : this->instructions)

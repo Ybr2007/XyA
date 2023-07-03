@@ -7,3 +7,4 @@ target("XyA")
     add_includedirs("Source", "Include")  -- 设置include目录
 
     add_cxflags("-w")  -- 隐藏警告
+    set_optimize("fastest")
