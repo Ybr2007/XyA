@@ -19,8 +19,11 @@ namespace XyA
     {
         #ifndef Debug_Display_Memory_Leaks
         #define XyA_Allocate_(T) MemoryPool::get_instance()->allocate<T>()
-        #define XyA_Allocate(T, args) MemoryPool::get_instance()->allocate<T>(args)
+        #define XyA_Allocate(T, ...) MemoryPool::get_instance()->allocate<T>(__VA_ARGS__)
         #define XyA_Deallocate(object) MemoryPool::get_instance()->deallocate(object)
+        #define XyA_Allocate_Array_(T, len) MemoryPool::get_instance()->allocate_array<T>(len)
+        #define XyA_Allocate_Array(T, len, ...) MemoryPool::get_instance()->allocate_array<T>(len, __VA_ARGS__)
+        #define XyA_Deallocate_Array(array) MemoryPool::get_instance()->deallocate_array(array)
         #endif
 
         #ifdef Debug_Display_Memory_Leaks
@@ -30,6 +33,9 @@ namespace XyA
         #define XyA_Allocate_(T) MemoryPool::get_instance()->allocate<T>(FILE_LINE)
         #define XyA_Allocate(T, args) MemoryPool::get_instance()->allocate<T>(FILE_LINE, args)
         #define XyA_Deallocate(object) MemoryPool::get_instance()->deallocate(FILE_LINE, object)
+        #define XyA_Allocate_Array_(T, len) MemoryPool::get_instance()->allocate_array<T>(FILE_LINE, len)
+        #define XyA_Allocate_Array(T, len, ...) MemoryPool::get_instance()->allocate_array<T>(FILE_LINE, len, __VA_ARGS__)
+        #define XyA_Deallocate_Array(array) MemoryPool::get_instance()->deallocate_array(FILE_LINE, array)
         #endif        
 
         struct Block
@@ -109,6 +115,7 @@ namespace XyA
 
             #ifdef Debug_Display_Memory_Leaks
             std::unordered_set<void*> allocated_objects;
+            std::unordered_set<void*> allocated_arraies;
             std::map<void*, std::string> allocation_locations;
             std::map<void*, std::string> deallocation_locations;
             #endif
@@ -136,6 +143,25 @@ namespace XyA
             }
             #endif
 
+            #ifndef Debug_Display_Memory_Leaks
+            template <typename T, typename... Args>
+            T* allocate_array(size_t len, Args&&... args)
+            {
+                size_t aligned_size = this->__get_aligned_size(sizeof(T) * len);
+
+                if (aligned_size > cpp_new_and_del_threshold_size)
+                {
+                    T* allocated_memory = new T[len]{std::forward<Args>(args)...};
+                    return allocated_memory;
+                }
+
+                size_t chunk_index = aligned_size / alignment;
+                Block* block = this->__chunks[chunk_index]->pop_free_block();
+                T* allocated_memory = new (block) T[len]{std::forward<Args>(args)...};
+                return allocated_memory;
+            }
+            #endif
+
             #ifdef Debug_Display_Memory_Leaks
             template <typename T, typename... Args>
             T* allocate(std::string location, Args&&... args)
@@ -147,6 +173,7 @@ namespace XyA
                     T* object = new T(std::forward<Args>(args)...);
                     this->allocated_objects.insert(object);
                     this->allocation_locations[object] = location;
+                    return object;
                 }
 
                 size_t chunk_index = aligned_size / alignment;
@@ -157,6 +184,29 @@ namespace XyA
                 this->allocation_locations[object] = location;
 
                 return object;
+            }
+            #endif
+
+            #ifdef Debug_Display_Memory_Leaks
+            template <typename T, typename... Args>
+            T* allocate_array(std::string location, size_t len, Args&&... args)
+            {
+                size_t aligned_size = this->__get_aligned_size(sizeof(T) * len);
+
+                if (aligned_size > cpp_new_and_del_threshold_size)
+                {
+                    T* allocated_memory = new T[len]{std::forward<Args>(args)...};
+                    this->allocated_arraies.insert(allocated_memory);
+                    this->allocation_locations[allocated_memory] = location;
+                    return allocated_memory;
+                }
+
+                size_t chunk_index = aligned_size / alignment;
+                Block* block = this->__chunks[chunk_index]->pop_free_block();
+                T* allocated_memory = new (block) T[len]{std::forward<Args>(args)...};
+                this->allocated_arraies.insert(allocated_memory);
+                this->allocation_locations[allocated_memory] = location;
+                return allocated_memory;
             }
             #endif
 
@@ -180,6 +230,26 @@ namespace XyA
                 this->__chunks[chunk_index]->push_block(block);
             }
             #endif
+
+            #ifndef Debug_Display_Memory_Leaks
+            template <typename T>
+            void deallocate_array(T* array)
+            {
+                size_t aligned_size = this->__get_aligned_size(sizeof(T));
+
+                if (aligned_size > cpp_new_and_del_threshold_size)
+                {
+                    delete[] array;
+                    return;
+                }
+                
+                size_t chunk_index = aligned_size / alignment;
+                Block* block = reinterpret_cast<Block*>(array);
+                
+                this->__chunks[chunk_index]->push_block(block);
+            }
+            #endif
+
 
             #ifdef Debug_Display_Memory_Leaks
             template <typename T>
@@ -212,10 +282,10 @@ namespace XyA
                         exit(-1);
                     }
                 }
+
                 this->deallocation_locations[object] = location;
 
                 size_t aligned_size = this->__get_aligned_size(sizeof(T));
-
                 if (aligned_size > cpp_new_and_del_threshold_size)
                 {
                     delete object;
@@ -231,6 +301,55 @@ namespace XyA
             }
             #endif
 
+
+            #ifdef Debug_Display_Memory_Leaks
+            template <typename T>
+            void deallocate_array(std::string location, T* array)
+            {
+                bool ok = false;
+                for (auto iter = this->allocated_arraies.begin(); iter != this->allocated_arraies.end(); iter ++)
+                {
+                    if (*iter == array)
+                    {
+                        this->allocated_arraies.erase(iter);
+                        ok = true;
+                        break;
+                    }
+                }
+
+                if (!ok)
+                {
+                    auto iter = this->deallocation_locations.find(array);
+                    if (iter == this->deallocation_locations.end())
+                    {
+                        printf("\nERROR: The object was not allocated by the memory pool\n");
+                        printf("ERROR Location: %s\n", location.c_str());
+                        exit(-1);
+                    }
+                    else
+                    {
+                        printf("\nERROR: The object was already deallocated at %s\n", iter->second.c_str());
+                        printf("ERROR Location: %s\n", location.c_str());
+                        exit(-1);
+                    }
+                }
+
+                this->deallocation_locations[array] = location;
+                size_t aligned_size = this->__get_aligned_size(sizeof(T));
+
+                if (aligned_size > cpp_new_and_del_threshold_size)
+                {
+                    delete[] array;
+                    return;
+                }
+                
+                size_t chunk_index = aligned_size / alignment;
+                Block* block = reinterpret_cast<Block*>(array);
+                
+                this->__chunks[chunk_index]->push_block(block);
+            }
+            #endif
+
             ~MemoryPool()
             {
                 #ifdef Debug_Display_Memory_Leaks
@@ -239,8 +358,17 @@ namespace XyA
                 for (auto iter = this->allocated_objects.begin(); iter != this->allocated_objects.end(); iter ++)
                 {
                     printf(
-                        "%s %d Allocation Location: %s\n", 
-                        ((Runtime::Object*)*iter)->to_string().c_str(),
+                        "%s %zd Allocation Location: %s\n", 
+                        static_cast<Object*>(*iter)->to_string().c_str(),
+                        (size_t)(*iter),
+                        this->allocation_locations[*iter].c_str()
+                    );
+                }
+
+                for (auto iter = this->allocated_arraies.begin(); iter != this->allocated_arraies.end(); iter ++)
+                {
+                    printf(
+                        "Array %zd Allocation Location: %s\n", 
                         (size_t)(*iter),
                         this->allocation_locations[*iter].c_str()
                     );

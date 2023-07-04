@@ -1,5 +1,6 @@
 #pragma once
 #include <stack>
+#include <Utils/Stack.hpp>
 #include <Runtime/Object.h>
 #include <Runtime/CodeObject.h>
 
@@ -14,7 +15,7 @@ namespace XyA
             Context* back = nullptr;
             CodeObject* code_obj;
             Object** local_variables;
-            std::stack<Object*> operand_stack;
+            Utils::Stack<Object*> operand_stack;
             size_t instruction_ptr = 0;
 
             Object* returned_obj = nullptr;

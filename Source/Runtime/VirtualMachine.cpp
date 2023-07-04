@@ -292,10 +292,10 @@ namespace XyA
                 break;
             }
 
-            Object** args = new Object*[2]{obj_1, obj_2};
+            Object** args = XyA_Allocate_Array(Object*, 2, obj_1, obj_2);
             bool exception_thrown = false;
             Object* result_obj = method->call(args, 2, exception_thrown);
-            delete[] args;
+            XyA_Deallocate_Array(args);
 
             if (exception_thrown)
             {
@@ -325,10 +325,10 @@ namespace XyA
                 break;
             }
 
-            Object** args = new Object*[2]{obj_1, obj_2};
+            Object** args = XyA_Allocate_Array(Object*, 2, obj_1, obj_2);
             bool exception_thrown = false;
             Object* result_obj = method->call(args, 2, exception_thrown);
-            delete[] args;
+            XyA_Deallocate_Array(args);
 
             if (exception_thrown)
             {

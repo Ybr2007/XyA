@@ -17,9 +17,9 @@ namespace XyA
                 this->local_variables[i] = nullptr;
             }
 
-            for (const auto& iter : this->code_obj->functions)
+            for (auto iter : this->code_obj->functions)
             {
-                this->local_variables[this->code_obj->variable_name_indices[iter.first]] = (Runtime::Object*)iter.second;
+                this->local_variables[this->code_obj->variable_name_indices[iter.first]] = reinterpret_cast<Object*>(iter.second);
             }
         }
 
@@ -81,8 +81,7 @@ namespace XyA
                 printf("EMPTY Stack");
                 exit(-1);
             }
-            Object* top_obj = this->operand_stack.top();
-            this->operand_stack.pop();
+            Object* top_obj = this->operand_stack.pop();
             return top_obj;
         }
 
