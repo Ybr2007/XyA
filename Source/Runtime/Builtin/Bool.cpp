@@ -53,13 +53,10 @@ namespace XyA
             {
                 this->name = "bool";
                 this->type = nullptr;
-                this->attrs[MagicMethodNames::equal_method_name] = XyA_Allocate(BuiltinFunction, bool_object_equal);
-                this->attrs[MagicMethodNames::str_method_name] = XyA_Allocate(BuiltinFunction, bool_object_str);
+                this->magic_methods[MagicMethodNames::equal_method_index] = XyA_Allocate(BuiltinFunction, bool_object_equal);
+                this->magic_methods[MagicMethodNames::str_method_index] = XyA_Allocate(BuiltinFunction, bool_object_str);
 
-                for (const auto& iter : this->attrs)
-                {
-                    iter.second->reference();
-                }
+                this->reference_attrs();
             }
 
             BoolType* BoolType::get_instance()

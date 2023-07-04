@@ -7,11 +7,20 @@ target("XyA")
     add_includedirs("Source", "Include")  -- 设置include目录
 
     if is_mode("debug") then
-        print("debug")
         set_optimize("none")
     end
 
     if is_mode("release") then 
-        print("release")
         set_optimize("fastest")
     end
+
+    before_build(
+        function (target) 
+            if is_mode("debug") then
+                print("Debug Mode")
+            end
+            if is_mode("release") then 
+                print("Release Mode")
+            end
+        end
+    )

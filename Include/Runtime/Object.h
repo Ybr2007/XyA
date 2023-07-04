@@ -1,6 +1,8 @@
 #pragma once
 #include <string>
-#include <unordered_map>
+#include <array>
+#include <vector>
+#include <Runtime/MagicMethodNames.hpp>
 #include <Config.h>
 
 
@@ -23,13 +25,19 @@ namespace XyA
         public:
             Type* type = nullptr;
             long long ref_count = 0;
-            std::unordered_map<std::string, Object*> attrs;
+            std::array<Object*, MagicMethodNames::magic_method_num> magic_methods{};
+            std::vector<Object*> attrs;
+            std::vector<std::string> attr_names;
 
             void reference();
             bool dereference();
             bool deallocate_if_no_ref();
+
+            void reference_attrs();
+            void dereference_attrs();
+
             bool is_instance(Type* type) const;
-            
+            TryGetMethodResult try_get_magic_method(size_t index, BaseFunction*& result) const;
             TryGetMethodResult try_get_method(const std::string& method_name, BaseFunction*& result) const;
             virtual ~Object();
 

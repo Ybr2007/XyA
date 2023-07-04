@@ -10,8 +10,21 @@ namespace XyA
 {
     namespace Runtime
     {
+        FunctionType::FunctionType()
+        {
+            this->name = "function";
+            this->type = nullptr;
+        }
+
+        FunctionType* FunctionType::get_instance()
+        {
+            static FunctionType instance;
+            return &instance;
+        }
+
         Function::Function()
         {
+            this->type = FunctionType::get_instance();
             this->code_object = XyA_Allocate_(CodeObject);
         }
 

@@ -14,11 +14,9 @@ namespace XyA
             {
                 this->name = "builtin function";
                 this->type = nullptr;
-                this->attrs[MagicMethodNames::str_method_name] = XyA_Allocate(BuiltinFunction, builtin_function_str);
-                for (const auto& iter : this->attrs)
-                {
-                    iter.second->reference();
-                }
+                this->magic_methods[MagicMethodNames::str_method_index] = XyA_Allocate(BuiltinFunction, builtin_function_str);
+                
+                this->reference_attrs();
             }
             
             Object* builtin_function_str(Object** args, size_t arg_num, bool& exception_thrown)

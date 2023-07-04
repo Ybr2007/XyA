@@ -1,5 +1,7 @@
 #pragma once
 #include <Runtime/Object.h>
+#include <Runtime/Builtin/BuiltinFunction.h>
+#include <Runtime/Function.h>
 #include <Runtime/MemoryManager.hpp>
 
 
@@ -9,10 +11,7 @@ namespace XyA
     {
         Object::~Object()
         {
-            for (const auto& iter : this->attrs)
-            {
-                iter.second->dereference();
-            }
+            this->dereference_attrs();
         }
 
         void Object::reference()
@@ -59,34 +58,123 @@ namespace XyA
             return false;
         }
 
+        void Object::reference_attrs()
+        {
+            for (auto attr : this->attrs)
+            {
+                attr->reference();
+            }
+            for (auto magic_method : this->magic_methods)
+            {
+                if (magic_method != nullptr)
+                {
+                    magic_method->reference();
+                }
+            }
+        }
+
+        void Object::dereference_attrs()
+        {
+            for (auto attr : this->attrs)
+            {
+                attr->dereference();
+            }
+            for (auto magic_method : this->magic_methods)
+            {
+                if (magic_method != nullptr)
+                {
+                    magic_method->dereference();
+                }
+            }
+        }
+
         bool Object::is_instance(Type* type) const
         {
             return this->type == type;
         }
+
+        TryGetMethodResult Object::try_get_magic_method(size_t index, BaseFunction*& result) const
+        {
+            Object* magic_method = this->magic_methods[index];
+            if (magic_method == nullptr)
+            {
+                magic_method = this->type->magic_methods[index];
+                if (magic_method == nullptr)
+                {
+                    return TryGetMethodResult::NotFound;
+                }
+            }
+            result = dynamic_cast<BaseFunction*>(magic_method);
+            if (result != nullptr)
+            {
+                return TryGetMethodResult::OK;
+            }
+            return TryGetMethodResult::NotCallable;
+        }
         
         TryGetMethodResult Object::try_get_method(const std::string& method_name, BaseFunction*& result) const
         {
-            auto iter = this->attrs.find(method_name);
-            if (iter == this->attrs.end())
-            {
-                if (this->type == nullptr)
-                {
-                    return TryGetMethodResult::NotFound;
-                }
+            size_t magic_method_index;
+            bool is_magic_method = MagicMethodNames::try_get_magic_method_index(method_name, magic_method_index);
 
-                iter = this->type->attrs.find(method_name);
-                if (iter == this->type->attrs.end())
-                {
-                    return TryGetMethodResult::NotFound;
-                }
-            }
-            BaseFunction* result_buffer = dynamic_cast<BaseFunction*>(iter->second);
-            if (result_buffer == nullptr)
+            if (is_magic_method)
             {
+                Object* magic_method = this->magic_methods[magic_method_index];
+                if (magic_method == nullptr)
+                {
+                    magic_method = this->type->magic_methods[magic_method_index];
+                    if (magic_method == nullptr)
+                    {
+                        return TryGetMethodResult::NotFound;
+                    }
+                }
+                result = dynamic_cast<BaseFunction*>(magic_method);
+                if (result != nullptr)
+                {
+                    return TryGetMethodResult::OK;
+                }
                 return TryGetMethodResult::NotCallable;
             }
-            result = result_buffer;
-            return TryGetMethodResult::OK;
+
+            for (size_t i = 0; i < this->attr_names.size(); i ++)
+            {
+                if (this->attr_names[i] == method_name)
+                {
+                    result = dynamic_cast<BaseFunction*>(this->attrs[i]);
+                    if (result != nullptr)
+                    {
+                        return TryGetMethodResult::OK;
+                    }
+                    else
+                    {
+                        return TryGetMethodResult::NotCallable;
+                    }
+                }
+            }
+
+            if (this->type == nullptr)
+            {
+                return TryGetMethodResult::NotFound;
+            }
+
+            for (size_t i = 0; i < this->type->attr_names.size(); i ++)
+            {
+                if (this->type->attr_names[i] == method_name)
+                {
+                    result = dynamic_cast<BaseFunction*>(this->type->attrs[i]);
+                    if (result != nullptr)
+                    {
+                        ;
+                        return TryGetMethodResult::OK;
+                    }
+                    else
+                    {
+                        return TryGetMethodResult::NotCallable;
+                    }
+                }
+            }
+
+            return TryGetMethodResult::NotFound;
         }
 
         #ifdef Debug_Display_Object

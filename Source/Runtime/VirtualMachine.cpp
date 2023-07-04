@@ -117,125 +117,61 @@ namespace XyA
 
             case InstructionType::BinaryAdd:
             {
-                Object* obj_2 = this->cur_context->pop_operand();
-                Object* obj_1 = this->cur_context->pop_operand();
-
-                BaseFunction* add_method = this->__get_obj_method(obj_1, MagicMethodNames::add_method_name);
-
-                Object** args = new Object*[2]{obj_1, obj_2};
-                bool exception_thrown = false;
-                Object* result_obj = add_method->call(args, 2, exception_thrown);
-                delete[] args;
-
-                if (exception_thrown)
-                {
-                    Builtin::BuiltinException* exception = dynamic_cast<Builtin::BuiltinException*>(result_obj);
-                    this->__throw_exception(exception->message);
-                }
-                
-                this->cur_context->push_operand(result_obj);
+                this->__call_binary_operation_magic_method(MagicMethodNames::add_method_index);
                 break;
             }
 
             case InstructionType::BinarySubtract:
             {
-                Object* obj_2 = this->cur_context->pop_operand();
-                Object* obj_1 = this->cur_context->pop_operand();
-
-                BaseFunction* sub_method = this->__get_obj_method(obj_1, MagicMethodNames::subtract_method_name);
-
-                Object** args = new Object*[2]{obj_1, obj_2};
-                bool exception_thrown = false;
-                Object* result_obj = sub_method->call(args, 2, exception_thrown);
-                delete[] args;
-
-                if (exception_thrown)
-                {
-                    Builtin::BuiltinException* exception = dynamic_cast<Builtin::BuiltinException*>(result_obj);
-                    this->__throw_exception(exception->message);
-                }
-                
-                this->cur_context->push_operand(result_obj);
+                this->__call_binary_operation_magic_method(MagicMethodNames::subtract_method_index);
                 break;
             }
 
             case InstructionType::BinaryMultiply:
             {
-                Object* obj_2 = this->cur_context->pop_operand();
-                Object* obj_1 = this->cur_context->pop_operand();
-
-                BaseFunction* mul_method = this->__get_obj_method(obj_1, MagicMethodNames::multiply_method_name);
-
-                Object** args = new Object*[2]{obj_1, obj_2};
-                bool exception_thrown = false;
-                Object* result_obj = mul_method->call(args, 2, exception_thrown);
-                delete[] args;
-
-                if (exception_thrown)
-                {
-                    Builtin::BuiltinException* exception = dynamic_cast<Builtin::BuiltinException*>(result_obj);
-                    this->__throw_exception(exception->message);
-                }
-                
-                this->cur_context->push_operand(result_obj);
+                this->__call_binary_operation_magic_method(MagicMethodNames::multiply_method_index);
                 break;
             }
 
             case InstructionType::BinaryDevide:
             {
-                Object* obj_2 = this->cur_context->pop_operand();
-                Object* obj_1 = this->cur_context->pop_operand();
-
-                BaseFunction* div_method = this->__get_obj_method(obj_1, MagicMethodNames::divide_method_name);
-
-                Object** args = new Object*[2]{obj_1, obj_2};
-                bool exception_thrown = false;
-                Object* result_obj = div_method->call(args, 2, exception_thrown);
-                delete[] args;
-
-                if (exception_thrown)
-                {
-                    Builtin::BuiltinException* exception = dynamic_cast<Builtin::BuiltinException*>(result_obj);
-                    this->__throw_exception(exception->message);
-                }
-                
-                this->cur_context->push_operand(result_obj);
+                this->__call_binary_operation_magic_method(MagicMethodNames::divide_method_index);
                 break;
             }
 
             case InstructionType::CompareIfEqual:
             {
-                this->__call_compare_magic_method(MagicMethodNames::equal_method_name);
+                this->__call_compare_magic_method(MagicMethodNames::equal_method_index);
                 break;
             }
 
             case InstructionType::CompareIfGreaterThan:
             {
-                this->__call_compare_magic_method(MagicMethodNames::greater_method_name);
+                this->__call_compare_magic_method(MagicMethodNames::greater_method_index);
                 break;
             }
 
             case InstructionType::CompareIfGreaterEqual:
             {
-                this->__call_compare_magic_method(MagicMethodNames::greater_equal_method_name);
+                this->__call_compare_magic_method(MagicMethodNames::greater_equal_method_index);
                 break;
             }
 
             case InstructionType::CompareIfLessThan:
             {
-                this->__call_compare_magic_method(MagicMethodNames::less_method_name);
+                this->__call_compare_magic_method(MagicMethodNames::less_method_index);
                 break;
             }
 
             case InstructionType::CompareIfLessEqual:
             {
-                this->__call_compare_magic_method(MagicMethodNames::less_equal_method_name);
+                this->__call_compare_magic_method(MagicMethodNames::less_equal_method_index);
                 break;
             }
 
             case InstructionType::CompareIfNotEqual:
             {
-                this->__call_compare_magic_method(MagicMethodNames::not_equal_method_name);
+                this->__call_compare_magic_method(MagicMethodNames::not_equal_method_index);
                 break;
             }
 
@@ -255,7 +191,7 @@ namespace XyA
 
                     if (exception_thrown)
                     {
-                        Builtin::BuiltinException* exception = dynamic_cast<Builtin::BuiltinException*>(result);
+                        Builtin::BuiltinException* exception = static_cast<Builtin::BuiltinException*>(result);
                         this->__throw_exception(exception->message);
                     }
 
@@ -317,7 +253,7 @@ namespace XyA
 
                 if (exception_thrown)
                 {
-                    Builtin::BuiltinException* exception = dynamic_cast<Builtin::BuiltinException*>(result);
+                    Builtin::BuiltinException* exception = static_cast<Builtin::BuiltinException*>(result);
                     this->__throw_exception(exception->message);
                 }
                 
@@ -337,29 +273,75 @@ namespace XyA
             this->cur_context = back;
         }
 
-        void VirtualMachine::__call_compare_magic_method(const std::string& method_name)
+        void VirtualMachine::__call_binary_operation_magic_method(size_t magic_method_index)
         {
             Object* obj_2 = this->cur_context->pop_operand();
             Object* obj_1 = this->cur_context->pop_operand();
 
-            BaseFunction* equal_method = this->__get_obj_method(obj_1, method_name);
+            BaseFunction* method;
+            TryGetMethodResult result = obj_1->try_get_magic_method(magic_method_index, method);
+
+            switch (result)
+            {
+            case TryGetMethodResult::NotFound:
+                this->__throw_exception("The method was not found");
+                break;
+            
+            case TryGetMethodResult::NotCallable:
+                this->__throw_exception("The method was not callable");
+                break;
+            }
 
             Object** args = new Object*[2]{obj_1, obj_2};
             bool exception_thrown = false;
-            Object* result_obj = equal_method->call(args, 2, exception_thrown);
+            Object* result_obj = method->call(args, 2, exception_thrown);
             delete[] args;
 
             if (exception_thrown)
             {
-                Builtin::BuiltinException* exception = dynamic_cast<Builtin::BuiltinException*>(result_obj);
+                Builtin::BuiltinException* exception = static_cast<Builtin::BuiltinException*>(result_obj);
+                this->__throw_exception(exception->message);
+            }
+            
+            this->cur_context->push_operand(result_obj);
+        }
+
+        void VirtualMachine::__call_compare_magic_method(size_t magic_method_index)
+        {
+            Object* obj_2 = this->cur_context->pop_operand();
+            Object* obj_1 = this->cur_context->pop_operand();
+
+            BaseFunction* method;
+            TryGetMethodResult result = obj_1->try_get_magic_method(magic_method_index, method);
+
+            switch (result)
+            {
+            case TryGetMethodResult::NotFound:
+                this->__throw_exception("The method was not found");
+                break;
+            
+            case TryGetMethodResult::NotCallable:
+                this->__throw_exception("The method was not callable");
+                break;
+            }
+
+            Object** args = new Object*[2]{obj_1, obj_2};
+            bool exception_thrown = false;
+            Object* result_obj = method->call(args, 2, exception_thrown);
+            delete[] args;
+
+            if (exception_thrown)
+            {
+                Builtin::BuiltinException* exception = static_cast<Builtin::BuiltinException*>(result_obj);
                 this->__throw_exception(exception->message);
             }
 
-            if (result_obj == nullptr)
+            Builtin::BoolObject* bool_result = dynamic_cast<Builtin::BoolObject*>(result_obj);
+            if (bool_result == nullptr)
             {
-                this->__throw_exception("The type of the return value of the " + method_name + " method is not bool");
+                this->__throw_exception("The type of the return value of the method is not bool");
             }
-            this->cur_context->push_operand(result_obj);            
+            this->cur_context->push_operand(bool_result);            
         }
 
 

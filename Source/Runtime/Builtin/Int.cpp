@@ -14,22 +14,19 @@ namespace XyA
             {
                 this->name = "int";
                 this->type = nullptr;
-                this->attrs[MagicMethodNames::add_method_name] = XyA_Allocate(BuiltinFunction, int_object_add);
-                this->attrs[MagicMethodNames::subtract_method_name] = XyA_Allocate(BuiltinFunction, int_object_subtract);
-                this->attrs[MagicMethodNames::multiply_method_name] = XyA_Allocate(BuiltinFunction, int_object_multiply);
-                this->attrs[MagicMethodNames::divide_method_name] = XyA_Allocate(BuiltinFunction, int_object_divide);
-                this->attrs[MagicMethodNames::equal_method_name] = XyA_Allocate(BuiltinFunction, int_object_equal);
-                this->attrs[MagicMethodNames::str_method_name] = XyA_Allocate(BuiltinFunction, int_object_str);
-                this->attrs[MagicMethodNames::bool_method_name] = XyA_Allocate(BuiltinFunction, int_object_bool);
-                this->attrs[MagicMethodNames::greater_method_name] = XyA_Allocate(BuiltinFunction, int_object_compare_if_greater);
-                this->attrs[MagicMethodNames::greater_equal_method_name] = XyA_Allocate(BuiltinFunction, int_object_compare_if_greater_equal);
-                this->attrs[MagicMethodNames::less_method_name] = XyA_Allocate(BuiltinFunction, int_object_compare_if_less);
-                this->attrs[MagicMethodNames::less_equal_method_name] = XyA_Allocate(BuiltinFunction, int_object_compare_if_less_equal);
+                this->magic_methods[MagicMethodNames::add_method_index] = XyA_Allocate(BuiltinFunction, int_object_add);
+                this->magic_methods[MagicMethodNames::subtract_method_index] = XyA_Allocate(BuiltinFunction, int_object_subtract);
+                this->magic_methods[MagicMethodNames::multiply_method_index] = XyA_Allocate(BuiltinFunction, int_object_multiply);
+                this->magic_methods[MagicMethodNames::divide_method_index] = XyA_Allocate(BuiltinFunction, int_object_divide);
+                this->magic_methods[MagicMethodNames::equal_method_index] = XyA_Allocate(BuiltinFunction, int_object_equal);
+                this->magic_methods[MagicMethodNames::str_method_index] = XyA_Allocate(BuiltinFunction, int_object_str);
+                this->magic_methods[MagicMethodNames::bool_method_index] = XyA_Allocate(BuiltinFunction, int_object_bool);
+                this->magic_methods[MagicMethodNames::greater_method_index] = XyA_Allocate(BuiltinFunction, int_object_compare_if_greater);
+                this->magic_methods[MagicMethodNames::greater_equal_method_index] = XyA_Allocate(BuiltinFunction, int_object_compare_if_greater_equal);
+                this->magic_methods[MagicMethodNames::less_method_index] = XyA_Allocate(BuiltinFunction, int_object_compare_if_less);
+                this->magic_methods[MagicMethodNames::less_equal_method_index] = XyA_Allocate(BuiltinFunction, int_object_compare_if_less_equal);
 
-                for (const auto& iter : this->attrs)
-                {
-                    iter.second->reference();
-                }
+                this->reference_attrs();
             }
 
             IntType* IntType::get_instance()
@@ -84,14 +81,17 @@ namespace XyA
                 XyA_Function_Check_Arg_Num(2)
                 XyA_Method_Get_Self(IntObject)
 
-                IntObject* int_other = dynamic_cast<IntObject*>(args[1]);
+                IntObject* int_other = nullptr;
                 FloatObject* float_other = nullptr;
-                if (int_other == nullptr)
+                if (args[1]->is_instance(IntType::get_instance()))
                 {
-                    float_other = dynamic_cast<FloatObject*>(args[1]);
+                    int_other = static_cast<IntObject*>(args[1]);
                 }
-
-                if (int_other == nullptr && float_other == nullptr)
+                else if (args[1]->is_instance(FloatType::get_instance()))
+                {
+                    float_other = static_cast<FloatObject*>(args[1]);
+                }
+                else
                 {
                     exception_thrown = true;
                     return XyA_Allocate(BuiltinException, "Type Error");
@@ -116,14 +116,17 @@ namespace XyA
                 XyA_Function_Check_Arg_Num(2)
                 XyA_Method_Get_Self(IntObject)
 
-                IntObject* int_other = dynamic_cast<IntObject*>(args[1]);
+                IntObject* int_other = nullptr;
                 FloatObject* float_other = nullptr;
-                if (int_other == nullptr)
+                if (args[1]->is_instance(IntType::get_instance()))
                 {
-                    float_other = dynamic_cast<FloatObject*>(args[1]);
+                    int_other = static_cast<IntObject*>(args[1]);
                 }
-
-                if (int_other == nullptr && float_other == nullptr)
+                else if (args[1]->is_instance(FloatType::get_instance()))
+                {
+                    float_other = static_cast<FloatObject*>(args[1]);
+                }
+                else
                 {
                     exception_thrown = true;
                     return XyA_Allocate(BuiltinException, "Type Error");
@@ -148,18 +151,22 @@ namespace XyA
                 XyA_Function_Check_Arg_Num(2)
                 XyA_Method_Get_Self(IntObject)
 
-                IntObject* int_other = dynamic_cast<IntObject*>(args[1]);
+                IntObject* int_other = nullptr;
                 FloatObject* float_other = nullptr;
-                if (int_other == nullptr)
+                if (args[1]->is_instance(IntType::get_instance()))
                 {
-                    float_other = dynamic_cast<FloatObject*>(args[1]);
+                    int_other = static_cast<IntObject*>(args[1]);
                 }
-
-                if (int_other == nullptr && float_other == nullptr)
+                else if (args[1]->is_instance(FloatType::get_instance()))
+                {
+                    float_other = static_cast<FloatObject*>(args[1]);
+                }
+                else
                 {
                     exception_thrown = true;
                     return XyA_Allocate(BuiltinException, "Type Error");
                 }
+
                 if ((int_other && int_other->value == 0) || (float_other && float_other->value == 0))
                 {
                     exception_thrown = true;
@@ -194,14 +201,17 @@ namespace XyA
                 XyA_Function_Check_Arg_Num(2)
                 XyA_Method_Get_Self(IntObject)
 
-                IntObject* int_other = dynamic_cast<IntObject*>(args[1]);
+                IntObject* int_other = nullptr;
                 FloatObject* float_other = nullptr;
-                if (int_other == nullptr)
+                if (args[1]->is_instance(IntType::get_instance()))
                 {
-                    float_other = dynamic_cast<FloatObject*>(args[1]);
+                    int_other = static_cast<IntObject*>(args[1]);
                 }
-
-                if (int_other == nullptr && float_other == nullptr)
+                else if (args[1]->is_instance(FloatType::get_instance()))
+                {
+                    float_other = static_cast<FloatObject*>(args[1]);
+                }
+                else
                 {
                     exception_thrown = true;
                     return XyA_Allocate(BuiltinException, "Type Error");
@@ -241,14 +251,17 @@ namespace XyA
                 XyA_Function_Check_Arg_Num(2)
                 XyA_Method_Get_Self(IntObject)
 
-                IntObject* int_other = dynamic_cast<IntObject*>(args[1]);
+                IntObject* int_other = nullptr;
                 FloatObject* float_other = nullptr;
-                if (int_other == nullptr)
+                if (args[1]->is_instance(IntType::get_instance()))
                 {
-                    float_other = dynamic_cast<FloatObject*>(args[1]);
+                    int_other = static_cast<IntObject*>(args[1]);
                 }
-
-                if (int_other == nullptr && float_other == nullptr)
+                else if (args[1]->is_instance(FloatType::get_instance()))
+                {
+                    float_other = static_cast<FloatObject*>(args[1]);
+                }
+                else
                 {
                     exception_thrown = true;
                     return XyA_Allocate(BuiltinException, "Type Error");
@@ -269,14 +282,17 @@ namespace XyA
                 XyA_Function_Check_Arg_Num(2)
                 XyA_Method_Get_Self(IntObject)
 
-                IntObject* int_other = dynamic_cast<IntObject*>(args[1]);
+                IntObject* int_other = nullptr;
                 FloatObject* float_other = nullptr;
-                if (int_other == nullptr)
+                if (args[1]->is_instance(IntType::get_instance()))
                 {
-                    float_other = dynamic_cast<FloatObject*>(args[1]);
+                    int_other = static_cast<IntObject*>(args[1]);
                 }
-
-                if (int_other == nullptr && float_other == nullptr)
+                else if (args[1]->is_instance(FloatType::get_instance()))
+                {
+                    float_other = static_cast<FloatObject*>(args[1]);
+                }
+                else
                 {
                     exception_thrown = true;
                     return XyA_Allocate(BuiltinException, "Type Error");
@@ -297,14 +313,17 @@ namespace XyA
                 XyA_Function_Check_Arg_Num(2)
                 XyA_Method_Get_Self(IntObject)
 
-                IntObject* int_other = dynamic_cast<IntObject*>(args[1]);
+                IntObject* int_other = nullptr;
                 FloatObject* float_other = nullptr;
-                if (int_other == nullptr)
+                if (args[1]->is_instance(IntType::get_instance()))
                 {
-                    float_other = dynamic_cast<FloatObject*>(args[1]);
+                    int_other = static_cast<IntObject*>(args[1]);
                 }
-
-                if (int_other == nullptr && float_other == nullptr)
+                else if (args[1]->is_instance(FloatType::get_instance()))
+                {
+                    float_other = static_cast<FloatObject*>(args[1]);
+                }
+                else
                 {
                     exception_thrown = true;
                     return XyA_Allocate(BuiltinException, "Type Error");
@@ -325,14 +344,17 @@ namespace XyA
                 XyA_Function_Check_Arg_Num(2)
                 XyA_Method_Get_Self(IntObject)
 
-                IntObject* int_other = dynamic_cast<IntObject*>(args[1]);
+                IntObject* int_other = nullptr;
                 FloatObject* float_other = nullptr;
-                if (int_other == nullptr)
+                if (args[1]->is_instance(IntType::get_instance()))
                 {
-                    float_other = dynamic_cast<FloatObject*>(args[1]);
+                    int_other = static_cast<IntObject*>(args[1]);
                 }
-
-                if (int_other == nullptr && float_other == nullptr)
+                else if (args[1]->is_instance(FloatType::get_instance()))
+                {
+                    float_other = static_cast<FloatObject*>(args[1]);
+                }
+                else
                 {
                     exception_thrown = true;
                     return XyA_Allocate(BuiltinException, "Type Error");

@@ -26,7 +26,7 @@ namespace XyA
         #ifdef Debug_Display_Memory_Leaks
         #define STRINGIFY(x) #x
         #define TOSTRING(x) STRINGIFY(x)
-        #define FILE_LINE std::string(__FILE__) + ": " + std::string(TOSTRING(__LINE__))
+        #define FILE_LINE std::string(__FILE__) + "(" + std::string(TOSTRING(__LINE__)) + ")"
         #define XyA_Allocate_(T) MemoryPool::get_instance()->allocate<T>(FILE_LINE)
         #define XyA_Allocate(T, args) MemoryPool::get_instance()->allocate<T>(FILE_LINE, args)
         #define XyA_Deallocate(object) MemoryPool::get_instance()->deallocate(FILE_LINE, object)

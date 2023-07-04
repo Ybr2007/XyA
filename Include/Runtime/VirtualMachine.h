@@ -33,7 +33,8 @@ namespace XyA
             void __excute_instruction(Instruction* instruction);
             void __back_context();
 
-            void __call_compare_magic_method(const std::string& method_name);
+            void __call_binary_operation_magic_method(size_t magic_method_index);
+            void __call_compare_magic_method(size_t magic_method_index);
 
             BaseFunction* __get_obj_method(Object* object, const std::string& method_name) const;
 
