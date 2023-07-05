@@ -9,7 +9,7 @@ namespace XyA
     {
         namespace MagicMethodNames
         {
-            const size_t magic_method_num = 12;
+            const size_t magic_method_num = 13;
             const std::string add_method_name = "operator+";
             const size_t add_method_index = 0;
             const std::string subtract_method_name = "operator-";
@@ -34,6 +34,8 @@ namespace XyA
             const size_t bool_method_index = 10;
             const std::string str_method_name = "__str__";
             const size_t str_method_index = 11;
+            const std::string call_method_name = "operator()";
+            const size_t call_method_index = 12;
 
         const std::unordered_map<std::string, size_t> magic_method_indices = {
                 {add_method_name, add_method_index}, 
@@ -48,6 +50,7 @@ namespace XyA
                 {less_equal_method_name, less_equal_method_index}, 
                 {bool_method_name, bool_method_index}, 
                 {str_method_name, str_method_index}, 
+                {call_method_name, call_method_index}, 
             };
 
             inline bool try_get_magic_method_index(const std::string& method_name, size_t& result)

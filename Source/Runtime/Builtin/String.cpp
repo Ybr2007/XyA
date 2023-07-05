@@ -14,10 +14,10 @@ namespace XyA
             {
                 this->name = "string";
                 this->type = nullptr;
-                this->magic_methods[MagicMethodNames::add_method_index] = XyA_Allocate(BuiltinFunction, string_object_add);
-                this->magic_methods[MagicMethodNames::multiply_method_index] = XyA_Allocate(BuiltinFunction, string_object_multiply);
-                this->magic_methods[MagicMethodNames::equal_method_index] = XyA_Allocate(BuiltinFunction, string_object_equal);
-                this->magic_methods[MagicMethodNames::bool_method_index] = XyA_Allocate(BuiltinFunction, string_object_bool);
+                this->instance_magic_methods[MagicMethodNames::add_method_index] = XyA_Allocate(BuiltinFunction, string_object_add);
+                this->instance_magic_methods[MagicMethodNames::multiply_method_index] = XyA_Allocate(BuiltinFunction, string_object_multiply);
+                this->instance_magic_methods[MagicMethodNames::equal_method_index] = XyA_Allocate(BuiltinFunction, string_object_equal);
+                this->instance_magic_methods[MagicMethodNames::bool_method_index] = XyA_Allocate(BuiltinFunction, string_object_bool);
 
                 this->reference_attrs();
             }

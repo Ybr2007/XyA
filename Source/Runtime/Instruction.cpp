@@ -97,6 +97,11 @@ namespace XyA
                 str += " " + std::to_string(this->parameter);
                 break;
 
+            case InstructionType::StoreAttr:
+                str += "Stroe Attr";
+                str += " " + std::to_string(this->parameter);
+                break;
+
             case InstructionType::PopJumpIfFalse:
                 str += "Pop Jump If False";
                 str += " " + std::to_string(this->parameter);
@@ -112,7 +117,10 @@ namespace XyA
                 str += " " + std::to_string(this->parameter);
                 break;
 
-                
+            case InstructionType::GetAttr:
+                str += "Get Attr";
+                str += " " + std::to_string(this->parameter);
+                break;
             
             default:
                 break;

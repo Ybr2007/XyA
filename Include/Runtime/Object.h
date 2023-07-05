@@ -1,7 +1,7 @@
 #pragma once
 #include <string>
 #include <array>
-#include <vector>
+#include <unordered_map>
 #include <Runtime/MagicMethodNames.hpp>
 #include <Config.h>
 
@@ -19,6 +19,12 @@ namespace XyA
             NotFound,
             NotCallable,
         };
+        
+        enum class TryGetAttrResult
+        {
+            OK,
+            NotFound
+        };
 
         class Object
         {
@@ -26,19 +32,20 @@ namespace XyA
             Type* type = nullptr;
             long long ref_count = 0;
             std::array<Object*, MagicMethodNames::magic_method_num> magic_methods{};
-            std::vector<Object*> attrs;
-            std::vector<std::string> attr_names;
+            std::unordered_map<std::string, Object*> attrs;
 
             void reference();
             bool dereference();
             bool deallocate_if_no_ref();
 
-            void reference_attrs();
-            void dereference_attrs();
+            virtual void reference_attrs();
+            virtual void dereference_attrs();
 
             bool is_instance(Type* type) const;
+
             TryGetMethodResult try_get_magic_method(size_t index, BaseFunction*& result) const;
-            TryGetMethodResult try_get_method(const std::string& method_name, BaseFunction*& result) const;
+            TryGetAttrResult try_get_attr(const std::string& attr_name, Object*& result) const;
+
             virtual ~Object();
 
             #ifdef Debug_Display_Object
@@ -50,6 +57,12 @@ namespace XyA
         {
         public:
             std::string name;
+            std::array<Object*, MagicMethodNames::magic_method_num> instance_magic_methods{};
+            std::unordered_map<std::string, Object*> instance_methods;
+            bool instance_allows_external_attr = true;
+
+            void reference_attrs() override;
+            virtual ~Type() override;
         };
 
         #define XyA_Function_Check_Arg_Num(expected_arg_num_) \

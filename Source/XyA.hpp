@@ -57,26 +57,32 @@ namespace XyA
         // 词法分析，生成Tokens
         std::vector<LexicalAnalysis::Token*>* tokens = this->token_analyzer.analyze_source(source);
 
-        // #ifdef DebugMode
-        // printf("Tokens:\n");
-        // for (auto token : *tokens)
-        // {
-        //     printf("%s ", token->to_string().c_str());
-        // }
-        // printf("\n\n");
-        // #endif
+        #ifdef Debug_Display_Tokens
+        printf("Tokens:\n");
+        for (auto token : *tokens)
+        {
+            printf("%s ", token->to_string().c_str());
+        }
+        printf("\n\n");
+        #endif
 
         // 语法分析，生成语法树
         SyntaxAnalysis::SyntaxTreeNode* syntax_tree = this->syntax_parser.parse_tokens(tokens);
 
-        // #ifdef DebugMode
-        // YJson::Object* syntax_tree_json = syntax_tree->to_json();
-        // YJson::dump("Y:\\C++\\XyA\\syntax_tree.json", syntax_tree_json, 2);
-        // delete syntax_tree_json;
-        // #endif
+        #ifdef Debug_Write_AST_To_Json_File
+        YJson::Object* syntax_tree_json = syntax_tree->to_json();
+        YJson::dump("Y:\\C++\\XyA\\syntax_tree.json", syntax_tree_json, 2);
+        delete syntax_tree_json;
+        #endif
 
         // 编译，生成CodeObject
         Runtime::CodeObject* code_object = this->compiler.compile(syntax_tree);
+
+        #ifdef Debug_Write_AST_To_Json_File
+        YJson::Object* optimized_syntax_tree_json = syntax_tree->to_json();
+        YJson::dump("Y:\\C++\\XyA\\syntax_tree_optimized.json", optimized_syntax_tree_json, 2);
+        delete optimized_syntax_tree_json;
+        #endif
 
         #ifdef Debug_Display_Instructions
         printf("Global Instructions:\n");
@@ -87,7 +93,7 @@ namespace XyA
         printf("\n");
         
         printf("Function Instructions:\n");
-        for (const auto& iter : code_object->functions)
+        for (auto iter : *code_object->functions)
         {
             printf("Function Name: %s\n", iter.first.c_str());
             for (size_t i = 0; i < iter.second->code_object->instructions.size(); i ++)
@@ -116,12 +122,6 @@ namespace XyA
         // }
         // printf("\n");
         // #endif
-
-        #ifdef Debug_Write_AST_To_Json_File
-        YJson::Object* optimized_syntax_tree_json = syntax_tree->to_json();
-        YJson::dump("Y:\\C++\\XyA\\syntax_tree_optimized.json", optimized_syntax_tree_json, 2);
-        delete optimized_syntax_tree_json;
-        #endif
 
         // 编译结束，Tokens、SyntaxTree不再使用，释放
         for (LexicalAnalysis::Token* token : *tokens)

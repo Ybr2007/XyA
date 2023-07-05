@@ -11,27 +11,28 @@ namespace XyA
         {
             this->code_obj = code_obj;
 
-            this->local_variables = new Object*[code_obj->variable_name_indices.size()];  // delete于Context::~Context()
-            for (size_t i = 0; i < code_obj->variable_name_indices.size(); i ++)
+            this->local_variables = new Object*[code_obj->variable_name_2_index.size()];  // delete于Context::~Context()
+            for (size_t i = 0; i < code_obj->variable_name_2_index.size(); i ++)  // 将所有变量设置为未定义
             {
                 this->local_variables[i] = nullptr;
             }
 
-            for (auto iter : this->code_obj->functions)
+            for (auto iter : *this->code_obj->functions)  // 将函数加载到对应的本地变量中
             {
-                this->local_variables[this->code_obj->variable_name_indices[iter.first]] = reinterpret_cast<Object*>(iter.second);
+                this->local_variables[this->code_obj->variable_name_2_index[iter.first]] = reinterpret_cast<Object*>(iter.second);
             }
+            XyA_Deallocate(this->code_obj->functions);
         }
 
         Context::~Context()
-        {
+        { 
             if (!this->operand_stack.empty())
             {
-                printf("WARNING: The stack was not empty when the context exits.");
+                printf("WARNING: The stack was not empty when the context exited.");
             }
 
             /* 离开作用域，所有变量引用计数减一 */
-            for (size_t i = 0; i < this->code_obj->variable_name_indices.size(); i ++)
+            for (size_t i = 0; i < this->code_obj->variable_name_2_index.size(); i ++)
             {
                 if (this->local_variables[i] != nullptr)
                 {
@@ -60,7 +61,7 @@ namespace XyA
 
         const std::string& Context::get_variable_name(size_t index) const
         {
-            for (auto& item : this->code_obj->variable_name_indices)
+            for (auto& item : this->code_obj->variable_name_2_index)
             {
                 if (item.second == index)
                 {

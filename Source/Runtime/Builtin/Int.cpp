@@ -14,19 +14,23 @@ namespace XyA
             {
                 this->name = "int";
                 this->type = nullptr;
-                this->magic_methods[MagicMethodNames::add_method_index] = XyA_Allocate(BuiltinFunction, int_object_add);
-                this->magic_methods[MagicMethodNames::subtract_method_index] = XyA_Allocate(BuiltinFunction, int_object_subtract);
-                this->magic_methods[MagicMethodNames::multiply_method_index] = XyA_Allocate(BuiltinFunction, int_object_multiply);
-                this->magic_methods[MagicMethodNames::divide_method_index] = XyA_Allocate(BuiltinFunction, int_object_divide);
-                this->magic_methods[MagicMethodNames::equal_method_index] = XyA_Allocate(BuiltinFunction, int_object_equal);
-                this->magic_methods[MagicMethodNames::str_method_index] = XyA_Allocate(BuiltinFunction, int_object_str);
-                this->magic_methods[MagicMethodNames::bool_method_index] = XyA_Allocate(BuiltinFunction, int_object_bool);
-                this->magic_methods[MagicMethodNames::greater_method_index] = XyA_Allocate(BuiltinFunction, int_object_compare_if_greater);
-                this->magic_methods[MagicMethodNames::greater_equal_method_index] = XyA_Allocate(BuiltinFunction, int_object_compare_if_greater_equal);
-                this->magic_methods[MagicMethodNames::less_method_index] = XyA_Allocate(BuiltinFunction, int_object_compare_if_less);
-                this->magic_methods[MagicMethodNames::less_equal_method_index] = XyA_Allocate(BuiltinFunction, int_object_compare_if_less_equal);
+                this->instance_magic_methods[MagicMethodNames::add_method_index] = XyA_Allocate(BuiltinFunction, int_object_add);
+                this->instance_magic_methods[MagicMethodNames::subtract_method_index] = XyA_Allocate(BuiltinFunction, int_object_subtract);
+                this->instance_magic_methods[MagicMethodNames::multiply_method_index] = XyA_Allocate(BuiltinFunction, int_object_multiply);
+                this->instance_magic_methods[MagicMethodNames::divide_method_index] = XyA_Allocate(BuiltinFunction, int_object_divide);
+                this->instance_magic_methods[MagicMethodNames::equal_method_index] = XyA_Allocate(BuiltinFunction, int_object_equal);
+                this->instance_magic_methods[MagicMethodNames::str_method_index] = XyA_Allocate(BuiltinFunction, int_object_str);
+                this->instance_magic_methods[MagicMethodNames::bool_method_index] = XyA_Allocate(BuiltinFunction, int_object_bool);
+                this->instance_magic_methods[MagicMethodNames::greater_method_index] = XyA_Allocate(BuiltinFunction, int_object_compare_if_greater);
+                this->instance_magic_methods[MagicMethodNames::greater_equal_method_index] = XyA_Allocate(BuiltinFunction, int_object_compare_if_greater_equal);
+                this->instance_magic_methods[MagicMethodNames::less_method_index] = XyA_Allocate(BuiltinFunction, int_object_compare_if_less);
+                this->instance_magic_methods[MagicMethodNames::less_equal_method_index] = XyA_Allocate(BuiltinFunction, int_object_compare_if_less_equal);
+                
+                this->magic_methods[MagicMethodNames::call_method_index] = XyA_Allocate(BuiltinFunction, int_type_call);
 
+                this->ref_count = 1;
                 this->reference_attrs();
+                this->instance_allows_external_attr = false;
             }
 
             IntType* IntType::get_instance()
@@ -368,6 +372,20 @@ namespace XyA
                 {
                     return XyA_Allocate(BoolObject, self->value <= float_other->value);
                 }  
+            }
+
+            Object* int_type_call(Object** args, size_t arg_num, bool& exception_thrown)
+            {
+                XyA_Function_Check_Arg_Num(1)
+
+                if (args[0]->is_instance(StringType::get_instance()))
+                {
+                    StringObject* string_object = static_cast<StringObject*>(args[0]);
+
+                    IntObject* int_result = XyA_Allocate_(IntObject);
+                    int_result->value = std::stoll(string_object->value);
+                    return int_result;
+                }
             }
 
             #ifdef Debug_Display_Object

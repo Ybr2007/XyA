@@ -7,6 +7,12 @@ namespace XyA
 {
     namespace Runtime
     {
+        CodeObject::CodeObject()
+        {
+            using T = std::unordered_map<std::string, Function*>;
+            this->functions = XyA_Allocate_(T);
+        }
+
         CodeObject::~CodeObject()
         {
             for (size_t i = 0; i < this->literals.size(); i ++)
@@ -102,8 +108,22 @@ namespace XyA
 
         bool CodeObject::try_get_variable_index(const std::string& variable_name, size_t& result) const
         {
-            auto it = this->variable_name_indices.find(variable_name);
-            if (it != variable_name_indices.end()) 
+            auto it = this->variable_name_2_index.find(variable_name);
+            if (it != variable_name_2_index.end()) 
+            {
+                result = it->second;
+                return true;
+            } 
+            else 
+            {
+                return false;
+            }
+        }
+        
+        bool CodeObject::try_get_name_index(const std::string& name, size_t& result) const
+        {
+            auto it = this->variable_name_2_index.find(name);
+            if (it != variable_name_2_index.end()) 
             {
                 result = it->second;
                 return true;
@@ -123,9 +143,15 @@ namespace XyA
 
         size_t CodeObject::add_variable_name(const std::string& variable_name)
         {
-            size_t index = this->variable_name_indices.size();
-            this->variable_name_indices[variable_name] = index;
+            size_t index = this->variable_name_2_index.size();
+            this->variable_name_2_index[variable_name] = index;
             return index;
+        }
+
+        size_t CodeObject::add_name(const std::string& name)
+        {
+            this->names.push_back(name);
+            return this->names.size() - 1;
         }
 
         #ifdef Debug_Display_Object

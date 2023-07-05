@@ -6,16 +6,20 @@ line           -> (assignment | expression)
 if             -> "if" expression block ("else" (if | block))?
 while          -> "while" expression block
 
-assignment     -> Identifier "=" expression
+assignment     -> assignable "=" expression
+assignable     -> Identifier | attr
+
 expression     -> comparison
 comparison     -> addition ( ( "!=" | "==" | ">" | ">=" | "<" | "<=" ) addition )?
 addition       -> multiplication ( ( "-" | "+" ) multiplication )*
 multiplication -> unary ( ( "/" | "*" ) unary )*
 unary          -> ( "!" | "-" ) unary | primary
-primary        -> Literal | Identifier | "(" expression ")" | call
+primary        -> Literal | Identifier | "(" expression ")" | call | attr
 
 call           -> expression "(" call_argument_list? ")"
 call_argument_list -> expression ("," expression)*
+
+attr           -> expression "." Identifier
 
 function_definition -> "fn" Identifier "(" argument_list_definition? ")" block
 argument_list_definition -> Identifier ("," Identifier)*

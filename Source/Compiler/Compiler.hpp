@@ -42,6 +42,7 @@ namespace XyA
             // delete于Runtime::Context::~Context
             this->__global_code_object = Runtime::XyA_Allocate_(Runtime::CodeObject);
 
+            this->__global_code_object->add_variable_name("int");
             this->__global_code_object->add_variable_name("print");
             this->__global_code_object->add_variable_name("_get_ref_count");
             this->__global_code_object->add_variable_name("_get_id");
@@ -90,7 +91,7 @@ namespace XyA
                 }
 
                 this->__compile_block(function->code_object, unit_root->children[1]);
-                code_object->functions[unit_root->token->value] = function;
+                code_object->functions->operator[](unit_root->token->value) = function;
                 break;
             }
 
@@ -175,21 +176,48 @@ namespace XyA
 
         void Compiler::__compile_assignment(Runtime::CodeObject* code_object, SyntaxAnalysis::SyntaxTreeNode* assignment_root)
         {
-            this->__compile_expression(code_object, assignment_root->children[0]);
-
-            Runtime::Instruction* store_variable_instruction = new Runtime::Instruction(Runtime::InstructionType::StroeVariable);;                
-
-            if (!code_object->try_get_variable_index(assignment_root->token->value, store_variable_instruction->parameter))
+            if (assignment_root->children[0]->type == SyntaxAnalysis::SyntaxTreeNodeType::Attr)
             {
-                store_variable_instruction->parameter = code_object->add_variable_name(assignment_root->token->value);
-            }
+                this->__compile_expression(code_object, assignment_root->children[0]);
+                code_object->instructions.pop_back();
+                this->__compile_expression(code_object, assignment_root->children[1]);
+                Runtime::Instruction* store_attr_instruction = new Runtime::Instruction(Runtime::InstructionType::StoreAttr);;                
 
-            code_object->instructions.push_back(store_variable_instruction);
+                if (!code_object->try_get_name_index(assignment_root->children[0]->token->value, store_attr_instruction->parameter))
+                {
+                    store_attr_instruction->parameter = code_object->add_name(assignment_root->children[0]->token->value);
+                }
+                code_object->instructions.push_back(store_attr_instruction);
+            }
+            else  // assignment target is an Identifier
+            {
+                this->__compile_expression(code_object, assignment_root->children[1]);
+
+                Runtime::Instruction* store_variable_instruction = new Runtime::Instruction(Runtime::InstructionType::StroeVariable);;                
+
+                if (!code_object->try_get_variable_index(assignment_root->children[0]->token->value, store_variable_instruction->parameter))
+                {
+                    store_variable_instruction->parameter = code_object->add_variable_name(assignment_root->children[0]->token->value);
+                }
+                code_object->instructions.push_back(store_variable_instruction);
+            }
         }
 
         void Compiler::__compile_expression(Runtime::CodeObject* code_object, SyntaxAnalysis::SyntaxTreeNode* expression_root, bool pop)
         {
             expression_root->try_fold_literal();
+
+            if (expression_root->type == SyntaxAnalysis::SyntaxTreeNodeType::Attr)
+            {
+                this->__compile_expression(code_object, expression_root->children[0]);  // 计算attr所属object的值
+                Runtime::Instruction* get_attr_instruction = new Runtime::Instruction(Runtime::InstructionType::GetAttr);
+                if (!code_object->try_get_name_index(expression_root->token->value, get_attr_instruction->parameter))
+                {
+                    get_attr_instruction->parameter = code_object->add_name(expression_root->token->value);
+                }
+                code_object->instructions.push_back(get_attr_instruction);
+                return;
+            }
 
             if (expression_root->type == SyntaxAnalysis::SyntaxTreeNodeType::Call)
             {

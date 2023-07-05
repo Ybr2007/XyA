@@ -53,8 +53,8 @@ namespace XyA
             {
                 this->name = "bool";
                 this->type = nullptr;
-                this->magic_methods[MagicMethodNames::equal_method_index] = XyA_Allocate(BuiltinFunction, bool_object_equal);
-                this->magic_methods[MagicMethodNames::str_method_index] = XyA_Allocate(BuiltinFunction, bool_object_str);
+                this->instance_magic_methods[MagicMethodNames::equal_method_index] = XyA_Allocate(BuiltinFunction, bool_object_equal);
+                this->instance_magic_methods[MagicMethodNames::str_method_index] = XyA_Allocate(BuiltinFunction, bool_object_str);
 
                 this->reference_attrs();
             }
