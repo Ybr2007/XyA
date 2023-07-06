@@ -33,12 +33,14 @@ namespace XyA
             LoadGlobal,
 
             StroeVariable,
+            StoreAttr,
 
             PopJumpIfFalse,
             JumpTo,
 
-
             CallFunction,
+
+            GetAttr,
         };
 
         class Instruction

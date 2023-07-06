@@ -56,7 +56,7 @@ namespace XyA
                 if (arg_num != expected_arg_num_) \
                 { \
                     exception_thrown = true; \
-                    return new Builtin::BuiltinException("Expected " + std::to_string(expected_arg_num_) + " arguments, got " + std::to_string(arg_num)); \
+                    return new Builtin::BuiltinException("Expected " + std::to_string(expected_arg_num_) + " arguments, got " + std::to_string(arg_num) + __FILE__ + std::to_string(__LINE__)); \
                 }
 
         class BaseFunction : public Object

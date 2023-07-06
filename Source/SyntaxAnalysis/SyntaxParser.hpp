@@ -46,15 +46,16 @@ namespace XyA
             SyntaxTreeNode* __parse_block();
             SyntaxTreeNode* __parse_if();
             SyntaxTreeNode* __parse_while();
-            SyntaxTreeNode* __parse_assignment();
+            SyntaxTreeNode* __parse_assignment(SyntaxTreeNode* assignment_target);
             SyntaxTreeNode* __parse_expression();
             SyntaxTreeNode* __parse_comparison();
             SyntaxTreeNode* __parse_addition();
             SyntaxTreeNode* __parse_multiplication();
             SyntaxTreeNode* __parse_unary();
             SyntaxTreeNode* __parse_primary();
-            SyntaxTreeNode* __parse_call(SyntaxTreeNode* callee);
+            SyntaxTreeNode* __parse_call(SyntaxTreeNode* callee_expression);
             SyntaxTreeNode* __parse_call_argument_list();
+            SyntaxTreeNode* __parse_attr(SyntaxTreeNode* object_expression);
             SyntaxTreeNode* __parse_function_definition();
             SyntaxTreeNode* __parse_argument_list_definition();
             SyntaxTreeNode* __parse_return();
@@ -144,16 +145,13 @@ namespace XyA
         SyntaxTreeNode* SyntaxParser::__parse_line()
         {
             // line -> (assignment | expression) ";"
-            SyntaxTreeNode* node;
-            
-            if (this->__cur_token()->type == LexicalAnalysis::TokenType::Identifier && 
-                !this->__at_end() && this->__next_token()->type == LexicalAnalysis::TokenType::Op_Assignment)
+            SyntaxTreeNode* node = this->__parse_expression();
+
+            if (((node->type == SyntaxTreeNodeType::Primary && !node->token->is_literal()) || 
+                node->type == SyntaxTreeNodeType::Attr) && !this->__at_end() && 
+                this->__next_token()->type == LexicalAnalysis::TokenType::Op_Assignment)
             {
-                node = this->__parse_assignment();
-            }
-            else
-            {
-                node = this->__parse_expression();
+                node = this->__parse_assignment(node);
             }
 
             if (!this->__try_move_ptr() || this->__cur_token()->type != LexicalAnalysis::TokenType::S_Semicolon)
@@ -262,11 +260,9 @@ namespace XyA
             return if_node;
         }
 
-        SyntaxTreeNode* SyntaxParser::__parse_assignment()
+        SyntaxTreeNode* SyntaxParser::__parse_assignment(SyntaxTreeNode* assignment_target)
         {
-            // assignment -> Identifier "=" expression
-            LexicalAnalysis::Token* target_identifier = this->__cur_token();
-
+            // assignment -> assignable "=" expression
             if (!this->__try_move_ptr(2))
             {
                 this->__throw_exception("Expected expression", this->__cur_token()->start_pos);
@@ -275,8 +271,8 @@ namespace XyA
             SyntaxTreeNode* expression = this->__parse_expression();
 
             SyntaxTreeNode* assignment = new SyntaxTreeNode(SyntaxTreeNodeType::Assignment);
-            assignment->token = target_identifier;
-            assignment->children.reserve(1);
+            assignment->children.reserve(2);
+            assignment->children.push_back(assignment_target);
             assignment->children.push_back(expression);
             return assignment;
         }
@@ -440,9 +436,20 @@ namespace XyA
             {
                 SyntaxTreeNode* node = new SyntaxTreeNode(SyntaxTreeNodeType::Primary);
                 node->token = this->__cur_token();
-                while (!this->__at_end() && this->__next_token()->type == LexicalAnalysis::TokenType::S_LParenthesis)
+                while (!this->__at_end())
                 {
-                    node = this->__parse_call(node);
+                    if (this->__next_token()->type == LexicalAnalysis::TokenType::S_LParenthesis)
+                    {
+                        node = this->__parse_call(node);
+                    }
+                    else if (this->__next_token()->type == LexicalAnalysis::TokenType::Op_Dot)
+                    {
+                        node = this->__parse_attr(node);
+                    }
+                    else
+                    {
+                        break;
+                    }
                 }
                 return node;
             }
@@ -459,9 +466,20 @@ namespace XyA
                 {
                     this->__throw_exception("'(' was not closed", this->__cur_token()->start_pos);
                 }
-                while (!this->__at_end() && this->__next_token()->type == LexicalAnalysis::TokenType::S_LParenthesis)
+                while (!this->__at_end())
                 {
-                    expression = this->__parse_call(expression);
+                    if (this->__next_token()->type == LexicalAnalysis::TokenType::S_LParenthesis)
+                    {
+                        expression = this->__parse_call(expression);
+                    }
+                    else if (this->__next_token()->type == LexicalAnalysis::TokenType::Op_Dot)
+                    {
+                        expression = this->__parse_attr(expression);
+                    }
+                    else
+                    {
+                        break;
+                    }
                 }
                 return expression;
             }
@@ -471,11 +489,16 @@ namespace XyA
             }  
         }   
 
-        SyntaxTreeNode* SyntaxParser::__parse_call(SyntaxTreeNode* callee)
+        /*
+        当前位置: 左括号前一个Token，并保证下一个Token是左括号
+            [callee_expression]([arguments])
+                              ^_
+        */
+        SyntaxTreeNode* SyntaxParser::__parse_call(SyntaxTreeNode* callee_expression)
         {
             SyntaxTreeNode* call_node = new SyntaxTreeNode(SyntaxTreeNodeType::Call);
             call_node->children.reserve(2);
-            call_node->children.push_back(callee);
+            call_node->children.push_back(callee_expression);
 
             this->__try_move_ptr();
             if (this->__at_end())
@@ -533,6 +556,31 @@ namespace XyA
             }
             this->__cur_pos --;
             return argument_list;
+        }
+
+        /*
+        当前位置: 点号前一个Token，并保证下一个Token是点号
+            [object_expression].[attr_identifier]
+                              ^_
+        */
+        SyntaxTreeNode* SyntaxParser::__parse_attr(SyntaxTreeNode* object_expression)
+        {
+            // attr -> expression "." Identifier
+            SyntaxTreeNode* attr_node = new SyntaxTreeNode(SyntaxTreeNodeType::Attr);
+            attr_node->children.reserve(1);
+            attr_node->children.push_back(object_expression);
+
+            this->__try_move_ptr();  // 已经确定下一个字符是点号，可以直接移动
+            if (this->__at_end())
+            {
+                this->__throw_exception("Expected attribute identifier", this->__cur_token()->start_pos);
+                return nullptr;
+            }
+
+            this->__try_move_ptr();  // 已知不是结尾，可以直接移动
+            attr_node->token = this->__cur_token();
+
+            return attr_node;
         }
         
         SyntaxTreeNode* SyntaxParser::__parse_function_definition()

@@ -17,7 +17,7 @@ namespace XyA
             Block,                  // children: 数量不限，每个child是一个语句（块）
             If,                     // children: 数量为2或3，children[0] 是判断条件表达式，children[1] 是如果为真执行的语句块，children[2] 是如果为假执行的语句块（可选）
             While,                  // children: 数量为2，children[0] 是判断条件表达式，children[1] 是如果为真执行的语句块
-            Assignment,             // value: 赋值目标 children: 数量为1，值的表达式
+            Assignment,             // children: 数量为2，chilren[0]是赋值目标，children[1] 是值的表达式
             Comparison,             // value: 运算符 chilren: 数量为2，为两个运算数
             Addition,               // value: 运算符 chilren: 数量为2，为两个运算数
             Multiplication,         // value: 运算符 chilren: 数量为2，为两个运算数
@@ -27,6 +27,7 @@ namespace XyA
             Argument_List,          // children: 数量不限，每一个child是一个参数（对于Definition_Argument_List，是形参标识符；对于Call_Argument_List，是实参表达式）
             Argument,               // value: 形参名称标识符
             Call,                   // chilren: 数量为2，children[0] 为callee表达式，children[1] 为实参列表(Argument_List)
+            Attr,                   // value: 属性标识符 children: 数量为1，chilren[0] 为对象
             Return,                 // children: 数量为1，chilren[0] 为返回值表达式
         };
 
@@ -63,6 +64,10 @@ namespace XyA
                 return "<SyntaxTreeNodeType: Argument>";
             case SyntaxTreeNodeType::Call:
                 return "<SyntaxTreeNodeType: Call>";
+            case SyntaxTreeNodeType::Attr:
+                return "<SyntaxTreeNodeType: Attr>";
+            case SyntaxTreeNodeType::Return:
+                return "<SyntaxTreeNodeType: Return>";
             default:
                 return "<Unknown>";
             }
@@ -116,7 +121,8 @@ namespace XyA
                 this->type == SyntaxTreeNodeType::Multiplication ||
                 this->type == SyntaxTreeNodeType::Unary ||
                 this->type == SyntaxTreeNodeType::Primary ||
-                this->type == SyntaxTreeNodeType::Call;
+                this->type == SyntaxTreeNodeType::Call ||
+                this->type == SyntaxTreeNodeType::Attr;
         }
 
         bool SyntaxTreeNode::__flod_number_literals()
