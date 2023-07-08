@@ -12,7 +12,6 @@ namespace XyA
             NullType::NullType()
             {
                 this->name = "null";
-                this->type = nullptr;
                 this->magic_methods[MagicMethodNames::equal_method_index] = XyA_Allocate(BuiltinFunction, null_object_equal);
                 this->magic_methods[MagicMethodNames::str_method_index] = XyA_Allocate(BuiltinFunction, null_object_str);
 
@@ -27,7 +26,7 @@ namespace XyA
 
             NullObject::NullObject(bool value)
             {
-                this->type = NullType::get_instance();
+                this->__type = NullType::get_instance();
             }
 
             NullObject* NullObject::get_instance()

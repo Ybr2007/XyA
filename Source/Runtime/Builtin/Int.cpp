@@ -13,7 +13,6 @@ namespace XyA
             IntType::IntType()
             {
                 this->name = "int";
-                this->type = nullptr;
                 this->magic_methods[MagicMethodNames::add_method_index] = XyA_Allocate(BuiltinFunction, int_object_add);
                 this->magic_methods[MagicMethodNames::subtract_method_index] = XyA_Allocate(BuiltinFunction, int_object_subtract);
                 this->magic_methods[MagicMethodNames::multiply_method_index] = XyA_Allocate(BuiltinFunction, int_object_multiply);
@@ -36,7 +35,7 @@ namespace XyA
             }
             IntObject::IntObject()
             {
-                this->type = IntType::get_instance();
+                this->__type = IntType::get_instance();
             }
 
             /* Int Methods */

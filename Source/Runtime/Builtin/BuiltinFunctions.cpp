@@ -20,7 +20,7 @@ namespace XyA
                     if (!object_is_string)
                     {
                         Runtime::BaseFunction* str_method; 
-                        auto result = args[i]->try_get_method(MagicMethodNames::str_method_name, str_method);
+                        auto result = args[i]->try_get_magic_method(MagicMethodNames::str_method_index, str_method);
                         if (result == TryGetMethodResult::NotFound || result == TryGetMethodResult::NotCallable)
                         {
                             str_obj = XyA_Allocate_(StringObject);

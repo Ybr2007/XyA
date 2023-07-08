@@ -13,7 +13,6 @@ namespace XyA
             BuiltinFunctionType::BuiltinFunctionType()
             {
                 this->name = "builtin function";
-                this->type = nullptr;
                 this->magic_methods[MagicMethodNames::str_method_index] = XyA_Allocate(BuiltinFunction, builtin_function_str);
                 
                 this->reference_attrs();
@@ -30,7 +29,7 @@ namespace XyA
 
             BuiltinFunction::BuiltinFunction(std::function<Object*(Object**, size_t, bool&)> cpp_function)
             {
-                this->type = &builtin_function_type_instance;
+                this->__type = &builtin_function_type_instance;
                 this->cpp_function = cpp_function;
             }
 

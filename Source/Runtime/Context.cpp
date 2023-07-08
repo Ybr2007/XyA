@@ -94,5 +94,10 @@ namespace XyA
             }
             return this->operand_stack.top();
         }
+
+        void Context::set_top_operand(Object* obj)
+        {
+            this->operand_stack.set_top(obj);
+        }
     }
 }

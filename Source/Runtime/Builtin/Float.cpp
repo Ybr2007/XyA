@@ -13,7 +13,6 @@ namespace XyA
             FloatType::FloatType()
             {
                 this->name = "float";
-                this->type = nullptr;
                 this->magic_methods[MagicMethodNames::add_method_index] = XyA_Allocate(BuiltinFunction, float_object_add);
                 this->magic_methods[MagicMethodNames::subtract_method_index] = XyA_Allocate(BuiltinFunction, float_object_subtract);
                 this->magic_methods[MagicMethodNames::multiply_method_index] = XyA_Allocate(BuiltinFunction, float_object_multiply);
@@ -37,7 +36,7 @@ namespace XyA
 
             FloatObject::FloatObject()
             {
-                this->type = FloatType::get_instance();
+                this->__type = FloatType::get_instance();
             }
 
             /* Float Methods */

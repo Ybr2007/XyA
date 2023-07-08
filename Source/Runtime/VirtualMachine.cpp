@@ -37,6 +37,7 @@ namespace XyA
                 Instruction* cur_instruction = this->cur_context->cur_instruction();
                 // printf("Instruction %d, %s\n", (size_t)VirtualMachine::get_instance()->cur_context, cur_instruction->to_string().c_str());
                 this->__excute_instruction(cur_instruction);
+                // printf("FINISH\n");
                 this->cur_context->instruction_ptr ++;
             }
             this->__back_context();
@@ -101,9 +102,27 @@ namespace XyA
                 break;
             }
 
+            case InstructionType::GetAttr:
+            {
+                Object* attr_owner = this->cur_context->top_operand();
+
+                Object* attr;
+                TryGetAttrResult operation_result = attr_owner->try_get_attr(
+                    this->cur_context->code_obj->names[instruction->parameter], attr);
+
+                if (operation_result == TryGetAttrResult::NotFound)
+                {
+                    this->__throw_exception("The variable '" + this->cur_context->code_obj->names[instruction->parameter] + 
+                        "' is not defined or already deleted.");
+                }
+                this->cur_context->set_top_operand(attr);
+
+                break;
+            }
+
             case InstructionType::StroeVariable:
             {
-                Object*& old_variable = this->cur_context->local_variables[instruction->parameter];
+                Object* old_variable = this->cur_context->local_variables[instruction->parameter];
                 if (old_variable != nullptr)
                 {
                     old_variable->dereference();
@@ -111,6 +130,26 @@ namespace XyA
 
                 this->cur_context->local_variables[instruction->parameter] = this->cur_context->pop_operand();
                 this->cur_context->local_variables[instruction->parameter]->reference();
+
+                break;
+            }
+
+            case InstructionType::StoreAttr:
+            {
+                Object* new_attr = this->cur_context->pop_operand();
+                Object* attr_owner = this->cur_context->pop_operand();
+                
+                Object* old_attr;
+                TryGetAttrResult operation_result = attr_owner->try_get_attr(
+                    this->cur_context->code_obj->names[instruction->parameter], old_attr);
+
+                if (operation_result == TryGetAttrResult::OK)
+                {
+                    old_attr->dereference();
+                }
+
+                attr_owner->attrs[this->cur_context->code_obj->names[instruction->parameter]] = new_attr;
+                new_attr->reference();
 
                 break;
             }
@@ -183,23 +222,23 @@ namespace XyA
                 Builtin::BoolObject* bool_result = dynamic_cast<Builtin::BoolObject*>(top_object);
                 if (bool_result == nullptr)
                 {
-                    BaseFunction* bool_method = this->__get_obj_method(top_object, MagicMethodNames::bool_method_name);
+                    BaseFunction* bool_method;
+                    TryGetMethodResult operation_result =  top_object->try_get_magic_method(MagicMethodNames::bool_method_index, bool_method);
+
+                    switch (operation_result)
+                    {
+                    case TryGetMethodResult::NotFound:
+                        bool_result = XyA_Allocate(Builtin::BoolObject, false);
+                        break;
+
+                    case TryGetMethodResult::NotCallable:
+                        this->__throw_exception("__bool__ is not callable");
+                        break;
                     
-                    Object** args = new Object*[1]{top_object};
-                    Object* result = bool_method->call(args, 1, exception_thrown);
-                    delete[] args;
-
-                    if (exception_thrown)
+                    default:
                     {
-                        Builtin::BuiltinException* exception = static_cast<Builtin::BuiltinException*>(result);
-                        this->__throw_exception(exception->message);
+                        break;
                     }
-
-                    bool_result = dynamic_cast<Builtin::BoolObject*>(result);
-
-                    if (bool_result == nullptr)
-                    {
-                        this->__throw_exception("The type of return value of the __bool__ method was not bool");
                     }
                 }
 
@@ -210,10 +249,7 @@ namespace XyA
                     this->cur_context->instruction_ptr = instruction->parameter - 1;
                 }
 
-                if (bool_result->ref_count == 0)
-                {
-                    XyA_Deallocate(bool_result);
-                }
+                bool_result->deallocate_if_no_ref();
 
                 break;
             }
@@ -342,27 +378,6 @@ namespace XyA
                 this->__throw_exception("The type of the return value of the method is not bool");
             }
             this->cur_context->push_operand(bool_result);            
-        }
-
-
-        BaseFunction* VirtualMachine::__get_obj_method(Object* object, const std::string& method_name) const
-        {
-            BaseFunction* method;
-            auto result = object->try_get_method(method_name, method);
-            switch (result)
-            {
-            case TryGetMethodResult::NotFound:
-                this->__throw_exception("The method " + method_name + " was not found");
-                break;
-            
-            case TryGetMethodResult::NotCallable:
-                this->__throw_exception("The method " + method_name + " was not callable");
-                break;
-
-            default:
-                return method;
-            }
-            return nullptr;
         }
 
         void VirtualMachine::__throw_exception(std::string_view message) const

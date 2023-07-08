@@ -13,7 +13,6 @@ namespace XyA
             StringType::StringType()
             {
                 this->name = "string";
-                this->type = nullptr;
                 this->magic_methods[MagicMethodNames::add_method_index] = XyA_Allocate(BuiltinFunction, string_object_add);
                 this->magic_methods[MagicMethodNames::multiply_method_index] = XyA_Allocate(BuiltinFunction, string_object_multiply);
                 this->magic_methods[MagicMethodNames::equal_method_index] = XyA_Allocate(BuiltinFunction, string_object_equal);
@@ -31,7 +30,7 @@ namespace XyA
 
             StringObject::StringObject()
             {
-                this->type = StringType::get_instance();
+                this->__type = StringType::get_instance();
             }
 
             Object* string_object_add(Object** args, size_t arg_num, bool& exception_thrown)
