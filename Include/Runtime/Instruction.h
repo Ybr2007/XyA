@@ -39,8 +39,10 @@ namespace XyA
             JumpTo,
 
             CallFunction,
+            CallMethod,
 
             GetAttr,
+            GetMethod,
         };
 
         class Instruction

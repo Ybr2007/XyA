@@ -32,7 +32,6 @@ namespace XyA
         {
         public:
             long long ref_count = 0;
-            std::array<Object*, MagicMethodNames::magic_method_num> magic_methods{};
             StrKeyDict<Object*> attrs;
 
             Type* type() const;
@@ -46,7 +45,7 @@ namespace XyA
 
             bool is_instance(Type* type) const;
             TryGetAttrResult try_get_attr(const std::string& attr_name, Object*& result) const;
-            TryGetMethodResult try_get_magic_method(size_t index, BaseFunction*& result) const;
+            TryGetMethodResult try_get_method(const std::string& method_name, BaseFunction*& result) const;
             virtual ~Object();
 
             #ifdef Debug_Display_Object
@@ -60,7 +59,8 @@ namespace XyA
         class Type : public Object
         {
         public:
-            std::string name;
+            std::string name = "type";
+            bool instance_allow_external_attr = false;
 
             static Type* get_instance();
         };
@@ -69,7 +69,7 @@ namespace XyA
                 if (arg_num != expected_arg_num_) \
                 { \
                     exception_thrown = true; \
-                    return new Builtin::BuiltinException("Expected " + std::to_string(expected_arg_num_) + " arguments, got " + std::to_string(arg_num) + __FILE__ + std::to_string(__LINE__)); \
+                    return new Builtin::BuiltinException("Expected " + std::to_string(expected_arg_num_) + " arguments, got " + std::to_string(arg_num)); \
                 }
 
         class BaseFunction : public Object

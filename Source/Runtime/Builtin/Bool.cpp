@@ -52,8 +52,8 @@ namespace XyA
             BoolType::BoolType()
             {
                 this->name = "bool";
-                this->magic_methods[MagicMethodNames::equal_method_index] = XyA_Allocate(BuiltinFunction, bool_object_equal);
-                this->magic_methods[MagicMethodNames::str_method_index] = XyA_Allocate(BuiltinFunction, bool_object_str);
+                this->attrs[MagicMethodNames::equal_method_name] = XyA_Allocate(BuiltinFunction, bool_object_equal);
+                this->attrs[MagicMethodNames::str_method_name] = XyA_Allocate(BuiltinFunction, bool_object_str);
 
                 this->reference_attrs();
             }

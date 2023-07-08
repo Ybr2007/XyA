@@ -50,16 +50,12 @@ namespace XyA
 
                 bool operator!=(const Iterator& other) const
                 {
-                    return (this->__node_list_heads != other.__node_list_heads) || 
-                        (this->__node != other.__node) || 
-                        (this->__index != other.__index);
+                    return this->__node != other.__node;
                 }
 
                 bool operator==(const Iterator& other) const
                 {
-                    return (this->__node_list_heads == other.__node_list_heads) &&
-                        (this->__node == other.__node) &&
-                        (this->__index == other.__index);
+                    return this->__node == other.__node;
                 }
 
                 Node* operator*()
@@ -88,7 +84,7 @@ namespace XyA
                     {
                         Node* node = this->__node_list_heads[i];
                         this->__node_list_heads[i] = this->__node_list_heads[i]->next;
-                        delete node;
+                        XyA_Deallocate(node);
                     }
                 }
                 XyA_Deallocate_Array(this->__node_list_heads);
@@ -108,7 +104,7 @@ namespace XyA
                     node = node->next;
                 }
 
-                node = new Node;
+                node = XyA_Allocate_(Node);
                 node->key = key;
                 node->next = this->__node_list_heads[index];
                 this->__node_list_heads[index] = node;
@@ -150,7 +146,7 @@ namespace XyA
                         {
                             prev->next = node->next;
                         }
-                        delete node;
+                        XyA_Deallocate(node);
                         return;
                     }
                     prev = node;

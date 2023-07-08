@@ -1,17 +1,13 @@
 #pragma once
 #include <Runtime/MemoryManager.hpp>
 #include <Runtime/VirtualMachine.h>
+#include <format>
 
 
 namespace XyA
 {
     namespace Runtime
     {
-        VirtualMachine::VirtualMachine()  // private
-        {
-        
-        }
-
         VirtualMachine* VirtualMachine::get_instance()
         {
             static VirtualMachine instance;
@@ -120,6 +116,24 @@ namespace XyA
                 break;
             }
 
+            case InstructionType::GetMethod:
+            {
+                Object* attr_owner = this->cur_context->top_operand();
+
+                Object* attr;
+                TryGetAttrResult operation_result = attr_owner->try_get_attr(
+                    this->cur_context->code_obj->names[instruction->parameter], attr);
+
+                if (operation_result == TryGetAttrResult::NotFound)
+                {
+                    this->__throw_exception("The variable '" + this->cur_context->code_obj->names[instruction->parameter] + 
+                        "' is not defined or already deleted.");
+                }
+                this->cur_context->push_operand(attr);
+
+                break;
+            }
+
             case InstructionType::StroeVariable:
             {
                 Object* old_variable = this->cur_context->local_variables[instruction->parameter];
@@ -147,6 +161,11 @@ namespace XyA
                 {
                     old_attr->dereference();
                 }
+                else if (!attr_owner->type()->instance_allow_external_attr)
+                {
+                    this->__throw_exception(
+                        std::format("Variables of type '{}' do not allow external attribute addition", attr_owner->type()->name));
+                }
 
                 attr_owner->attrs[this->cur_context->code_obj->names[instruction->parameter]] = new_attr;
                 new_attr->reference();
@@ -156,61 +175,61 @@ namespace XyA
 
             case InstructionType::BinaryAdd:
             {
-                this->__call_binary_operation_magic_method(MagicMethodNames::add_method_index);
+                this->__call_binary_operation_magic_method(MagicMethodNames::add_method_name);
                 break;
             }
 
             case InstructionType::BinarySubtract:
             {
-                this->__call_binary_operation_magic_method(MagicMethodNames::subtract_method_index);
+                this->__call_binary_operation_magic_method(MagicMethodNames::subtract_method_name);
                 break;
             }
 
             case InstructionType::BinaryMultiply:
             {
-                this->__call_binary_operation_magic_method(MagicMethodNames::multiply_method_index);
+                this->__call_binary_operation_magic_method(MagicMethodNames::multiply_method_name);
                 break;
             }
 
             case InstructionType::BinaryDevide:
             {
-                this->__call_binary_operation_magic_method(MagicMethodNames::divide_method_index);
+                this->__call_binary_operation_magic_method(MagicMethodNames::divide_method_name);
                 break;
             }
 
             case InstructionType::CompareIfEqual:
             {
-                this->__call_compare_magic_method(MagicMethodNames::equal_method_index);
+                this->__call_compare_magic_method(MagicMethodNames::equal_method_name);
                 break;
             }
 
             case InstructionType::CompareIfGreaterThan:
             {
-                this->__call_compare_magic_method(MagicMethodNames::greater_method_index);
+                this->__call_compare_magic_method(MagicMethodNames::greater_method_name);
                 break;
             }
 
             case InstructionType::CompareIfGreaterEqual:
             {
-                this->__call_compare_magic_method(MagicMethodNames::greater_equal_method_index);
+                this->__call_compare_magic_method(MagicMethodNames::greater_equal_method_name);
                 break;
             }
 
             case InstructionType::CompareIfLessThan:
             {
-                this->__call_compare_magic_method(MagicMethodNames::less_method_index);
+                this->__call_compare_magic_method(MagicMethodNames::less_method_name);
                 break;
             }
 
             case InstructionType::CompareIfLessEqual:
             {
-                this->__call_compare_magic_method(MagicMethodNames::less_equal_method_index);
+                this->__call_compare_magic_method(MagicMethodNames::less_equal_method_name);
                 break;
             }
 
             case InstructionType::CompareIfNotEqual:
             {
-                this->__call_compare_magic_method(MagicMethodNames::not_equal_method_index);
+                this->__call_compare_magic_method(MagicMethodNames::not_equal_method_name);
                 break;
             }
 
@@ -223,7 +242,8 @@ namespace XyA
                 if (bool_result == nullptr)
                 {
                     BaseFunction* bool_method;
-                    TryGetMethodResult operation_result =  top_object->try_get_magic_method(MagicMethodNames::bool_method_index, bool_method);
+                    TryGetMethodResult operation_result =  top_object->try_get_method(
+                        MagicMethodNames::bool_method_name, bool_method);
 
                     switch (operation_result)
                     {
@@ -296,6 +316,28 @@ namespace XyA
                 this->cur_context->push_operand(result);
                 break;
             }
+
+            case InstructionType::CallMethod:
+            {
+                Object** args = new Object*[instruction->parameter + 1];
+                for (size_t i = 0; i < instruction->parameter; i ++)
+                {
+                    args[instruction->parameter - i] = this->cur_context->pop_operand();
+                }
+                BaseFunction* callee = dynamic_cast<BaseFunction*>(this->cur_context->pop_operand());
+                args[0] = this->cur_context->pop_operand();
+                bool exception_thrown = false; 
+                Object* result = callee->call(args, instruction->parameter + 1, exception_thrown);
+
+                if (exception_thrown)
+                {
+                    Builtin::BuiltinException* exception = static_cast<Builtin::BuiltinException*>(result);
+                    this->__throw_exception(exception->message);
+                }
+                
+                this->cur_context->push_operand(result);
+                break;
+            }
             
             default:
                 break;
@@ -309,13 +351,13 @@ namespace XyA
             this->cur_context = back;
         }
 
-        void VirtualMachine::__call_binary_operation_magic_method(size_t magic_method_index)
+        void VirtualMachine::__call_binary_operation_magic_method(const std::string& magic_method_name)
         {
             Object* obj_2 = this->cur_context->pop_operand();
             Object* obj_1 = this->cur_context->pop_operand();
 
             BaseFunction* method;
-            TryGetMethodResult result = obj_1->try_get_magic_method(magic_method_index, method);
+            TryGetMethodResult result = obj_1->try_get_method(magic_method_name, method);
 
             switch (result)
             {
@@ -342,13 +384,13 @@ namespace XyA
             this->cur_context->push_operand(result_obj);
         }
 
-        void VirtualMachine::__call_compare_magic_method(size_t magic_method_index)
+        void VirtualMachine::__call_compare_magic_method(const std::string& magic_method_name)
         {
             Object* obj_2 = this->cur_context->pop_operand();
             Object* obj_1 = this->cur_context->pop_operand();
 
             BaseFunction* method;
-            TryGetMethodResult result = obj_1->try_get_magic_method(magic_method_index, method);
+            TryGetMethodResult result = obj_1->try_get_method(magic_method_name, method);
 
             switch (result)
             {

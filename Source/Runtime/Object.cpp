@@ -65,23 +65,17 @@ namespace XyA
 
         void Object::reference_attrs()
         {
-            for (auto magic_method : this->magic_methods)
+            for (const auto& attr : this->attrs)
             {
-                if (magic_method != nullptr)
-                {
-                    magic_method->reference();
-                }
+                attr->value->reference();
             }
         }
 
         void Object::dereference_attrs()
         {
-            for (auto magic_method : this->magic_methods)
+            for (const auto& attr : this->attrs)
             {
-                if (magic_method != nullptr)
-                {
-                    magic_method->dereference();
-                }
+                attr->value->dereference();
             }
         }
 
@@ -96,26 +90,19 @@ namespace XyA
             {
                 return TryGetAttrResult::OK;
             }
-            return TryGetAttrResult::NotFound;
+            return this->__type == nullptr ? TryGetAttrResult::NotFound : this->__type->try_get_attr(attr_name, result);
         }
 
-        TryGetMethodResult Object::try_get_magic_method(size_t index, BaseFunction*& result) const
+        TryGetMethodResult Object::try_get_method(const std::string& method_name, BaseFunction*& result) const
         {
-            Object* magic_method = this->magic_methods[index];
-            if (magic_method == nullptr)
+            Object* attr;
+            auto operation_result = this->try_get_attr(method_name, attr);
+            if (operation_result == TryGetAttrResult::NotFound)
             {
-                magic_method = this->type()->magic_methods[index];
-                if (magic_method == nullptr)
-                {
-                    return TryGetMethodResult::NotFound;
-                }
+                return TryGetMethodResult::NotFound;
             }
-            result = dynamic_cast<BaseFunction*>(magic_method);
-            if (result != nullptr)
-            {
-                return TryGetMethodResult::OK;
-            }
-            return TryGetMethodResult::NotCallable;
+            result = dynamic_cast<BaseFunction*>(attr);
+            return result != nullptr ? TryGetMethodResult::OK : TryGetMethodResult::NotCallable;
         }
 
         #ifdef Debug_Display_Object

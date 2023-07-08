@@ -225,7 +225,16 @@ namespace XyA
                 {
                     this->__compile_expression(code_object, arg);
                 }
-                Runtime::Instruction* call_function_instruction = new Runtime::Instruction(Runtime::InstructionType::CallFunction);
+
+                Runtime::Instruction* call_function_instruction = new Runtime::Instruction(
+                    expression_root->children[0]->type == SyntaxAnalysis::SyntaxTreeNodeType::Attr ? 
+                    Runtime::InstructionType::CallMethod : Runtime::InstructionType::CallFunction);
+                    
+                if (expression_root->children[0]->type == SyntaxAnalysis::SyntaxTreeNodeType::Attr)
+                {
+                    code_object->instructions[code_object->instructions.size() - 1]->type = Runtime::InstructionType::GetMethod;
+                }
+
                 call_function_instruction->parameter = expression_root->children[1]->children.size();
                 code_object->instructions.push_back(call_function_instruction);
 

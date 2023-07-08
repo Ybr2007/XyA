@@ -117,7 +117,17 @@ namespace XyA
                 str += " " + std::to_string(this->parameter);
                 break;
 
+            case InstructionType::CallMethod:
+                str += "Call Method";
+                str += " " + std::to_string(this->parameter);
+                break;
+
             case InstructionType::GetAttr:
+                str += "Get Attr";
+                str += " " + std::to_string(this->parameter);
+                break;
+
+            case InstructionType::GetMethod:
                 str += "Get Attr";
                 str += " " + std::to_string(this->parameter);
                 break;

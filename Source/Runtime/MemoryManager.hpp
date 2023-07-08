@@ -2,7 +2,6 @@
 #include <stddef.h>
 #include <utility>
 #include <unordered_set>
-#include <Runtime/Object.h>
 #include <Config.h>
 
 #ifdef Debug_Display_Memory_Leaks
@@ -358,17 +357,7 @@ namespace XyA
                 for (auto iter = this->allocated_objects.begin(); iter != this->allocated_objects.end(); iter ++)
                 {
                     printf(
-                        "%s %zd Allocation Location: %s\n", 
-                        static_cast<Object*>(*iter)->to_string().c_str(),
-                        (size_t)(*iter),
-                        this->allocation_locations[*iter].c_str()
-                    );
-                }
-
-                for (auto iter = this->allocated_arraies.begin(); iter != this->allocated_arraies.end(); iter ++)
-                {
-                    printf(
-                        "Array %zd Allocation Location: %s\n", 
+                        "%zd Allocation Location: %s\n",
                         (size_t)(*iter),
                         this->allocation_locations[*iter].c_str()
                     );

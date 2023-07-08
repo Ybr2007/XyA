@@ -12,8 +12,8 @@ namespace XyA
             NullType::NullType()
             {
                 this->name = "null";
-                this->magic_methods[MagicMethodNames::equal_method_index] = XyA_Allocate(BuiltinFunction, null_object_equal);
-                this->magic_methods[MagicMethodNames::str_method_index] = XyA_Allocate(BuiltinFunction, null_object_str);
+                this->attrs[MagicMethodNames::equal_method_name] = XyA_Allocate(BuiltinFunction, null_object_equal);
+                this->attrs[MagicMethodNames::str_method_name] = XyA_Allocate(BuiltinFunction, null_object_str);
 
                 this->reference_attrs();
             }

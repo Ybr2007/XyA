@@ -105,24 +105,6 @@ namespace XyA
         printf("\n");
         #endif
 
-        // printf("Literals:\n");
-        // for (size_t i = 0; i < code_object->literals.size(); i ++)
-        // {
-        //     Runtime::Builtin::StringObject* str_obj = dynamic_cast<Runtime::Builtin::StringObject*>(code_object->literals[i]);
-        //     if (str_obj == nullptr)
-        //     {
-        //         Runtime::BaseFunction* str_method = dynamic_cast<Runtime::BaseFunction*>(
-        //             code_object->literals[i]->type->attrs[Runtime::MagicMethodNames::str_method_name]);
-
-        //         Runtime::Object** args = new Runtime::Object*[1]{code_object->literals[i]};
-        //         bool exception_thrown = false;
-        //         str_obj = dynamic_cast<Runtime::Builtin::StringObject*>(str_method->call(args, 1, exception_thrown));
-        //     }
-        //     printf("index: %d  value: %s  ref_count: %d\n", (int)i, str_obj->value.c_str(), code_object->literals[i]->ref_count);
-        // }
-        // printf("\n");
-        // #endif
-
         // 编译结束，Tokens、SyntaxTree不再使用，释放
         for (LexicalAnalysis::Token* token : *tokens)
         {

@@ -13,10 +13,10 @@ namespace XyA
             StringType::StringType()
             {
                 this->name = "string";
-                this->magic_methods[MagicMethodNames::add_method_index] = XyA_Allocate(BuiltinFunction, string_object_add);
-                this->magic_methods[MagicMethodNames::multiply_method_index] = XyA_Allocate(BuiltinFunction, string_object_multiply);
-                this->magic_methods[MagicMethodNames::equal_method_index] = XyA_Allocate(BuiltinFunction, string_object_equal);
-                this->magic_methods[MagicMethodNames::bool_method_index] = XyA_Allocate(BuiltinFunction, string_object_bool);
+                this->attrs[MagicMethodNames::add_method_name] = XyA_Allocate(BuiltinFunction, string_object_add);
+                this->attrs[MagicMethodNames::multiply_method_name] = XyA_Allocate(BuiltinFunction, string_object_multiply);
+                this->attrs[MagicMethodNames::equal_method_name] = XyA_Allocate(BuiltinFunction, string_object_equal);
+                this->attrs[MagicMethodNames::bool_method_name] = XyA_Allocate(BuiltinFunction, string_object_bool);
 
                 this->reference_attrs();
             }
