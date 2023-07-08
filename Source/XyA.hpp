@@ -93,7 +93,7 @@ namespace XyA
         printf("\n");
         
         printf("Function Instructions:\n");
-        for (auto iter : *code_object->functions)
+        for (auto iter : code_object->functions)
         {
             printf("Function Name: %s\n", iter.first.c_str());
             for (size_t i = 0; i < iter.second->code_object->instructions.size(); i ++)

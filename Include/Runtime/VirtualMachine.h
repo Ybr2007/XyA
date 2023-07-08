@@ -33,9 +33,10 @@ namespace XyA
             void __excute_instruction(Instruction* instruction);
             void __back_context();
 
-            Object* __call_object(Object* callee, Object** args, size_t arg_num, bool& exception_thrown);
             void __call_binary_operation_magic_method(size_t magic_method_index);
             void __call_compare_magic_method(size_t magic_method_index);
+
+            BaseFunction* __get_obj_method(Object* object, const std::string& method_name) const;
 
             void __throw_exception(std::string_view message) const;
         };

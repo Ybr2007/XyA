@@ -12,23 +12,22 @@ namespace XyA
             this->code_obj = code_obj;
 
             this->local_variables = new Object*[code_obj->variable_name_2_index.size()];  // delete于Context::~Context()
-            for (size_t i = 0; i < code_obj->variable_name_2_index.size(); i ++)  // 将所有变量设置为未定义
+            for (size_t i = 0; i < code_obj->variable_name_2_index.size(); i ++)
             {
                 this->local_variables[i] = nullptr;
             }
 
-            for (auto iter : *this->code_obj->functions)  // 将函数加载到对应的本地变量中
+            for (auto iter : this->code_obj->functions)
             {
                 this->local_variables[this->code_obj->variable_name_2_index[iter.first]] = reinterpret_cast<Object*>(iter.second);
             }
-            XyA_Deallocate(this->code_obj->functions);
         }
 
         Context::~Context()
-        { 
+        {
             if (!this->operand_stack.empty())
             {
-                printf("WARNING: The stack was not empty when the context exited.");
+                printf("WARNING: The stack was not empty when the context exits.");
             }
 
             /* 离开作用域，所有变量引用计数减一 */
@@ -94,6 +93,11 @@ namespace XyA
                 exit(-1);
             }
             return this->operand_stack.top();
+        }
+
+        void Context::set_top_operand(Object* obj)
+        {
+            this->operand_stack.set_top(obj);
         }
     }
 }

@@ -33,6 +33,7 @@ namespace XyA
             void push_operand(Object* obj);
             Object* pop_operand();
             Object* top_operand() const;
+            void set_top_operand(Object* obj);
         };
     }
 }

@@ -1,7 +1,6 @@
 #pragma once
-#include <Runtime/VirtualMachine.h>
 #include <Runtime/MemoryManager.hpp>
-#include <Runtime/Function.h>
+#include <Runtime/VirtualMachine.h>
 
 
 namespace XyA
@@ -38,7 +37,7 @@ namespace XyA
                 Instruction* cur_instruction = this->cur_context->cur_instruction();
                 // printf("Instruction %d, %s\n", (size_t)VirtualMachine::get_instance()->cur_context, cur_instruction->to_string().c_str());
                 this->__excute_instruction(cur_instruction);
-                // printf("Instruction Executing Finished\n");
+                // printf("FINISH\n");
                 this->cur_context->instruction_ptr ++;
             }
             this->__back_context();
@@ -46,29 +45,23 @@ namespace XyA
 
         void VirtualMachine::__init_global_context()
         {
-            /* global builtin types */
-            Object*& builtin_int_type = this->global_context->local_variables[0];
-            builtin_int_type = Builtin::IntType::get_instance();
-            builtin_int_type->reference();
-
-            /* global builtin functions */
-            Object*& builtin_print_function = this->global_context->local_variables[1]; // 0: global_context->code_obj->variable_name_indices["print"]
+            Object*& builtin_print_function = this->global_context->local_variables[0]; // 0: global_context->code_obj->variable_name_indices["print"]
             builtin_print_function = XyA_Allocate(Builtin::BuiltinFunction, Builtin::print);
             builtin_print_function->reference();
 
-            Object*& builtin__get_ref_count_function = this->global_context->local_variables[2]; // 1: global_context->code_obj->variable_name_indices["_get_ref_count"]
+            Object*& builtin__get_ref_count_function = this->global_context->local_variables[1]; // 1: global_context->code_obj->variable_name_indices["_get_ref_count"]
             builtin__get_ref_count_function = XyA_Allocate(Builtin::BuiltinFunction, Builtin::_get_ref_count);
             builtin__get_ref_count_function->reference();
 
-            Object*& builtin__get_id_function = this->global_context->local_variables[3];  // 2: global_context->code_obj->variable_name_indices["_get_id"]
+            Object*& builtin__get_id_function = this->global_context->local_variables[2];  // 2: global_context->code_obj->variable_name_indices["_get_id"]
             builtin__get_id_function = XyA_Allocate(Builtin::BuiltinFunction, Builtin::_get_id);
             builtin__get_id_function->reference();
 
-            Object*& builtin_clock_function = this->global_context->local_variables[4];  // 3: global_context->code_obj->variable_name_indices["clock"]
+            Object*& builtin_clock_function = this->global_context->local_variables[3];  // 3: global_context->code_obj->variable_name_indices["clock"]
             builtin_clock_function = XyA_Allocate(Builtin::BuiltinFunction, Builtin::clock_);
             builtin_clock_function->reference();
 
-            Object*& builtin_sizeof_function = this->global_context->local_variables[5];  // 4: global_context->code_obj->variable_name_indices["clock"]
+            Object*& builtin_sizeof_function = this->global_context->local_variables[4];  // 4: global_context->code_obj->variable_name_indices["clock"]
             builtin_sizeof_function = XyA_Allocate(Builtin::BuiltinFunction, Builtin::sizeof_);
             builtin_sizeof_function->reference();
         }
@@ -109,9 +102,27 @@ namespace XyA
                 break;
             }
 
+            case InstructionType::GetAttr:
+            {
+                Object* attr_owner = this->cur_context->top_operand();
+
+                Object* attr;
+                TryGetAttrResult operation_result = attr_owner->try_get_attr(
+                    this->cur_context->code_obj->names[instruction->parameter], attr);
+
+                if (operation_result == TryGetAttrResult::NotFound)
+                {
+                    this->__throw_exception("The variable '" + this->cur_context->code_obj->names[instruction->parameter] + 
+                        "' is not defined or already deleted.");
+                }
+                this->cur_context->set_top_operand(attr);
+
+                break;
+            }
+
             case InstructionType::StroeVariable:
             {
-                Object*& old_variable = this->cur_context->local_variables[instruction->parameter];
+                Object* old_variable = this->cur_context->local_variables[instruction->parameter];
                 if (old_variable != nullptr)
                 {
                     old_variable->dereference();
@@ -126,23 +137,20 @@ namespace XyA
             case InstructionType::StoreAttr:
             {
                 Object* new_attr = this->cur_context->pop_operand();
-                Object* attr_onwer = this->cur_context->pop_operand();
-
-                if (attr_onwer->type != nullptr && !attr_onwer->type->instance_allows_external_attr)
-                {
-                    this->__throw_exception("The object does not allow external attr definition");
-                }
-
+                Object* attr_owner = this->cur_context->pop_operand();
+                
                 Object* old_attr;
-                TryGetAttrResult operation_result = attr_onwer->try_get_attr(
+                TryGetAttrResult operation_result = attr_owner->try_get_attr(
                     this->cur_context->code_obj->names[instruction->parameter], old_attr);
+
                 if (operation_result == TryGetAttrResult::OK)
                 {
                     old_attr->dereference();
                 }
 
-                attr_onwer->attrs[this->cur_context->code_obj->names[instruction->parameter]] = new_attr;
+                attr_owner->attrs[this->cur_context->code_obj->names[instruction->parameter]] = new_attr;
                 new_attr->reference();
+
                 break;
             }
 
@@ -215,33 +223,22 @@ namespace XyA
                 if (bool_result == nullptr)
                 {
                     BaseFunction* bool_method;
-                    auto operation_result = top_object->try_get_magic_method(MagicMethodNames::bool_method_index, bool_method);
+                    TryGetMethodResult operation_result =  top_object->try_get_magic_method(MagicMethodNames::bool_method_index, bool_method);
+
                     switch (operation_result)
                     {
                     case TryGetMethodResult::NotFound:
-                        this->__throw_exception("The object cannot convert to bool");
+                        bool_result = XyA_Allocate(Builtin::BoolObject, false);
                         break;
-                    
+
                     case TryGetMethodResult::NotCallable:
-                        this->__throw_exception("The attr '__bool__' was not callable");
+                        this->__throw_exception("__bool__ is not callable");
+                        break;
+                    
+                    default:
+                    {
                         break;
                     }
-                    
-                    Object** args = new Object*[1]{top_object};
-                    Object* result_object = bool_method->call(args, 1, exception_thrown);
-                    delete[] args;
-
-                    if (exception_thrown)
-                    {
-                        Builtin::BuiltinException* exception = static_cast<Builtin::BuiltinException*>(result_object);
-                        this->__throw_exception(exception->message);
-                    }
-
-                    bool_result = dynamic_cast<Builtin::BoolObject*>(result_object);
-
-                    if (bool_result == nullptr)
-                    {
-                        this->__throw_exception("The type of return value of the __bool__ method was not bool");
                     }
                 }
 
@@ -252,10 +249,7 @@ namespace XyA
                     this->cur_context->instruction_ptr = instruction->parameter - 1;
                 }
 
-                if (bool_result->ref_count == 0)
-                {
-                    XyA_Deallocate(bool_result);
-                }
+                bool_result->deallocate_if_no_ref();
 
                 break;
             }
@@ -289,9 +283,9 @@ namespace XyA
                 {
                     args[instruction->parameter - i - 1] = this->cur_context->pop_operand();
                 }
-                Object* callee = this->cur_context->pop_operand();
+                BaseFunction* callee = dynamic_cast<BaseFunction*>(this->cur_context->pop_operand());
                 bool exception_thrown = false; 
-                Object* result = this->__call_object(callee, args, instruction->parameter, exception_thrown);
+                Object* result = callee->call(args, instruction->parameter, exception_thrown);
 
                 if (exception_thrown)
                 {
@@ -300,20 +294,6 @@ namespace XyA
                 }
                 
                 this->cur_context->push_operand(result);
-                break;
-            }
-
-            case InstructionType::GetAttr:
-            {
-                Object* attr_onwer = this->cur_context->pop_operand();
-                Object* attr_object;
-                TryGetAttrResult operation_result = attr_onwer->try_get_attr(
-                    this->cur_context->code_obj->names[instruction->parameter], attr_object);
-                if (operation_result == TryGetAttrResult::NotFound)
-                {
-                    this->__throw_exception("Attr '" + this->cur_context->code_obj->names[instruction->parameter] + "' not found");
-                }
-                this->cur_context->push_operand(attr_object);
                 break;
             }
             
@@ -327,27 +307,6 @@ namespace XyA
             Context* back = this->cur_context->back;
             delete this->cur_context;
             this->cur_context = back;
-        }
-        
-        Object* VirtualMachine::__call_object(Object* callee, Object** args, size_t arg_num, bool& exception_thrown)
-        {
-            BaseFunction* function = dynamic_cast<BaseFunction*>(callee);
-            if (function == nullptr)
-            {
-                TryGetMethodResult result = callee->try_get_magic_method(MagicMethodNames::call_method_index, function);
-                switch (result)
-                {
-                case TryGetMethodResult::NotFound:
-                    this->__throw_exception("The object was not callable");
-                    break;
-                
-                case TryGetMethodResult::NotCallable:
-                    this->__throw_exception("The attr 'operator()' was not callable");
-                    break;
-                }
-            }
-
-            return function->call(args, arg_num, exception_thrown);
         }
 
         void VirtualMachine::__call_binary_operation_magic_method(size_t magic_method_index)

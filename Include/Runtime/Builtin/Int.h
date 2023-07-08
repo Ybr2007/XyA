@@ -25,8 +25,6 @@ namespace XyA
             inline Object* int_object_compare_if_greater_equal(Object** args, size_t arg_num, bool& exception_thrown);
             inline Object* int_object_compare_if_less(Object** args, size_t arg_num, bool& exception_thrown);
             inline Object* int_object_compare_if_less_equal(Object** args, size_t arg_num, bool& exception_thrown);
-            
-            inline Object* int_type_call(Object** args, size_t arg_num, bool& exception_thrown);
 
             class IntType : public Type
             {

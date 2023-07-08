@@ -13,7 +13,6 @@ namespace XyA
         FunctionType::FunctionType()
         {
             this->name = "function";
-            this->type = nullptr;
         }
 
         FunctionType* FunctionType::get_instance()
@@ -24,7 +23,7 @@ namespace XyA
 
         Function::Function()
         {
-            this->type = FunctionType::get_instance();
+            this->__type = FunctionType::get_instance();
             this->code_object = XyA_Allocate_(CodeObject);
         }
 

@@ -52,9 +52,8 @@ namespace XyA
             BoolType::BoolType()
             {
                 this->name = "bool";
-                this->type = nullptr;
-                this->instance_magic_methods[MagicMethodNames::equal_method_index] = XyA_Allocate(BuiltinFunction, bool_object_equal);
-                this->instance_magic_methods[MagicMethodNames::str_method_index] = XyA_Allocate(BuiltinFunction, bool_object_str);
+                this->magic_methods[MagicMethodNames::equal_method_index] = XyA_Allocate(BuiltinFunction, bool_object_equal);
+                this->magic_methods[MagicMethodNames::str_method_index] = XyA_Allocate(BuiltinFunction, bool_object_str);
 
                 this->reference_attrs();
             }
@@ -67,7 +66,7 @@ namespace XyA
 
             BoolObject::BoolObject(bool value)
             {
-                this->type = BoolType::get_instance();
+                this->__type = BoolType::get_instance();
                 this->value = value;
             }
         }

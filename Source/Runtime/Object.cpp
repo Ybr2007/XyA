@@ -14,6 +14,11 @@ namespace XyA
             this->dereference_attrs();
         }
 
+        Type* Object::type() const
+        {
+            return this->__type != nullptr ? this->__type : Type::get_instance();
+        }
+
         void Object::reference()
         {
             this->ref_count ++;
@@ -60,10 +65,6 @@ namespace XyA
 
         void Object::reference_attrs()
         {
-            for (auto iter : this->attrs)
-            {
-                iter.second->reference();
-            }
             for (auto magic_method : this->magic_methods)
             {
                 if (magic_method != nullptr)
@@ -75,10 +76,6 @@ namespace XyA
 
         void Object::dereference_attrs()
         {
-            for (auto iter : this->attrs)
-            {
-                iter.second->dereference();
-            }
             for (auto magic_method : this->magic_methods)
             {
                 if (magic_method != nullptr)
@@ -90,20 +87,24 @@ namespace XyA
 
         bool Object::is_instance(Type* type) const
         {
-            return this->type == type;
+            return this->type() == type;
         }
 
-        TryGetMethodResult Object::try_get_magic_method(size_t magic_method_index, BaseFunction*& result) const
+        TryGetAttrResult Object::try_get_attr(const std::string& attr_name, Object*& result) const
         {
-            Object* magic_method = this->magic_methods[magic_method_index];
+            if (this->attrs.try_get(attr_name, result))
+            {
+                return TryGetAttrResult::OK;
+            }
+            return TryGetAttrResult::NotFound;
+        }
+
+        TryGetMethodResult Object::try_get_magic_method(size_t index, BaseFunction*& result) const
+        {
+            Object* magic_method = this->magic_methods[index];
             if (magic_method == nullptr)
             {
-                if (this->type == nullptr)
-                {
-                    return TryGetMethodResult::NotFound;
-                }
-
-                magic_method = this->type->instance_magic_methods[magic_method_index];
+                magic_method = this->type()->magic_methods[index];
                 if (magic_method == nullptr)
                 {
                     return TryGetMethodResult::NotFound;
@@ -117,17 +118,6 @@ namespace XyA
             return TryGetMethodResult::NotCallable;
         }
 
-        TryGetAttrResult Object::try_get_attr(const std::string& attr_name, Object*& result) const
-        {
-            auto iter = this->attrs.find(attr_name);
-            if (iter == this->attrs.end())
-            {
-                return TryGetAttrResult::NotFound;
-            }
-            result = iter->second;
-            return TryGetAttrResult::OK;
-        }
-        
         #ifdef Debug_Display_Object
         std::string Object::to_string() const
         {
@@ -137,37 +127,10 @@ namespace XyA
         }
         #endif
 
-        Type::~Type()
-        {            
-            for (auto iter : this->instance_methods)
-            {
-                iter.second->dereference();
-            }
-            for (auto magic_method : this->instance_magic_methods)
-            {
-                if (magic_method != nullptr)
-                {
-                    magic_method->dereference();
-                }
-            }
-        }
-
-        void Type::reference_attrs()
+        Type* Type::get_instance()
         {
-            Object::reference_attrs();
-
-            for (auto iter : this->instance_methods)
-            {
-                iter.second->reference();
-            }
-            for (auto magic_method : this->instance_magic_methods)
-            {
-                if (magic_method != nullptr)
-                {
-                    magic_method->reference();
-                }
-            }
+            static Type instance;
+            return &instance;
         }
-
     }
 }

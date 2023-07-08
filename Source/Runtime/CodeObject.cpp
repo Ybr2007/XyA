@@ -7,12 +7,6 @@ namespace XyA
 {
     namespace Runtime
     {
-        CodeObject::CodeObject()
-        {
-            using T = std::unordered_map<std::string, Function*>;
-            this->functions = XyA_Allocate_(T);
-        }
-
         CodeObject::~CodeObject()
         {
             for (size_t i = 0; i < this->literals.size(); i ++)
@@ -28,16 +22,16 @@ namespace XyA
 
         bool CodeObject::try_get_literal_index(Builtin::IntObject* literal_object, size_t& result) const
         {
-            auto it = std::find_if(literals.begin(), literals.end(),
+            auto iter = std::find_if(literals.begin(), literals.end(),
                 [&](Object* obj) 
                 {
                     auto int_obj = dynamic_cast<Builtin::IntObject*>(obj);
                     return int_obj && int_obj->value == literal_object->value;
                 }
             );
-            if (it != literals.end()) 
+            if (iter != literals.end()) 
             {
-                result = std::distance(literals.begin(), it);
+                result = std::distance(literals.begin(), iter);
                 return true;
             } 
             else 
@@ -48,16 +42,16 @@ namespace XyA
 
         bool CodeObject::try_get_literal_index(Builtin::FloatObject* literal_object, size_t& result) const
         {
-            auto it = std::find_if(literals.begin(), literals.end(),
+            auto iter = std::find_if(literals.begin(), literals.end(),
                 [&](Object* obj) 
                 {
                     auto defined_obj = dynamic_cast<Builtin::FloatObject*>(obj);
                     return defined_obj && defined_obj->value == literal_object->value;
                 }
             );
-            if (it != literals.end()) 
+            if (iter != literals.end()) 
             {
-                result = std::distance(literals.begin(), it);
+                result = std::distance(literals.begin(), iter);
                 return true;
             } 
             else 
@@ -68,16 +62,16 @@ namespace XyA
 
         bool CodeObject::try_get_literal_index(Builtin::StringObject* literal_object, size_t& result) const
         {
-            auto it = std::find_if(literals.begin(), literals.end(),
+            auto iter = std::find_if(literals.begin(), literals.end(),
                 [&](Object* obj) 
                 {
                     auto defined_obj = dynamic_cast<Builtin::StringObject*>(obj);
                     return defined_obj && defined_obj->value == literal_object->value;
                 }
             );
-            if (it != literals.end()) 
+            if (iter != literals.end()) 
             {
-                result = std::distance(literals.begin(), it);
+                result = std::distance(literals.begin(), iter);
                 return true;
             } 
             else 
@@ -88,16 +82,16 @@ namespace XyA
 
         bool CodeObject::try_get_literal_index(Builtin::BoolObject* literal_object, size_t& result) const
         {
-            auto it = std::find_if(literals.begin(), literals.end(),
+            auto iter = std::find_if(literals.begin(), literals.end(),
                 [&](Object* obj) 
                 {
                     auto defined_obj = dynamic_cast<Builtin::BoolObject*>(obj);
                     return defined_obj && defined_obj->value == literal_object->value;
                 }
             );
-            if (it != literals.end()) 
+            if (iter != literals.end()) 
             {
-                result = std::distance(literals.begin(), it);
+                result = std::distance(literals.begin(), iter);
                 return true;
             } 
             else 
@@ -108,10 +102,10 @@ namespace XyA
 
         bool CodeObject::try_get_variable_index(const std::string& variable_name, size_t& result) const
         {
-            auto it = this->variable_name_2_index.find(variable_name);
-            if (it != variable_name_2_index.end()) 
+            auto iter = this->variable_name_2_index.find(variable_name);
+            if (iter != variable_name_2_index.end()) 
             {
-                result = it->second;
+                result = iter->second;
                 return true;
             } 
             else 
@@ -122,10 +116,15 @@ namespace XyA
         
         bool CodeObject::try_get_name_index(const std::string& name, size_t& result) const
         {
-            auto it = this->variable_name_2_index.find(name);
-            if (it != variable_name_2_index.end()) 
+            auto iter = std::find_if(this->names.begin(), this->names.end(),
+                [&](const std::string& defined_name) -> bool
+                {
+                    return defined_name == name;
+                }
+            );
+            if (iter != this->names.end()) 
             {
-                result = it->second;
+                result = std::distance(this->names.begin(), iter);
                 return true;
             } 
             else 

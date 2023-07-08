@@ -20,11 +20,10 @@ namespace XyA
         public:
             std::vector<Instruction*> instructions;  
             std::vector<Object*> literals;
-            std::unordered_map<std::string, Function*>* functions;  // 使用vector指针是因为要手动释放
+            std::unordered_map<std::string, Function*> functions;
             std::unordered_map<std::string, size_t> variable_name_2_index;
             std::vector<std::string> names;
 
-            CodeObject();
             ~CodeObject();
 
             bool try_get_literal_index(Builtin::IntObject* literal_object, size_t& result) const;

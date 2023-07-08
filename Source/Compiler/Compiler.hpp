@@ -42,7 +42,6 @@ namespace XyA
             // delete于Runtime::Context::~Context
             this->__global_code_object = Runtime::XyA_Allocate_(Runtime::CodeObject);
 
-            this->__global_code_object->add_variable_name("int");
             this->__global_code_object->add_variable_name("print");
             this->__global_code_object->add_variable_name("_get_ref_count");
             this->__global_code_object->add_variable_name("_get_id");
@@ -91,7 +90,7 @@ namespace XyA
                 }
 
                 this->__compile_block(function->code_object, unit_root->children[1]);
-                code_object->functions->operator[](unit_root->token->value) = function;
+                code_object->functions[unit_root->token->value] = function;
                 break;
             }
 
