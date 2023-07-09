@@ -36,8 +36,6 @@ namespace XyA
             void __call_binary_operation_magic_method(const std::string& magic_method_name);
             void __call_compare_magic_method(const std::string& magic_method_name);
 
-            BaseFunction* __get_obj_method(Object* object, const std::string& method_name) const;
-
             void __throw_exception(std::string_view message) const;
         };
     }

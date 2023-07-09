@@ -6,6 +6,7 @@
 #include <Runtime/Builtin/Float.h>
 #include <Runtime/Builtin/String.h>
 #include <Runtime/Builtin/Bool.h>
+#include <Runtime/Builtin/Null.h>
 #include <Runtime/Function.h>
 #include <Runtime/MemoryManager.hpp>
 #include <Utils/StringUtils.hpp>
@@ -226,23 +227,22 @@ namespace XyA
 
             if (expression_root->type == SyntaxAnalysis::SyntaxTreeNodeType::Call)
             {
-                this->__compile_expression(code_object, expression_root->children[0]);  // 计算callee的值
+                bool callee_is_method = expression_root->children[0]->type == SyntaxAnalysis::SyntaxTreeNodeType::Attr;
+
                 for (auto arg : expression_root->children[1]->children)  // expression_root->children[1]: Argument List
                 {
                     this->__compile_expression(code_object, arg);
                 }
 
-                Runtime::Instruction* call_function_instruction = new Runtime::Instruction(
-                    expression_root->children[0]->type == SyntaxAnalysis::SyntaxTreeNodeType::Attr ? 
-                    Runtime::InstructionType::CallMethod : Runtime::InstructionType::CallFunction);
-                call_function_instruction->parameter = expression_root->children[1]->children.size();
-                    
-                if (expression_root->children[0]->type == SyntaxAnalysis::SyntaxTreeNodeType::Attr)
+                this->__compile_expression(code_object, expression_root->children[0]);  // 计算callee的值
+                if (callee_is_method)  // 如果调用的是method，则将最后的Get_Attr指令改为Get_Method
                 {
-                    code_object->instructions[code_object->instructions.size() - call_function_instruction->parameter - 1]->type = 
-                        Runtime::InstructionType::GetMethod;
+                    code_object->instructions[code_object->instructions.size() - 1]->type = Runtime::InstructionType::GetMethod;
                 }
 
+                Runtime::Instruction* call_function_instruction = new Runtime::Instruction(
+                     callee_is_method ? Runtime::InstructionType::CallMethod : Runtime::InstructionType::CallFunction);
+                call_function_instruction->parameter = expression_root->children[1]->children.size();                
                 code_object->instructions.push_back(call_function_instruction);
 
                 if (pop)
@@ -482,9 +482,10 @@ namespace XyA
         Runtime::Type* Compiler::__build_class(
             Runtime::CodeObject* code_object, SyntaxAnalysis::SyntaxTreeNode* class_definition_root, size_t& class_variable_index)
         {
-            Runtime::Type* class_type = XyA_Allocate_(Runtime::Type);
-            class_type->instance_allow_external_attr = true;
-            class_type->ref_count = 1;
+            Runtime::Type* cls = XyA_Allocate_(Runtime::Type);
+            cls->name = class_definition_root->token->value;
+            cls->instance_allow_external_attr = true;
+            cls->ref_count = 1;
 
             if (code_object != nullptr && 
                 !code_object->try_get_variable_index(class_definition_root->token->value, class_variable_index))
@@ -494,7 +495,7 @@ namespace XyA
 
             for (auto method_definithon_root : class_definition_root->children)
             {
-                class_type->attrs[method_definithon_root->token->value] = this->__build_function(method_definithon_root);
+                cls->attrs[method_definithon_root->token->value] = this->__build_function(method_definithon_root);
             }
             Runtime::Object* new_method = XyA_Allocate(
                 Runtime::Builtin::BuiltinFunction,
@@ -502,6 +503,7 @@ namespace XyA
                 {
                     Runtime::Type* cls = static_cast<Runtime::Type*>(args[0]);
                     Runtime::Object* instance = XyA_Allocate_(Runtime::Object);
+                    instance->reference();
                     instance->set_type(cls);
 
                     Runtime::BaseFunction* init_method;
@@ -509,23 +511,34 @@ namespace XyA
 
                     if (result == Runtime::TryGetMethodResult::OK)
                     {
-                        Runtime::Object** init_Method_args = new Runtime::Object*[arg_num];
+                        Runtime::Object** init_Method_args = XyA_Allocate_Array_(Runtime::Object*, arg_num);
                         init_Method_args[0] = instance;
                         for (size_t i = 1; i < arg_num; i ++)
                         {
                             init_Method_args[i] = args[i];
                         }               
                         Runtime::Object* return_object = init_method->call(init_Method_args, arg_num, exception_thrown);
-                        delete[] init_Method_args;
-                    }
 
+                        if (return_object->type() != Runtime::Builtin::NullType::get_instance())
+                        {
+                            exception_thrown = true; 
+                            return XyA_Allocate(Runtime::Builtin::BuiltinException, "The return object of the method __init__ is not null");
+                        }
+                        else
+                        {
+                            XyA_Deallocate(return_object);
+                        }
+
+                        XyA_Deallocate_Array(init_Method_args, arg_num);
+                    }
+                    instance->ref_count --;
                     return instance;
                 }
             );
             new_method->reference();
-            class_type->attrs[Runtime::MagicMethodNames::new_method_name] = new_method;
+            cls->attrs[Runtime::MagicMethodNames::new_method_name] = new_method;
 
-            return class_type;
+            return cls;
         }
 
     }  // namespace Compiler

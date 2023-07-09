@@ -1,7 +1,8 @@
 #pragma once
+#include <format>
 #include <Runtime/MemoryManager.hpp>
 #include <Runtime/VirtualMachine.h>
-#include <format>
+#include <Runtime/FunctionalUtils.hpp>
 
 
 namespace XyA
@@ -31,7 +32,7 @@ namespace XyA
             while (this->cur_context->instruction_ptr < this->cur_context->code_obj->instructions.size())
             {
                 Instruction* cur_instruction = this->cur_context->cur_instruction();
-                // printf("Instruction %d, %s\n", (size_t)VirtualMachine::get_instance()->cur_context, cur_instruction->to_string().c_str());
+                // printf("Instruction %zd, %s\n", (size_t)VirtualMachine::get_instance()->cur_context, cur_instruction->to_string().c_str());
                 this->__excute_instruction(cur_instruction);
                 // printf("FINISH\n");
                 this->cur_context->instruction_ptr ++;
@@ -296,48 +297,67 @@ namespace XyA
 
             case InstructionType::CallFunction:
             {
-                Object** args = new Object*[instruction->parameter + 1];
-                for (size_t i = 0; i < instruction->parameter; i ++)
-                {
-                    args[instruction->parameter - i] = this->cur_context->pop_operand();
-                }
                 Object* callee_object = this->cur_context->pop_operand();
-                BaseFunction* callee_function;
-                unsigned char arg_offset;
+                Object** args;
+                size_t arg_num;
+                bool exception_thrown = false;
+                Object* return_object;
 
+                // 被调用的对象是类型，则调用__new__魔术方法初始化一个该类型的示例，并将类型对象本身作为第一个参数传入__new__方法
                 if (callee_object->type() == Type::get_instance())
                 {
-                    arg_offset = 1;
+                    arg_num = instruction->parameter + 1;
+                    args = XyA_Allocate_Array_(Object*, arg_num);
                     args[0] = callee_object;
-                    auto operation_result = callee_object->try_get_method(MagicMethodNames::new_method_name, callee_function);
-                }
-                else
-                {
-                    arg_offset = 0;
-                    callee_function = static_cast<BaseFunction*>(callee_object);
-                }
+                    for (size_t i = 1; i <= instruction->parameter; i ++)
+                    {
+                        args[i] = this->cur_context->pop_operand();
+                    }
 
-                bool exception_thrown = false; 
-                Object* result = callee_function->call(args + 1 - arg_offset, instruction->parameter + arg_offset, exception_thrown);
+                    BaseFunction* new_method;
+                    auto result = callee_object->try_get_method(MagicMethodNames::new_method_name, new_method);
+
+                    if (result != TryGetMethodResult::OK)
+                    {
+                        this->__throw_exception("Cannot call the __new__");
+                    }
+
+                    return_object = new_method->call(args, arg_num, exception_thrown);
+                }
+                else if (is_function(callee_object))
+                {
+                    BaseFunction* callee_function = static_cast<BaseFunction*>(callee_object);
+                    arg_num = instruction->parameter;
+
+                    args = XyA_Allocate_Array_(Object*, arg_num);
+                    for (size_t i = 0; i < arg_num; i ++)
+                    {
+                        args[arg_num - i - 1] = this->cur_context->pop_operand();
+                    }
+
+                    return_object = callee_function->call(args, arg_num, exception_thrown);
+                }
+                XyA_Deallocate_Array(args, arg_num);
 
                 if (exception_thrown)
                 {
-                    Builtin::BuiltinException* exception = static_cast<Builtin::BuiltinException*>(result);
+                    Builtin::BuiltinException* exception = static_cast<Builtin::BuiltinException*>(return_object);
                     this->__throw_exception(exception->message);
                 }
                 
-                this->cur_context->push_operand(result);
+                this->cur_context->push_operand(return_object);
                 break;
             }
 
             case InstructionType::CallMethod:
             {
+                Object* callee_object = this->cur_context->pop_operand();
                 Object** args = new Object*[instruction->parameter + 1];
                 for (size_t i = 0; i < instruction->parameter; i ++)
                 {
                     args[instruction->parameter - i] = this->cur_context->pop_operand();
                 }
-                BaseFunction* callee = dynamic_cast<BaseFunction*>(this->cur_context->pop_operand());
+                BaseFunction* callee = dynamic_cast<BaseFunction*>(callee_object);
                 args[0] = this->cur_context->pop_operand();
                 bool exception_thrown = false; 
                 Object* result = callee->call(args, instruction->parameter + 1, exception_thrown);
@@ -386,7 +406,7 @@ namespace XyA
             Object** args = XyA_Allocate_Array(Object*, 2, obj_1, obj_2);
             bool exception_thrown = false;
             Object* result_obj = method->call(args, 2, exception_thrown);
-            XyA_Deallocate_Array(args);
+            XyA_Deallocate_Array(args, 2);
 
             if (exception_thrown)
             {
@@ -419,7 +439,7 @@ namespace XyA
             Object** args = XyA_Allocate_Array(Object*, 2, obj_1, obj_2);
             bool exception_thrown = false;
             Object* result_obj = method->call(args, 2, exception_thrown);
-            XyA_Deallocate_Array(args);
+            XyA_Deallocate_Array(args, 2);
 
             if (exception_thrown)
             {

@@ -16,6 +16,7 @@ namespace XyA
                 {
                     Builtin::StringObject* str_obj = dynamic_cast<Runtime::Builtin::StringObject*>(args[i]);
 
+
                     bool object_is_string = (str_obj != nullptr);
                     if (!object_is_string)
                     {

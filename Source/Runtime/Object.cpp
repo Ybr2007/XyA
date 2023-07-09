@@ -113,9 +113,9 @@ namespace XyA
         #ifdef Debug_Display_Object
         std::string Object::to_string() const
         {
-            return this->type == nullptr ? 
+            return this->__type == nullptr ? 
                 "<XyA Object at " + std::to_string((size_t)this) + ">" : 
-                "<" + this->type->name + " Object at " + std::to_string((size_t)this) + ">" ;
+                "<" + this->__type->name + " Object at " + std::to_string((size_t)this) + ">" ;
         }
         #endif
 

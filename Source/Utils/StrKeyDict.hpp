@@ -87,7 +87,7 @@ namespace XyA
                         XyA_Deallocate(node);
                     }
                 }
-                XyA_Deallocate_Array(this->__node_list_heads);
+                XyA_Deallocate_Array(this->__node_list_heads, N);
             }
 
             T& operator[](const std::string& key)

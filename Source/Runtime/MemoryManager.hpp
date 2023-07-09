@@ -22,7 +22,7 @@ namespace XyA
         #define XyA_Deallocate(object) Runtime::MemoryPool::get_instance()->deallocate(object)
         #define XyA_Allocate_Array_(T, len) Runtime::MemoryPool::get_instance()->allocate_array<T>(len)
         #define XyA_Allocate_Array(T, len, ...) Runtime::MemoryPool::get_instance()->allocate_array<T>(len, __VA_ARGS__)
-        #define XyA_Deallocate_Array(array) Runtime::MemoryPool::get_instance()->deallocate_array(array)
+        #define XyA_Deallocate_Array(array, len) Runtime::MemoryPool::get_instance()->deallocate_array(array, len)
         #endif
 
         #ifdef Debug_Display_Memory_Leaks
@@ -34,7 +34,7 @@ namespace XyA
         #define XyA_Deallocate(object) Runtime::MemoryPool::get_instance()->deallocate(FILE_LINE, object)
         #define XyA_Allocate_Array_(T, len) Runtime::MemoryPool::get_instance()->allocate_array<T>(FILE_LINE, len)
         #define XyA_Allocate_Array(T, len, ...) Runtime::MemoryPool::get_instance()->allocate_array<T>(FILE_LINE, len, __VA_ARGS__)
-        #define XyA_Deallocate_Array(array) Runtime::MemoryPool::get_instance()->deallocate_array(FILE_LINE, array)
+        #define XyA_Deallocate_Array(array, len) Runtime::MemoryPool::get_instance()->deallocate_array(FILE_LINE, array, len)
         #endif        
 
         struct Block
@@ -131,12 +131,17 @@ namespace XyA
             {
                 size_t aligned_size = this->__get_aligned_size(sizeof(T));
 
+                if (aligned_size == 0)
+                {
+                    return nullptr;
+                }
+
                 if (aligned_size > cpp_new_and_del_threshold_size)
                 {
                     return new T(std::forward<Args>(args)...);
                 }
 
-                size_t chunk_index = aligned_size / alignment;
+                size_t chunk_index = aligned_size / alignment - 1;
                 Block* block = this->__chunks[chunk_index]->pop_free_block();
                 return new(block) T(std::forward<Args>(args)...);
             }
@@ -148,13 +153,18 @@ namespace XyA
             {
                 size_t aligned_size = this->__get_aligned_size(sizeof(T) * len);
 
+                if (aligned_size == 0)
+                {
+                    return nullptr;
+                }
+
                 if (aligned_size > cpp_new_and_del_threshold_size)
                 {
                     T* allocated_memory = new T[len]{std::forward<Args>(args)...};
                     return allocated_memory;
                 }
 
-                size_t chunk_index = aligned_size / alignment;
+                size_t chunk_index = aligned_size / alignment - 1;
                 Block* block = this->__chunks[chunk_index]->pop_free_block();
                 T* allocated_memory = new (block) T[len]{std::forward<Args>(args)...};
                 return allocated_memory;
@@ -167,7 +177,12 @@ namespace XyA
             {
                 size_t aligned_size = this->__get_aligned_size(sizeof(T));
 
-                if (aligned_size > cpp_new_and_del_threshold_size)
+                if (aligned_size == 0)
+                {
+                    return nullptr;
+                }
+
+                if (aligned_size > cpp_new_and_del_threshold_size || 1)
                 {
                     T* object = new T(std::forward<Args>(args)...);
                     this->allocated_objects.insert(object);
@@ -175,9 +190,9 @@ namespace XyA
                     return object;
                 }
 
-                size_t chunk_index = aligned_size / alignment;
+                size_t chunk_index = aligned_size / alignment - 1;
                 Block* block = this->__chunks[chunk_index]->pop_free_block();
-                T* object = new(block) T(std::forward<Args>(args)...);
+                T* object = new(block)T(std::forward<Args>(args)...);
                 
                 this->allocated_objects.insert(object);
                 this->allocation_locations[object] = location;
@@ -192,6 +207,11 @@ namespace XyA
             {
                 size_t aligned_size = this->__get_aligned_size(sizeof(T) * len);
 
+                if (aligned_size == 0)
+                {
+                    return nullptr;
+                }
+
                 if (aligned_size > cpp_new_and_del_threshold_size)
                 {
                     T* allocated_memory = new T[len]{std::forward<Args>(args)...};
@@ -200,7 +220,7 @@ namespace XyA
                     return allocated_memory;
                 }
 
-                size_t chunk_index = aligned_size / alignment;
+                size_t chunk_index = aligned_size / alignment - 1;
                 Block* block = this->__chunks[chunk_index]->pop_free_block();
                 T* allocated_memory = new (block) T[len]{std::forward<Args>(args)...};
                 this->allocated_arraies.insert(allocated_memory);
@@ -213,6 +233,11 @@ namespace XyA
             template <typename T>
             void deallocate(T* object)
             {
+                if (object == nullptr)
+                {
+                    return;
+                }
+
                 size_t aligned_size = this->__get_aligned_size(sizeof(T));
 
                 if (aligned_size > cpp_new_and_del_threshold_size)
@@ -223,7 +248,7 @@ namespace XyA
 
                 object->~T();
                 
-                size_t chunk_index = aligned_size / alignment;
+                size_t chunk_index = aligned_size / alignment - 1;
                 Block* block = reinterpret_cast<Block*>(object);
                 
                 this->__chunks[chunk_index]->push_block(block);
@@ -232,9 +257,14 @@ namespace XyA
 
             #ifndef Debug_Display_Memory_Leaks
             template <typename T>
-            void deallocate_array(T* array)
+            void deallocate_array(T* array, size_t len)
             {
-                size_t aligned_size = this->__get_aligned_size(sizeof(T));
+                if (array == nullptr)
+                {
+                    return;
+                }
+
+                size_t aligned_size = this->__get_aligned_size(sizeof(T) * len);
 
                 if (aligned_size > cpp_new_and_del_threshold_size)
                 {
@@ -242,7 +272,7 @@ namespace XyA
                     return;
                 }
                 
-                size_t chunk_index = aligned_size / alignment;
+                size_t chunk_index = aligned_size / alignment - 1;
                 Block* block = reinterpret_cast<Block*>(array);
                 
                 this->__chunks[chunk_index]->push_block(block);
@@ -254,6 +284,11 @@ namespace XyA
             template <typename T>
             void deallocate(std::string location, T* object)
             {
+                if (object == nullptr)
+                {
+                    return;
+                }
+
                 bool ok = false;
                 for (auto iter = this->allocated_objects.begin(); iter != this->allocated_objects.end(); iter ++)
                 {
@@ -293,7 +328,7 @@ namespace XyA
 
                 object->~T();
                 
-                size_t chunk_index = aligned_size / alignment;
+                size_t chunk_index = aligned_size / alignment - 1;
                 Block* block = reinterpret_cast<Block*>(object);
                 
                 this->__chunks[chunk_index]->push_block(block);
@@ -303,8 +338,13 @@ namespace XyA
 
             #ifdef Debug_Display_Memory_Leaks
             template <typename T>
-            void deallocate_array(std::string location, T* array)
+            void deallocate_array(std::string location, T* array, size_t len)
             {
+                if (array == nullptr)
+                {
+                    return;
+                }
+
                 bool ok = false;
                 for (auto iter = this->allocated_arraies.begin(); iter != this->allocated_arraies.end(); iter ++)
                 {
@@ -334,7 +374,7 @@ namespace XyA
                 }
 
                 this->deallocation_locations[array] = location;
-                size_t aligned_size = this->__get_aligned_size(sizeof(T));
+                size_t aligned_size = this->__get_aligned_size(sizeof(T) * len);
 
                 if (aligned_size > cpp_new_and_del_threshold_size)
                 {
@@ -342,7 +382,7 @@ namespace XyA
                     return;
                 }
                 
-                size_t chunk_index = aligned_size / alignment;
+                size_t chunk_index = aligned_size / alignment - 1;
                 Block* block = reinterpret_cast<Block*>(array);
                 
                 this->__chunks[chunk_index]->push_block(block);
@@ -377,7 +417,7 @@ namespace XyA
             {
                 for (size_t i = 0; i < cpp_new_and_del_threshold_size / alignment; i ++)
                 {
-                    this->__chunks[i] = new Chunk(i * alignment);
+                    this->__chunks[i] = new Chunk((i + 1) * alignment);
                 }
             }
 
