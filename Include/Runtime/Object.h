@@ -35,6 +35,7 @@ namespace XyA
             StrKeyDict<Object*> attrs;
 
             Type* type() const;
+            void set_type(Type* type);
 
             void reference();
             bool dereference();

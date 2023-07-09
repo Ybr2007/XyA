@@ -17,24 +17,24 @@ namespace XyA
     namespace Runtime
     {
         #ifndef Debug_Display_Memory_Leaks
-        #define XyA_Allocate_(T) MemoryPool::get_instance()->allocate<T>()
-        #define XyA_Allocate(T, ...) MemoryPool::get_instance()->allocate<T>(__VA_ARGS__)
-        #define XyA_Deallocate(object) MemoryPool::get_instance()->deallocate(object)
-        #define XyA_Allocate_Array_(T, len) MemoryPool::get_instance()->allocate_array<T>(len)
-        #define XyA_Allocate_Array(T, len, ...) MemoryPool::get_instance()->allocate_array<T>(len, __VA_ARGS__)
-        #define XyA_Deallocate_Array(array) MemoryPool::get_instance()->deallocate_array(array)
+        #define XyA_Allocate_(T) Runtime::MemoryPool::get_instance()->allocate<T>()
+        #define XyA_Allocate(T, ...) Runtime::MemoryPool::get_instance()->allocate<T>(__VA_ARGS__)
+        #define XyA_Deallocate(object) Runtime::MemoryPool::get_instance()->deallocate(object)
+        #define XyA_Allocate_Array_(T, len) Runtime::MemoryPool::get_instance()->allocate_array<T>(len)
+        #define XyA_Allocate_Array(T, len, ...) Runtime::MemoryPool::get_instance()->allocate_array<T>(len, __VA_ARGS__)
+        #define XyA_Deallocate_Array(array) Runtime::MemoryPool::get_instance()->deallocate_array(array)
         #endif
 
         #ifdef Debug_Display_Memory_Leaks
         #define STRINGIFY(x) #x
         #define TOSTRING(x) STRINGIFY(x)
         #define FILE_LINE std::string(__FILE__) + "(" + std::string(TOSTRING(__LINE__)) + ")"
-        #define XyA_Allocate_(T) MemoryPool::get_instance()->allocate<T>(FILE_LINE)
-        #define XyA_Allocate(T, args) MemoryPool::get_instance()->allocate<T>(FILE_LINE, args)
-        #define XyA_Deallocate(object) MemoryPool::get_instance()->deallocate(FILE_LINE, object)
-        #define XyA_Allocate_Array_(T, len) MemoryPool::get_instance()->allocate_array<T>(FILE_LINE, len)
-        #define XyA_Allocate_Array(T, len, ...) MemoryPool::get_instance()->allocate_array<T>(FILE_LINE, len, __VA_ARGS__)
-        #define XyA_Deallocate_Array(array) MemoryPool::get_instance()->deallocate_array(FILE_LINE, array)
+        #define XyA_Allocate_(T) Runtime::MemoryPool::get_instance()->allocate<T>(FILE_LINE)
+        #define XyA_Allocate(T, args) Runtime::MemoryPool::get_instance()->allocate<T>(FILE_LINE, args)
+        #define XyA_Deallocate(object) Runtime::MemoryPool::get_instance()->deallocate(FILE_LINE, object)
+        #define XyA_Allocate_Array_(T, len) Runtime::MemoryPool::get_instance()->allocate_array<T>(FILE_LINE, len)
+        #define XyA_Allocate_Array(T, len, ...) Runtime::MemoryPool::get_instance()->allocate_array<T>(FILE_LINE, len, __VA_ARGS__)
+        #define XyA_Deallocate_Array(array) Runtime::MemoryPool::get_instance()->deallocate_array(FILE_LINE, array)
         #endif        
 
         struct Block

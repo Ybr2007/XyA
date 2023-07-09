@@ -20,7 +20,7 @@ namespace XyA
         public:
             std::vector<Instruction*> instructions;  
             std::vector<Object*> literals;
-            std::unordered_map<std::string, Function*> functions;
+            std::vector<std::pair<size_t, Object*>> prebuilt_objects;
             std::unordered_map<std::string, size_t> variable_name_2_index;
             std::vector<std::string> names;
 

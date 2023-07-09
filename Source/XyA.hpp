@@ -93,13 +93,32 @@ namespace XyA
         printf("\n");
         
         printf("Function Instructions:\n");
-        for (auto iter : code_object->functions)
+        for (auto iter : code_object->prebuilt_objects)
         {
-            printf("Function Name: %s\n", iter.first.c_str());
-            for (size_t i = 0; i < iter.second->code_object->instructions.size(); i ++)
+            printf("-----------------------\n");
+            Runtime::Function* function = dynamic_cast<Runtime::Function*>(iter.second);
+            if (function)
             {
-                printf("%d %s\n", (int)i, iter.second->code_object->instructions[i]->to_string().c_str());
+                for (size_t i = 0; i < function->code_object->instructions.size(); i ++)
+                {
+                    printf("%d %s\n", (int)i, function->code_object->instructions[i]->to_string().c_str());
+                }
             }
+            else
+            {
+                for (const auto& iter : dynamic_cast<Runtime::Type*>(iter.second)->attrs)
+                {
+                    printf("Method: %s\n", iter->key.c_str());
+
+                    Runtime::Function* method = dynamic_cast<Runtime::Function*>(iter->value);
+
+                    for (size_t i = 0; method && i < method->code_object->instructions.size(); i ++)
+                    {
+                        printf("%d %s\n", (int)i, method->code_object->instructions[i]->to_string().c_str());
+                    }
+                }
+            }
+            
             printf("\n");
         }
         printf("\n");

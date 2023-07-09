@@ -23,7 +23,7 @@ namespace XyA
         private:
             /* 
             在以下__compile_xxx中new的Instructions都会在Runtime::CodeObject::~CodeObject释放
-            在以下__compile_xxx中new的Literals会被GC机制删除
+            在以下__compile_xxx中new的Literals会被GC机制释放
              */
             Runtime::CodeObject* __global_code_object;
 
@@ -35,12 +35,18 @@ namespace XyA
             void __compile_assignment(Runtime::CodeObject* code_object, SyntaxAnalysis::SyntaxTreeNode* assignment_root);
             void __compile_expression(Runtime::CodeObject* code_object, SyntaxAnalysis::SyntaxTreeNode* expression_root, bool pop=false);
             void __compile_return(Runtime::CodeObject* code_object, SyntaxAnalysis::SyntaxTreeNode* return_root);
+
+            Runtime::Function* __build_function(
+                Runtime::CodeObject* code_object, SyntaxAnalysis::SyntaxTreeNode* function_definition_root, size_t& function_variable_index);
+            Runtime::Function* __build_function(SyntaxAnalysis::SyntaxTreeNode* function_definition_root);
+            Runtime::Type* __build_class(
+                Runtime::CodeObject* code_object, SyntaxAnalysis::SyntaxTreeNode* class_definition_root, size_t& class_variable_index);
         };
 
         Runtime::CodeObject* Compiler::compile(SyntaxAnalysis::SyntaxTreeNode* syntax_tree_root)
         {
             // delete于Runtime::Context::~Context
-            this->__global_code_object = Runtime::XyA_Allocate_(Runtime::CodeObject);
+            this->__global_code_object = XyA_Allocate_(Runtime::CodeObject);
 
             this->__global_code_object->add_variable_name("print");
             this->__global_code_object->add_variable_name("_get_ref_count");
@@ -74,25 +80,19 @@ namespace XyA
 
             case SyntaxAnalysis::SyntaxTreeNodeType::Function_Definition:
             {
-                Runtime::Function* function = Runtime::XyA_Allocate_(Runtime::Function);
-                function->reference();
-
                 size_t function_variable_index;
-                if (!code_object->try_get_variable_index(unit_root->token->value, function_variable_index))
-                {
-                    function_variable_index = code_object->add_variable_name(unit_root->token->value);
-                }
-
-                function->expected_arg_num = unit_root->children[0]->children.size();
-                for (auto arg : unit_root->children[0]->children)
-                {
-                    function->code_object->add_variable_name(arg->token->value);
-                }
-
-                this->__compile_block(function->code_object, unit_root->children[1]);
-                code_object->functions[unit_root->token->value] = function;
+                Runtime::Function* function = this->__build_function(code_object, unit_root, function_variable_index);
+                code_object->prebuilt_objects.emplace_back(function_variable_index, function);
                 break;
             }
+
+            case SyntaxAnalysis::SyntaxTreeNodeType::Class_Definition:
+            {
+                size_t class_variable_index;
+                Runtime::Type* class_type = this->__build_class(code_object, unit_root, class_variable_index);
+                code_object->prebuilt_objects.emplace_back(class_variable_index, class_type);
+                break;
+            } 
 
             case SyntaxAnalysis::SyntaxTreeNodeType::Return:
             {
@@ -215,6 +215,12 @@ namespace XyA
                     get_attr_instruction->parameter = code_object->add_name(expression_root->token->value);
                 }
                 code_object->instructions.push_back(get_attr_instruction);
+
+                if (pop)
+                {
+                    Runtime::Instruction* pop_top_instruction = new Runtime::Instruction(Runtime::InstructionType::PopTop);
+                    code_object->instructions.push_back(pop_top_instruction);
+                }
                 return;
             }
 
@@ -229,13 +235,14 @@ namespace XyA
                 Runtime::Instruction* call_function_instruction = new Runtime::Instruction(
                     expression_root->children[0]->type == SyntaxAnalysis::SyntaxTreeNodeType::Attr ? 
                     Runtime::InstructionType::CallMethod : Runtime::InstructionType::CallFunction);
+                call_function_instruction->parameter = expression_root->children[1]->children.size();
                     
                 if (expression_root->children[0]->type == SyntaxAnalysis::SyntaxTreeNodeType::Attr)
                 {
-                    code_object->instructions[code_object->instructions.size() - 1]->type = Runtime::InstructionType::GetMethod;
+                    code_object->instructions[code_object->instructions.size() - call_function_instruction->parameter - 1]->type = 
+                        Runtime::InstructionType::GetMethod;
                 }
 
-                call_function_instruction->parameter = expression_root->children[1]->children.size();
                 code_object->instructions.push_back(call_function_instruction);
 
                 if (pop)
@@ -254,7 +261,7 @@ namespace XyA
                 {
                 case LexicalAnalysis::TokenType::IntLiteral:
                 {
-                    Runtime::Builtin::IntObject* int_obj = Runtime::XyA_Allocate_(Runtime::Builtin::IntObject);
+                    Runtime::Builtin::IntObject* int_obj = XyA_Allocate_(Runtime::Builtin::IntObject);
                     int_obj->value = std::stoll(expression_root->token->value);
                     if (!code_object->try_get_literal_index(int_obj, load_literal_instruction->parameter))
                     {
@@ -262,14 +269,14 @@ namespace XyA
                     }
                     else  // 已经有了该对象，则需要释放掉多余的
                     {
-                        Runtime::XyA_Deallocate(int_obj);
+                        XyA_Deallocate(int_obj);
                     }
                     break;
                 }
 
                 case LexicalAnalysis::TokenType::FloatLiteral:
                 {
-                    Runtime::Builtin::FloatObject* float_obj = Runtime::XyA_Allocate_(Runtime::Builtin::FloatObject);
+                    Runtime::Builtin::FloatObject* float_obj = XyA_Allocate_(Runtime::Builtin::FloatObject);
                     float_obj->value = std::stod(expression_root->token->value);
                     if (!code_object->try_get_literal_index(float_obj, load_literal_instruction->parameter))
                     {
@@ -277,14 +284,14 @@ namespace XyA
                     }
                     else  // 已经有了该对象，则需要释放掉多余的
                     {
-                        Runtime::XyA_Deallocate(float_obj);
+                        XyA_Deallocate(float_obj);
                     }
                     break;
                 }
 
                 case LexicalAnalysis::TokenType::StringLiteral:
                 {
-                    Runtime::Builtin::StringObject* str_obj = Runtime::XyA_Allocate_(Runtime::Builtin::StringObject);
+                    Runtime::Builtin::StringObject* str_obj = XyA_Allocate_(Runtime::Builtin::StringObject);
                     str_obj->value.assign(expression_root->token->value.begin() + 1, expression_root->token->value.end() - 1);
                     if (!code_object->try_get_literal_index(str_obj, load_literal_instruction->parameter))
                     {
@@ -292,14 +299,14 @@ namespace XyA
                     }   
                     else  // 已经有了该对象，则需要释放掉多余的
                     {
-                        Runtime::XyA_Deallocate(str_obj);
+                        XyA_Deallocate(str_obj);
                     }
                     break;
                 }
 
                 case LexicalAnalysis::TokenType::BoolLiteral:
                 {
-                    Runtime::Builtin::BoolObject* bool_obj = Runtime::XyA_Allocate_(Runtime::Builtin::BoolObject);
+                    Runtime::Builtin::BoolObject* bool_obj = XyA_Allocate_(Runtime::Builtin::BoolObject);
                     bool_obj->value = expression_root->token->value == "true" ? true : false;
                     if (!code_object->try_get_literal_index(bool_obj, load_literal_instruction->parameter))
                     {
@@ -307,7 +314,7 @@ namespace XyA
                     }   
                     else  // 已经有了该对象，则需要释放掉多余的
                     {
-                        Runtime::XyA_Deallocate(bool_obj);
+                        XyA_Deallocate(bool_obj);
                     }
                     break;
                 }
@@ -431,6 +438,94 @@ namespace XyA
 
             Runtime::Instruction* return_instruction = new Runtime::Instruction(Runtime::InstructionType::Return);
             code_object->instructions.push_back(return_instruction);
+        }
+
+        Runtime::Function* Compiler::__build_function(
+            Runtime::CodeObject* code_object, SyntaxAnalysis::SyntaxTreeNode* function_definition_root, size_t& function_variable_index)
+        {
+            Runtime::Function* function = XyA_Allocate_(Runtime::Function);
+            function->reference();
+
+            if (code_object != nullptr && 
+                !code_object->try_get_variable_index(function_definition_root->token->value, function_variable_index))
+            {
+                function_variable_index = code_object->add_variable_name(function_definition_root->token->value);
+            }
+
+            function->expected_arg_num = function_definition_root->children[0]->children.size();
+            for (auto arg : function_definition_root->children[0]->children)
+            {
+                function->code_object->add_variable_name(arg->token->value);
+            }
+
+            this->__compile_block(function->code_object, function_definition_root->children[1]);
+
+            return function;
+        }
+
+        Runtime::Function* Compiler::__build_function(SyntaxAnalysis::SyntaxTreeNode* function_definition_root)
+        {
+            Runtime::Function* function = XyA_Allocate_(Runtime::Function);
+            function->reference();
+
+            function->expected_arg_num = function_definition_root->children[0]->children.size();
+            for (auto arg : function_definition_root->children[0]->children)
+            {
+                function->code_object->add_variable_name(arg->token->value);
+            }
+
+            this->__compile_block(function->code_object, function_definition_root->children[1]);
+
+            return function;
+        }
+
+        Runtime::Type* Compiler::__build_class(
+            Runtime::CodeObject* code_object, SyntaxAnalysis::SyntaxTreeNode* class_definition_root, size_t& class_variable_index)
+        {
+            Runtime::Type* class_type = XyA_Allocate_(Runtime::Type);
+            class_type->instance_allow_external_attr = true;
+            class_type->ref_count = 1;
+
+            if (code_object != nullptr && 
+                !code_object->try_get_variable_index(class_definition_root->token->value, class_variable_index))
+            {
+                class_variable_index = code_object->add_variable_name(class_definition_root->token->value);
+            }
+
+            for (auto method_definithon_root : class_definition_root->children)
+            {
+                class_type->attrs[method_definithon_root->token->value] = this->__build_function(method_definithon_root);
+            }
+            Runtime::Object* new_method = XyA_Allocate(
+                Runtime::Builtin::BuiltinFunction,
+                [](Runtime::Object** args, size_t arg_num, bool& exception_thrown) -> Runtime::Object*
+                {
+                    Runtime::Type* cls = static_cast<Runtime::Type*>(args[0]);
+                    Runtime::Object* instance = XyA_Allocate_(Runtime::Object);
+                    instance->set_type(cls);
+
+                    Runtime::BaseFunction* init_method;
+                    auto result = instance->try_get_method(Runtime::MagicMethodNames::init_method_name, init_method);
+
+                    if (result == Runtime::TryGetMethodResult::OK)
+                    {
+                        Runtime::Object** init_Method_args = new Runtime::Object*[arg_num];
+                        init_Method_args[0] = instance;
+                        for (size_t i = 1; i < arg_num; i ++)
+                        {
+                            init_Method_args[i] = args[i];
+                        }               
+                        Runtime::Object* return_object = init_method->call(init_Method_args, arg_num, exception_thrown);
+                        delete[] init_Method_args;
+                    }
+
+                    return instance;
+                }
+            );
+            new_method->reference();
+            class_type->attrs[Runtime::MagicMethodNames::new_method_name] = new_method;
+
+            return class_type;
         }
 
     }  // namespace Compiler

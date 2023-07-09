@@ -19,6 +19,11 @@ namespace XyA
             return this->__type != nullptr ? this->__type : Type::get_instance();
         }
 
+        void Object::set_type(Type* type)
+        {
+            this->__type = type;
+        }
+
         void Object::reference()
         {
             this->ref_count ++;

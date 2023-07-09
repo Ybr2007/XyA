@@ -198,7 +198,7 @@ namespace XyA
                 this->__try_move_ptr();
                 return token;
             }
-            // 该分支会对负数的负号进行识别
+            // 该分支会对负数字面量的负号进行识别
             // 由于编译期字面量折叠，不会影响运行性能
             if (this->__cur_char() == '-')
             {
@@ -270,6 +270,13 @@ namespace XyA
                 token->type = TokenType::Kw_Return;
                 token->end_pos = this->__pos + 5;
                 this->__try_move_ptr(6);
+                return token;
+            }
+            if (this->__match("class", true))
+            {
+                token->type = TokenType::Kw_Class;
+                token->end_pos = this->__pos + 4;
+                this->__try_move_ptr(5);
                 return token;
             }
             if (this->__match("import", true))

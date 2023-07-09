@@ -25,6 +25,8 @@ namespace XyA
             {
             public:
                 BuiltinFunctionType();
+
+                static BuiltinFunctionType* get_instance();
             };
 
             class BuiltinFunction : public BaseFunction

@@ -17,9 +17,9 @@ namespace XyA
                 this->local_variables[i] = nullptr;
             }
 
-            for (auto iter : this->code_obj->functions)
+            for (auto iter : this->code_obj->prebuilt_objects)
             {
-                this->local_variables[this->code_obj->variable_name_2_index[iter.first]] = reinterpret_cast<Object*>(iter.second);
+                this->local_variables[iter.first] = iter.second;
             }
         }
 

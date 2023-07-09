@@ -59,6 +59,7 @@ namespace XyA
             SyntaxTreeNode* __parse_function_definition();
             SyntaxTreeNode* __parse_argument_list_definition();
             SyntaxTreeNode* __parse_return();
+            SyntaxTreeNode* __parse_class_definition();
 
             void __throw_exception(std::string_view message, size_t pos) const;
         };
@@ -111,7 +112,7 @@ namespace XyA
 
         SyntaxTreeNode* SyntaxParser::__parse_unit()
         {
-            // unit -> block | if | line | function_definiton
+            // unit -> block | if | line | function_definiton | class_definition
             switch (this->__cur_token()->type)
             {
             case LexicalAnalysis::TokenType::S_LBrace:
@@ -125,6 +126,9 @@ namespace XyA
 
             case LexicalAnalysis::TokenType::Kw_Fn:
                 return this->__parse_function_definition();
+
+            case LexicalAnalysis::TokenType::Kw_Class:
+                return this->__parse_class_definition();
 
             case LexicalAnalysis::TokenType::Kw_Return:
                 if (!this->__inside_function)
@@ -704,6 +708,46 @@ namespace XyA
                 this->__throw_exception("Expected ';'", this->__cur_token()->start_pos);
             }
             return return_node;
+        }
+
+        SyntaxTreeNode* SyntaxParser::__parse_class_definition()
+        {
+            // class_definition -> "class" Identifier "{" function_definition* "}"
+            // 调用时已确定当前token的type为Kw_Class
+            
+            if (!this->__try_move_ptr() || this->__cur_token()->type != LexicalAnalysis::TokenType::Identifier)
+            {
+                this->__throw_exception("Expected class name", this->__cur_token()->start_pos);
+                return nullptr;
+            }
+
+            SyntaxTreeNode* class_definition_node = new SyntaxTreeNode(SyntaxTreeNodeType::Class_Definition);
+            class_definition_node->token = this->__cur_token();
+
+            if (!this->__try_move_ptr() || this->__cur_token()->type != LexicalAnalysis::TokenType::S_LBrace)
+            {
+                this->__throw_exception("Expected indented block", this->__cur_token()->start_pos);
+                return nullptr;
+            }
+            size_t left_brace_pos = this->__cur_pos;
+
+            if (!this->__try_move_ptr())
+            {
+                this->__throw_exception("'{' was not closed", left_brace_pos);
+                return nullptr;
+            }
+            while (this->__cur_token()->type != LexicalAnalysis::TokenType::S_RBrace)
+            {
+                class_definition_node->children.push_back(this->__parse_function_definition());
+
+                if (!this->__try_move_ptr())
+                {
+                    this->__throw_exception("'{' was not closed", left_brace_pos);
+                    return nullptr;
+                }
+            }
+
+            return class_definition_node;
         }
 
         void SyntaxParser::__throw_exception(std::string_view message, size_t pos) const

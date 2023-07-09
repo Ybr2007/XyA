@@ -18,17 +18,18 @@ namespace XyA
             If,                     // children: 数量为2或3，children[0] 是判断条件表达式，children[1] 是如果为真执行的语句块，children[2] 是如果为假执行的语句块（可选）
             While,                  // children: 数量为2，children[0] 是判断条件表达式，children[1] 是如果为真执行的语句块
             Assignment,             // children: 数量为2，chilren[0]是赋值目标，children[1] 是值的表达式
-            Comparison,             // value: 运算符 chilren: 数量为2，为两个运算数
-            Addition,               // value: 运算符 chilren: 数量为2，为两个运算数
-            Multiplication,         // value: 运算符 chilren: 数量为2，为两个运算数
-            Unary,                  // value: 运算符 chilren: 数量为1，为运算数
-            Primary,                // value: 标识符或字面量
-            Function_Definition,    // value: 函数名称标识符 children: 数量为2，children[0] 形参列表(Argument_List)，children[1] 函数体(Block)
+            Comparison,             // token: 运算符 chilren: 数量为2，为两个运算数
+            Addition,               // token: 运算符 chilren: 数量为2，为两个运算数
+            Multiplication,         // token: 运算符 chilren: 数量为2，为两个运算数
+            Unary,                  // token: 运算符 chilren: 数量为1，为运算数
+            Primary,                // token: 标识符或字面量
+            Function_Definition,    // token: 函数名称标识符 children: 数量为2，children[0] 形参列表(Argument_List)，children[1] 函数体(Block)
             Argument_List,          // children: 数量不限，每一个child是一个参数（对于Definition_Argument_List，是形参标识符；对于Call_Argument_List，是实参表达式）
-            Argument,               // value: 形参名称标识符
+            Argument,               // token: 形参名称标识符
             Call,                   // chilren: 数量为2，children[0] 为callee表达式，children[1] 为实参列表(Argument_List)
-            Attr,                   // value: 属性标识符 children: 数量为1，chilren[0] 为对象
+            Attr,                   // token: 属性标识符 children: 数量为1，chilren[0] 为对象
             Return,                 // children: 数量为1，chilren[0] 为返回值表达式
+            Class_Definition,       // token: 类名称标识符 chilren: 数量不限，每一个child是一个成员函数定义(Function_Definition)
         };
 
         #ifdef Debug_Write_AST_To_Json_File
@@ -68,6 +69,8 @@ namespace XyA
                 return "<SyntaxTreeNodeType: Attr>";
             case SyntaxTreeNodeType::Return:
                 return "<SyntaxTreeNodeType: Return>";
+            case SyntaxTreeNodeType::Class_Definition:
+                return "<SyntaxTreeNodeType: Class_Definition>";
             default:
                 return "<Unknown>";
             }

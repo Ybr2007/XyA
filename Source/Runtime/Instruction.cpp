@@ -128,7 +128,7 @@ namespace XyA
                 break;
 
             case InstructionType::GetMethod:
-                str += "Get Attr";
+                str += "Get Method";
                 str += " " + std::to_string(this->parameter);
                 break;
             

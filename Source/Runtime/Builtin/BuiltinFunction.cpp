@@ -10,12 +10,19 @@ namespace XyA
     {
         namespace Builtin
         {
+            BuiltinFunctionType builtin_function_type_instance;
+
             BuiltinFunctionType::BuiltinFunctionType()
             {
                 this->name = "builtin function";
                 this->attrs[MagicMethodNames::str_method_name] = XyA_Allocate(BuiltinFunction, builtin_function_str);
                 
                 this->reference_attrs();
+            }
+
+            BuiltinFunctionType* BuiltinFunctionType::get_instance()
+            {
+                return &builtin_function_type_instance;
             }
             
             Object* builtin_function_str(Object** args, size_t arg_num, bool& exception_thrown)
@@ -25,11 +32,9 @@ namespace XyA
                 return str;
             }
 
-            BuiltinFunctionType builtin_function_type_instance;
-
             BuiltinFunction::BuiltinFunction(std::function<Object*(Object**, size_t, bool&)> cpp_function)
             {
-                this->__type = &builtin_function_type_instance;
+                this->__type = BuiltinFunctionType::get_instance();
                 this->cpp_function = cpp_function;
             }
 

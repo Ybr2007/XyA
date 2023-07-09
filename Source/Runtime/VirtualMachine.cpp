@@ -108,7 +108,7 @@ namespace XyA
 
                 if (operation_result == TryGetAttrResult::NotFound)
                 {
-                    this->__throw_exception("The variable '" + this->cur_context->code_obj->names[instruction->parameter] + 
+                    this->__throw_exception("The attr '" + this->cur_context->code_obj->names[instruction->parameter] + 
                         "' is not defined or already deleted.");
                 }
                 this->cur_context->set_top_operand(attr);
@@ -256,9 +256,7 @@ namespace XyA
                         break;
                     
                     default:
-                    {
                         break;
-                    }
                     }
                 }
 
@@ -298,14 +296,29 @@ namespace XyA
 
             case InstructionType::CallFunction:
             {
-                Object** args = new Object*[instruction->parameter];
+                Object** args = new Object*[instruction->parameter + 1];
                 for (size_t i = 0; i < instruction->parameter; i ++)
                 {
-                    args[instruction->parameter - i - 1] = this->cur_context->pop_operand();
+                    args[instruction->parameter - i] = this->cur_context->pop_operand();
                 }
-                BaseFunction* callee = dynamic_cast<BaseFunction*>(this->cur_context->pop_operand());
+                Object* callee_object = this->cur_context->pop_operand();
+                BaseFunction* callee_function;
+                unsigned char arg_offset;
+
+                if (callee_object->type() == Type::get_instance())
+                {
+                    arg_offset = 1;
+                    args[0] = callee_object;
+                    auto operation_result = callee_object->try_get_method(MagicMethodNames::new_method_name, callee_function);
+                }
+                else
+                {
+                    arg_offset = 0;
+                    callee_function = static_cast<BaseFunction*>(callee_object);
+                }
+
                 bool exception_thrown = false; 
-                Object* result = callee->call(args, instruction->parameter, exception_thrown);
+                Object* result = callee_function->call(args + 1 - arg_offset, instruction->parameter + arg_offset, exception_thrown);
 
                 if (exception_thrown)
                 {
