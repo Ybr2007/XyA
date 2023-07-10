@@ -148,7 +148,7 @@ namespace XyA
 
         SyntaxTreeNode* SyntaxParser::__parse_line()
         {
-            // line -> (assignment | expression) ";"
+            // line -> (assignment | expression)
             SyntaxTreeNode* node = this->__parse_expression();
 
             if (((node->type == SyntaxTreeNodeType::Primary && !node->token->is_literal()) || 
@@ -158,11 +158,6 @@ namespace XyA
                 node = this->__parse_assignment(node);
             }
 
-            if (!this->__try_move_ptr() || this->__cur_token()->type != LexicalAnalysis::TokenType::S_Semicolon)
-            {
-                this->__throw_exception("Expected ';'", this->__cur_token()->start_pos);
-            }
-            
             return node;
         }
 
@@ -692,7 +687,7 @@ namespace XyA
 
         SyntaxTreeNode* SyntaxParser::__parse_return()
         {
-            // return -> "return" expression? ";"
+            // return -> "return" expression?
             if (!this->__try_move_ptr())
             {
                 this->__throw_exception("Expected expression", this->__cur_token()->start_pos);
@@ -703,10 +698,6 @@ namespace XyA
             return_node->children.reserve(1);
             return_node->children.push_back(expression);
 
-            if (!this->__try_move_ptr() || this->__cur_token()->type != LexicalAnalysis::TokenType::S_Semicolon)
-            {
-                this->__throw_exception("Expected ';'", this->__cur_token()->start_pos);
-            }
             return return_node;
         }
 

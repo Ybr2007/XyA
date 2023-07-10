@@ -78,5 +78,6 @@ namespace XyA
         public:
             virtual Object* call(Object** args, size_t arg_num, bool& exception_thrown) const = 0;
         };
+        
     }
 }

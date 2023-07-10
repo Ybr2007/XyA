@@ -19,7 +19,6 @@ namespace XyA
             S_RParenthesis,                 // )
             S_LBrace,                       // {
             S_RBrace,                       // }
-            S_Semicolon,                    // ;
             S_Comma,                        // ,
 
             /* Operators */
@@ -83,8 +82,6 @@ namespace XyA
                 return "<Token: Separator '{'>";
             case TokenType::S_RBrace:
                 return "<Token: Separator '}'>";
-            case TokenType::S_Semicolon:
-                return "<Token: Separator ';'>";
             case TokenType::S_Comma:
                 return "<Token: Separator ','>";
 

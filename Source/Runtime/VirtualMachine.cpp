@@ -239,8 +239,13 @@ namespace XyA
                 Object* top_object = this->cur_context->pop_operand();
 
                 bool exception_thrown = false; 
-                Builtin::BoolObject* bool_result = dynamic_cast<Builtin::BoolObject*>(top_object);
-                if (bool_result == nullptr)
+                Builtin::BoolObject* bool_result;
+
+                if (top_object->type() == Builtin::BoolType::get_instance())
+                {
+                    bool_result = static_cast<Builtin::BoolObject*>(top_object);
+                }
+                else
                 {
                     BaseFunction* bool_method;
                     TryGetMethodResult operation_result =  top_object->try_get_method(
@@ -256,8 +261,21 @@ namespace XyA
                         this->__throw_exception("__bool__ is not callable");
                         break;
                     
-                    default:
-                        break;
+                    case TryGetMethodResult::OK:
+                    {
+                        Object** args = XyA_Allocate_Array(Object*, 1, top_object);
+                        Object* bool_method_return_object = bool_method->call(args, 1, exception_thrown);
+                        XyA_Deallocate_Array(args, 1);
+
+                        if (bool_method_return_object->type() != Builtin::BoolType::get_instance())
+                        {
+                            this->__throw_exception("The type of the return object of the __bool__ is not bool");
+                        }
+                        else
+                        {
+                            bool_result = static_cast<Builtin::BoolObject*>(bool_method_return_object);
+                        }
+                    }                     
                     }
                 }
 
@@ -353,12 +371,12 @@ namespace XyA
             {
                 Object* callee_object = this->cur_context->pop_operand();
                 Object** args = new Object*[instruction->parameter + 1];
+                args[0] = this->cur_context->pop_operand();
                 for (size_t i = 0; i < instruction->parameter; i ++)
                 {
                     args[instruction->parameter - i] = this->cur_context->pop_operand();
                 }
                 BaseFunction* callee = dynamic_cast<BaseFunction*>(callee_object);
-                args[0] = this->cur_context->pop_operand();
                 bool exception_thrown = false; 
                 Object* result = callee->call(args, instruction->parameter + 1, exception_thrown);
 

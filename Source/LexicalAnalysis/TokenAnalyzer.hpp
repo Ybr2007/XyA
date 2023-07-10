@@ -126,13 +126,6 @@ namespace XyA
                 this->__try_move_ptr();
                 return token;
             }
-            if (this->__cur_char() == ';')
-            {
-                token->type = TokenType::S_Semicolon;
-                token->end_pos = this->__pos;
-                this->__try_move_ptr();
-                return token;
-            }
             if (this->__cur_char() == ',')
             {
                 token->type = TokenType::S_Comma;
