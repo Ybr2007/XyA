@@ -19,6 +19,7 @@ namespace XyA
             S_RParenthesis,                 // )
             S_LBrace,                       // {
             S_RBrace,                       // }
+            S_Semicolon,                    // ;
             S_Comma,                        // ,
 
             /* Operators */
@@ -57,14 +58,26 @@ namespace XyA
             Unknown,                        // 占位
         };
 
+        struct TokenPos
+        {
+            size_t row;
+            size_t column;
+
+            TokenPos& operator+(size_t offset)
+            {
+                this->column += offset;
+                return *this;
+            }
+        };
+
         /* Token, 程序源代码中可拆分的最小有意义单位 */
         class Token
         {
         public:
             TokenType type;     // Token的类型
             std::string value;  // Token的值，只有在type为Literal或Indentifier时才有效
-            size_t start_pos;   // Token在源码中开始的位置
-            size_t end_pos;     // Token再源码中结束的位置
+            TokenPos start_pos;
+            TokenPos end_pos;
 
             std::string to_string() const;
             bool is_literal() const;
@@ -82,6 +95,8 @@ namespace XyA
                 return "<Token: Separator '{'>";
             case TokenType::S_RBrace:
                 return "<Token: Separator '}'>";
+            case TokenType::S_Semicolon:
+                return "<Token: Separator ';'>";
             case TokenType::S_Comma:
                 return "<Token: Separator ','>";
 

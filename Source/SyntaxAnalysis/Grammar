@@ -1,7 +1,7 @@
 unit           -> block | if | while | line | function_definiton | class_definition
 
 block          -> "{" unit* "}"
-line           -> (assignment | expression)
+line           -> (assignment | expression) ";"
 
 if             -> "if" expression block ("else" (if | block))?
 while          -> "while" expression block
@@ -24,7 +24,7 @@ attr           -> expression "." Identifier
 function_definition -> "fn" Identifier "(" argument_list_definition? ")" block
 argument_list_definition -> Identifier ("," Identifier)*
 
-return         -> "return" expression?
+return         -> "return" expression? ";"
 function_unit  -> block | if | while | line | function_definiton | return  // 在__parse_unit实现
 function_block -> "{" function_unit* "}"                                   // 在__parse_block实现
 

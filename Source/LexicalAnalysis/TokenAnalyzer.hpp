@@ -23,7 +23,7 @@ namespace XyA
                 std::string_view: 异常信息
                 size_t: 异常位置
              */
-            std::vector<std::function<void(std::string_view, size_t)>> exception_callbacks;
+            std::vector<std::function<void(std::string_view, TokenPos)>> exception_callbacks;
 
             /* 
             * 将源码分析为Token序列
@@ -37,7 +37,9 @@ namespace XyA
 
         private:
             std::string_view __analyzing_source;
-            size_t __pos;
+            size_t __cur_char_ptr;
+            size_t __cur_row;
+            size_t __cur_column;
             bool __last_is_identifier;
             bool __finished;
 
@@ -54,14 +56,17 @@ namespace XyA
             bool __match(std::string str, bool keyword_mode = false) const;
             char __cur_char() const;
             char __next_char() const;
+            TokenPos __cur_pos() const;
 
-            void __throw_exception(std::string_view message, size_t pos) const;
+            void __throw_exception(std::string_view message, TokenPos pos) const;
         };
 
         std::vector<Token*>* TokenAnalyzer::analyze_source(std::string_view source)
         {
             this->__analyzing_source = source;
-            this->__pos = 0;
+            this->__cur_char_ptr = 0;
+            this->__cur_row = 1;
+            this->__cur_column = 1;
             this->__finished = false;
 
             // 在XyA.hpp的Core::execute中，当编译完成，tokens和其中的Token*会被释放
@@ -95,41 +100,48 @@ namespace XyA
             }
 
             Token* token = new Token;
-            token->start_pos = this->__pos;
+            token->start_pos = this->__cur_pos();
 
             // Separators
             if (this->__cur_char() == '(')
             {
                 token->type = TokenType::S_LParenthesis;
-                token->end_pos = this->__pos;
+                token->end_pos = this->__cur_pos();
                 this->__try_move_ptr();
                 return token;
             }
             if (this->__cur_char() == ')')
             {
                 token->type = TokenType::S_RParenthesis;
-                token->end_pos = this->__pos;
+                token->end_pos = this->__cur_pos();
                 this->__try_move_ptr();
                 return token;
             }
             if (this->__cur_char() == '{')
             {
                 token->type = TokenType::S_LBrace;
-                token->end_pos = this->__pos;
+                token->end_pos = this->__cur_pos();
                 this->__try_move_ptr();
                 return token;
             }
             if (this->__cur_char() == '}')
             {
                 token->type = TokenType::S_RBrace;
-                token->end_pos = this->__pos;
+                token->end_pos = this->__cur_pos();
+                this->__try_move_ptr();
+                return token;
+            }
+            if (this->__cur_char() == ';')
+            {
+                token->type = TokenType::S_Semicolon;
+                token->end_pos = this->__cur_pos();
                 this->__try_move_ptr();
                 return token;
             }
             if (this->__cur_char() == ',')
             {
                 token->type = TokenType::S_Comma;
-                token->end_pos = this->__pos;
+                token->end_pos = this->__cur_pos();
                 this->__try_move_ptr();
                 return token;
             }
@@ -138,56 +150,56 @@ namespace XyA
             if (this->__match("=="))
             {
                 token->type = TokenType::Op_Equal;
-                token->end_pos = this->__pos + 1;
+                token->end_pos = this->__cur_pos() + 1;
                 this->__try_move_ptr(2);
                 return token;
             }
             if (this->__match("!="))
             {
                 token->type = TokenType::Op_Equal;
-                token->end_pos = this->__pos + 1;
+                token->end_pos = this->__cur_pos() + 1;
                 this->__try_move_ptr(2);
                 return token;
             }
             if (this->__cur_char() == '=')
             {
                 token->type = TokenType::Op_Assignment;
-                token->end_pos = this->__pos;
+                token->end_pos = this->__cur_pos();
                 this->__try_move_ptr();
                 return token;
             }
             if (this->__match(">="))
             {
                 token->type = TokenType::Op_GreaterEqual;
-                token->end_pos = this->__pos + 1;
+                token->end_pos = this->__cur_pos() + 1;
                 this->__try_move_ptr(2);
                 return token;
             }
             if (this->__cur_char() == '>')
             {
                 token->type = TokenType::Op_GreaterThan;
-                token->end_pos = this->__pos;
+                token->end_pos = this->__cur_pos();
                 this->__try_move_ptr();
                 return token;
             }
             if (this->__match("<="))
             {
                 token->type = TokenType::Op_LessEqual;
-                token->end_pos = this->__pos + 1;
+                token->end_pos = this->__cur_pos() + 1;
                 this->__try_move_ptr(2);
                 return token;
             }
             if (this->__cur_char() == '<')
             {
                 token->type = TokenType::Op_LessThan;
-                token->end_pos = this->__pos;
+                token->end_pos = this->__cur_pos();
                 this->__try_move_ptr();
                 return token;
             }
             if (this->__cur_char() == '+')
             {
                 token->type = TokenType::Op_Plus;
-                token->end_pos = this->__pos;
+                token->end_pos = this->__cur_pos();
                 this->__try_move_ptr();
                 return token;
             }
@@ -196,28 +208,28 @@ namespace XyA
             if (this->__cur_char() == '-')
             {
                 token->type = TokenType::Op_Minus;
-                token->end_pos = this->__pos;
+                token->end_pos = this->__cur_pos();
                 this->__try_move_ptr();
                 return token;
             }
             if (this->__cur_char() == '*')
             {
                 token->type = TokenType::Op_Multiply;
-                token->end_pos = this->__pos;
+                token->end_pos = this->__cur_pos();
                 this->__try_move_ptr();
                 return token;
             }
             if (this->__cur_char() == '/')
             {
                 token->type = TokenType::Op_Devide;
-                token->end_pos = this->__pos;
+                token->end_pos = this->__cur_pos();
                 this->__try_move_ptr();
                 return token;
             }
             if (this->__cur_char() == '.')
             {
                 token->type = TokenType::Op_Dot;
-                token->end_pos = this->__pos;
+                token->end_pos = this->__cur_pos();
                 this->__try_move_ptr();
                 return token;
             }
@@ -226,56 +238,56 @@ namespace XyA
             if (this->__match("if", true))
             {
                 token->type = TokenType::Kw_If;
-                token->end_pos = this->__pos + 1;
+                token->end_pos = this->__cur_pos() + 1;
                 this->__try_move_ptr(2);
                 return token;
             }
             if (this->__match("else", true))
             {
                 token->type = TokenType::Kw_Else;
-                token->end_pos = this->__pos + 3;
+                token->end_pos = this->__cur_pos() + 3;
                 this->__try_move_ptr(4);
                 return token;
             }
             if (this->__match("for", true))
             {
                 token->type = TokenType::Kw_For;
-                token->end_pos = this->__pos + 2;
+                token->end_pos = this->__cur_pos() + 2;
                 this->__try_move_ptr(3);
                 return token;
             }
             if (this->__match("while", true))
             {
                 token->type = TokenType::Kw_While;
-                token->end_pos = this->__pos + 4;
+                token->end_pos = this->__cur_pos() + 4;
                 this->__try_move_ptr(5);
                 return token;
             }
             if (this->__match("fn", true))
             {
                 token->type = TokenType::Kw_Fn;
-                token->end_pos = this->__pos + 1;
+                token->end_pos = this->__cur_pos() + 1;
                 this->__try_move_ptr(2);
                 return token;
             }
             if (this->__match("return", true))
             {
                 token->type = TokenType::Kw_Return;
-                token->end_pos = this->__pos + 5;
+                token->end_pos = this->__cur_pos() + 5;
                 this->__try_move_ptr(6);
                 return token;
             }
             if (this->__match("class", true))
             {
                 token->type = TokenType::Kw_Class;
-                token->end_pos = this->__pos + 4;
+                token->end_pos = this->__cur_pos() + 4;
                 this->__try_move_ptr(5);
                 return token;
             }
             if (this->__match("import", true))
             {
                 token->type = TokenType::Kw_Import;
-                token->end_pos = this->__pos + 5;
+                token->end_pos = this->__cur_pos() + 5;
                 this->__try_move_ptr(6);
                 return token;
             }
@@ -284,7 +296,7 @@ namespace XyA
             {
                 token->type = TokenType::BoolLiteral;
                 token->value = "true";
-                token->end_pos = this->__pos + 3;
+                token->end_pos = this->__cur_pos() + 3;
                 this->__try_move_ptr(4);
                 return token;
             }
@@ -292,14 +304,14 @@ namespace XyA
             {
                 token->type = TokenType::BoolLiteral;
                 token->value = "false";
-                token->end_pos = this->__pos + 4;
+                token->end_pos = this->__cur_pos() + 4;
                 this->__try_move_ptr(5);
                 return token;
             }
             if (this->__match("null", true))
             {
                 token->type = TokenType::NullLiteral;
-                token->end_pos = this->__pos + 3;
+                token->end_pos = this->__cur_pos() + 3;
                 this->__try_move_ptr(4);
                 return token;
             }
@@ -321,7 +333,7 @@ namespace XyA
                 }
                 else
                 {
-                    this->__throw_exception("Invalid syntax", this->__pos);
+                    this->__throw_exception("Invalid syntax", this->__cur_pos());
                 }
             }   
             
@@ -335,7 +347,7 @@ namespace XyA
                 }
                 else
                 {
-                    this->__throw_exception("Invalid syntax", this->__pos);
+                    this->__throw_exception("Invalid syntax", this->__cur_pos());
                 }
             }
 
@@ -348,7 +360,7 @@ namespace XyA
             }
             else
             {
-                this->__throw_exception("Invalid syntax", this->__pos);
+                this->__throw_exception("Invalid syntax", this->__cur_pos());
             }
         }
 
@@ -382,7 +394,7 @@ namespace XyA
                 {
                     if (is_float)
                     {
-                        this->__throw_exception("SyntaxError: Multiple decimal points found.", this->__pos);
+                        this->__throw_exception("SyntaxError: Multiple decimal points found.", this->__cur_pos());
                         return false;
                     }
                     is_float = true;
@@ -400,11 +412,11 @@ namespace XyA
         {
             if (!this->__try_move_ptr())  // 从左引号的下一个字符开始
             {
-                this->__throw_exception("SyntaxError: '\"' was not closed", this->__pos);
+                this->__throw_exception("SyntaxError: '\"' was not closed", this->__cur_pos());
                 return false;
             }
 
-            size_t firstCharPos = this->__pos;
+            TokenPos firstCharPos = this->__cur_pos();
 
             result.push_back('"');
             while (this->__cur_char() != '"')
@@ -446,7 +458,7 @@ namespace XyA
 
                 if (!this->__try_move_ptr())  // 从左引号的下一个字符开始
                 {
-                    this->__throw_exception("SyntaxError: '\"' was not closed", this->__pos);
+                    this->__throw_exception("SyntaxError: '\"' was not closed", this->__cur_pos());
                     return false;
                 }
             }
@@ -460,7 +472,7 @@ namespace XyA
         {
             if (!Utils::is_letter(this->__cur_char()) && this->__cur_char() != '_')
             {
-                this->__throw_exception("SyntaxError: invalid syntax", this->__pos);
+                this->__throw_exception("SyntaxError: invalid syntax", this->__cur_pos());
                 return false;
             }
             while(Utils::is_letter(this->__cur_char()) || Utils::is_digit(this->__cur_char()) || this->__cur_char() == '_')
@@ -476,9 +488,21 @@ namespace XyA
 
         bool TokenAnalyzer::__try_move_ptr(size_t step)
         {
-            if (this->__pos + step < this->__analyzing_source.length())
+            if (this->__cur_char_ptr + step < this->__analyzing_source.length())
             {
-                this->__pos += step;
+                for (size_t i = 0; i < step; i++)
+                {
+                    if (this->__cur_char() == '\n')
+                    {
+                        this->__cur_row ++;
+                        this->__cur_column = 1;
+                    }
+                    else
+                    {
+                        this->__cur_column ++;
+                    }
+                    this->__cur_char_ptr ++;
+                }
                 return true;
             }
             this->__finished = true;
@@ -487,19 +511,19 @@ namespace XyA
 
         bool TokenAnalyzer::__at_end() const
         {
-            return this->__pos == this->__analyzing_source.length() - 1;
+            return this->__cur_char_ptr == this->__analyzing_source.length() - 1;
         }
 
         bool TokenAnalyzer::__match(std::string str, bool keyword_mode) const
         {
-            if (this->__pos + str.length() > this->__analyzing_source.length())
+            if (this->__cur_char_ptr + str.length() > this->__analyzing_source.length())
             {
                 return false;
             }
 
             for (size_t i = 0; i < str.length(); i ++)
             {
-                if (this->__analyzing_source[this->__pos + i] != str[i])
+                if (this->__analyzing_source[this->__cur_char_ptr + i] != str[i])
                 {
                     return false;
                 }
@@ -507,15 +531,15 @@ namespace XyA
 
             if(keyword_mode)
             {
-                if (this->__pos + str.length() == this->__analyzing_source.length())
+                if (this->__cur_char_ptr + str.length() == this->__analyzing_source.length())
                 {
                     return true;
                 }
                 else
                 {
-                    if (Utils::is_letter(this->__analyzing_source[this->__pos + str.length()]) || 
-                        Utils::is_digit(this->__analyzing_source[this->__pos + str.length()]) || 
-                        this->__analyzing_source[this->__pos + str.length()] == '_')
+                    if (Utils::is_letter(this->__analyzing_source[this->__cur_char_ptr + str.length()]) || 
+                        Utils::is_digit(this->__analyzing_source[this->__cur_char_ptr + str.length()]) || 
+                        this->__analyzing_source[this->__cur_char_ptr + str.length()] == '_')
                     {
                         return false;
                     }
@@ -527,15 +551,20 @@ namespace XyA
 
         char TokenAnalyzer::__cur_char() const
         {
-            return this->__analyzing_source[this->__pos];
+            return this->__analyzing_source[this->__cur_char_ptr];
         }
 
         char TokenAnalyzer::__next_char() const
         {
-            return this->__analyzing_source[this->__pos + 1];
+            return this->__analyzing_source[this->__cur_char_ptr + 1];
         }
 
-        void TokenAnalyzer::__throw_exception(std::string_view message, size_t pos) const
+        TokenPos TokenAnalyzer::__cur_pos() const
+        {
+            return TokenPos(this->__cur_row, this->__cur_column);
+        }
+
+        void TokenAnalyzer::__throw_exception(std::string_view message, TokenPos pos) const
         {
             for (auto callback : this->exception_callbacks)
             {

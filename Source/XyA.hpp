@@ -26,16 +26,16 @@ namespace XyA
     Core::Core()
     {
         this->token_analyzer.exception_callbacks.push_back(
-            [](std::string_view msg, size_t pos){
-                printf("Lexical Error: %s  Pos: %zu\n", std::string(msg).c_str(), pos);
+            [](std::string_view msg, LexicalAnalysis::TokenPos pos){
+                printf("Lexical Error: %s  Pos: %zu %zu\n", std::string(msg).c_str(), pos.row, pos.column);
                 exit(-1);
             }
         );
 
         this->syntax_parser.exception_callbacks.push_back(
-            [](std::string_view msg, size_t pos){
-                printf("Syntax Error: %s  Pos: %zu\n", std::string(msg).c_str(), pos);
-                exit(-1);
+            [](std::string_view msg, LexicalAnalysis::TokenPos pos){
+                printf("Syntax Error: %s  Pos: %zu %zu\n", std::string(msg).c_str(), pos.row, pos.column);
+                // exit(-1);
             }
         );
 

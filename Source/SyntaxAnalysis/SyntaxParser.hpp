@@ -12,7 +12,7 @@ namespace XyA
         class SyntaxParser
         {
         public:
-            std::vector<std::function<void(std::string_view, size_t)>> exception_callbacks;
+            std::vector<std::function<void(std::string_view, LexicalAnalysis::TokenPos)>> exception_callbacks;
 
             SyntaxTreeNode* parse_tokens(std::vector<LexicalAnalysis::Token*>* tokens);
 
@@ -61,7 +61,7 @@ namespace XyA
             SyntaxTreeNode* __parse_return();
             SyntaxTreeNode* __parse_class_definition();
 
-            void __throw_exception(std::string_view message, size_t pos) const;
+            void __throw_exception(std::string_view message, LexicalAnalysis::TokenPos pos) const;
         };
 
         SyntaxTreeNode* SyntaxParser::parse_tokens(std::vector<LexicalAnalysis::Token*>* tokens)
@@ -101,6 +101,7 @@ namespace XyA
                 this->__cur_pos += step;
                 return true;
             }
+            this->__cur_pos = this->__parsing_tokens->size() - 1;
             this->__finished = true;
             return false;
         }
@@ -148,14 +149,28 @@ namespace XyA
 
         SyntaxTreeNode* SyntaxParser::__parse_line()
         {
-            // line -> (assignment | expression)
+            // line -> (assignment | expression) ";"
             SyntaxTreeNode* node = this->__parse_expression();
+            if (node == nullptr)
+            {
+                return nullptr;
+            }
 
             if (((node->type == SyntaxTreeNodeType::Primary && !node->token->is_literal()) || 
                 node->type == SyntaxTreeNodeType::Attr) && !this->__at_end() && 
                 this->__next_token()->type == LexicalAnalysis::TokenType::Op_Assignment)
             {
                 node = this->__parse_assignment(node);
+                if (node == nullptr)
+                {
+                    return nullptr;
+                }
+            }
+
+            if (!this->__try_move_ptr() || this->__cur_token()->type != LexicalAnalysis::TokenType::S_Semicolon)
+            {
+                this->__throw_exception("Expected ';'", this->__cur_token()->start_pos);
+                return nullptr;
             }
 
             return node;
@@ -165,7 +180,7 @@ namespace XyA
         {
             // block -> "{" unit* "}"
 
-            size_t left_brace_pos = this->__cur_pos;
+            LexicalAnalysis::TokenPos left_brace_pos = this->__cur_token()->start_pos;
             if (!this->__try_move_ptr())
             {
                 this->__throw_exception("'{' was not closed", left_brace_pos);
@@ -175,11 +190,18 @@ namespace XyA
 
             while (this->__cur_token()->type != LexicalAnalysis::TokenType::S_RBrace)
             {
-                node->children.push_back(this->__parse_unit());
+                SyntaxTreeNode* line_node = this->__parse_unit();
+                if (line_node == nullptr)
+                {
+                    return nullptr;
+                }
+
+                node->children.push_back(line_node);
 
                 if (!this->__try_move_ptr())
                 {
                     this->__throw_exception("'{' was not closed", left_brace_pos);
+                    return nullptr;
                 }
             }
 
@@ -192,14 +214,24 @@ namespace XyA
             if (!this->__try_move_ptr())
             {
                 this->__throw_exception("Expected expression", this->__cur_token()->start_pos);
+                return nullptr;
             }
             SyntaxTreeNode* expression = this->__parse_expression();
+            if (expression == nullptr)
+            {
+                return nullptr;
+            }
 
             if (!this->__try_move_ptr())
             {
                 this->__throw_exception("Expected indented block", this->__cur_token()->start_pos);
+                return nullptr;
             }
             SyntaxTreeNode* indented_block = this->__parse_block();
+            if (indented_block == nullptr)
+            {
+                return nullptr;
+            }
 
             SyntaxTreeNode* else_indented_block = nullptr;
             if (!this->__at_end() && this->__next_token()->type == LexicalAnalysis::TokenType::Kw_Else)
@@ -208,6 +240,7 @@ namespace XyA
                 if(!this->__try_move_ptr())
                 {
                     this->__throw_exception("Expected indented block", this->__cur_token()->start_pos);
+                    return nullptr;
                 }
 
                 if (this->__cur_token()->type == LexicalAnalysis::TokenType::Kw_If)
@@ -221,6 +254,12 @@ namespace XyA
                 else
                 {
                     this->__throw_exception("Expected indented block", this->__cur_token()->start_pos);
+                    return nullptr;
+                }
+
+                if (else_indented_block == nullptr)
+                {
+                    return nullptr;
                 }
             }
 
@@ -242,14 +281,24 @@ namespace XyA
             if (!this->__try_move_ptr())
             {
                 this->__throw_exception("Expected expression", this->__cur_token()->start_pos);
+                return nullptr;
             }
             SyntaxTreeNode* expression = this->__parse_expression();
+            if (expression == nullptr)
+            {
+                return nullptr;
+            }
 
             if (!this->__try_move_ptr())
             {
                 this->__throw_exception("Expected indented block", this->__cur_token()->start_pos);
+                return nullptr;
             }
             SyntaxTreeNode* indented_block = this->__parse_block();
+            if (indented_block == nullptr)
+            {
+                return nullptr;
+            }
 
             SyntaxTreeNode* if_node = new SyntaxTreeNode(SyntaxTreeNodeType::While);
             if_node->children.reserve(2);
@@ -265,9 +314,14 @@ namespace XyA
             if (!this->__try_move_ptr(2))
             {
                 this->__throw_exception("Expected expression", this->__cur_token()->start_pos);
+                return nullptr;
             }
 
             SyntaxTreeNode* expression = this->__parse_expression();
+            if (expression == nullptr)
+            {
+                return nullptr;
+            }
 
             SyntaxTreeNode* assignment = new SyntaxTreeNode(SyntaxTreeNodeType::Assignment);
             assignment->children.reserve(2);
@@ -286,6 +340,10 @@ namespace XyA
         {
             // comparison -> addition ( ( "!=" | "==" | ">" | ">=" | "<" | "<=" ) addition )?
             SyntaxTreeNode* left_addition = this->__parse_addition();
+            if (left_addition == nullptr)
+            {
+                return nullptr;
+            }
 
             if (this->__at_end())
             {
@@ -305,8 +363,13 @@ namespace XyA
                 if (!this->__try_move_ptr())
                 {
                     this->__throw_exception("Expected a left addition", this->__cur_token()->start_pos);
+                    return nullptr;
                 }
                 SyntaxTreeNode* right_addition = this->__parse_comparison();
+                if (right_addition == nullptr)
+                {
+                    return nullptr;
+                }
 
                 SyntaxTreeNode* result_root = new SyntaxTreeNode(SyntaxTreeNodeType::Comparison);
                 result_root->token = operator_token;
@@ -321,6 +384,10 @@ namespace XyA
         {
             // addition -> multiplication ( ( "-" | "+" ) multiplication )*
             SyntaxTreeNode* first_multiplication = this->__parse_multiplication();
+            if (first_multiplication == nullptr)
+            {
+                return nullptr;
+            }
 
             if (this->__at_end())
             {
@@ -339,9 +406,14 @@ namespace XyA
                 if (!this->__try_move_ptr())
                 {
                     this->__throw_exception("Expected following multiplications", this->__cur_token()->start_pos);
+                    return nullptr;
                 }
 
                 SyntaxTreeNode* following_multiplication = this->__parse_multiplication();
+                if (following_multiplication == nullptr)
+                {
+                    return nullptr;
+                }
 
                 cur_left_multiplication = cur_root;
 
@@ -363,6 +435,10 @@ namespace XyA
         {
             // multiplication -> unary ( ( "*" | "/" ) unary )*
             SyntaxTreeNode* first_unary = this->__parse_unary();
+            if (first_unary == nullptr)
+            {
+                return nullptr;
+            }
 
             if (this->__at_end())
             {
@@ -382,9 +458,14 @@ namespace XyA
                 if (!this->__try_move_ptr())
                 {
                     this->__throw_exception("Expected following multiplications", this->__cur_token()->start_pos);
+                    return nullptr;
                 }
 
                 SyntaxTreeNode* following_unary = this->__parse_unary();
+                if (following_unary == nullptr)
+                {
+                    return nullptr;
+                }
 
                 cur_left_unary = cur_root;
 
@@ -412,8 +493,14 @@ namespace XyA
                 if (!this->__try_move_ptr())
                 {
                     this->__throw_exception("Expected expression", this->__cur_token()->start_pos);
+                    return nullptr;
                 }
                 SyntaxTreeNode* primany = this->__parse_primary();
+                if (primany == nullptr)
+                {
+                    return nullptr;
+                }
+
                 node->children.push_back(primany);
                 return node;
             }
@@ -449,6 +536,11 @@ namespace XyA
                     {
                         break;
                     }
+                    
+                    if (node == nullptr)
+                    {
+                        return nullptr;
+                    }
                 }
                 return node;
             }
@@ -458,12 +550,19 @@ namespace XyA
                 if (!this->__try_move_ptr())
                 {
                     this->__throw_exception("'(' was not closed", this->__cur_token()->start_pos);
+                    return nullptr;
                 }
                 SyntaxTreeNode* expression = this->__parse_expression();
+                if (expression == nullptr)
+                {
+                    return nullptr;
+                }
+
                 if (!this->__try_move_ptr() && 
                     this->__cur_token()->type != LexicalAnalysis::TokenType::S_RParenthesis)
                 {
                     this->__throw_exception("'(' was not closed", this->__cur_token()->start_pos);
+                    return nullptr;
                 }
                 while (!this->__at_end())
                 {
@@ -479,12 +578,18 @@ namespace XyA
                     {
                         break;
                     }
+
+                    if (expression == nullptr)
+                    {
+                        return nullptr;
+                    }
                 }
                 return expression;
             }
 
             default:
                 this->__throw_exception("Expected expression", this->__cur_token()->start_pos);
+                return nullptr;
             }  
         }   
 
@@ -503,6 +608,7 @@ namespace XyA
             if (this->__at_end())
             {
                 this->__throw_exception("'(' was not closed", this->__cur_token()->start_pos);
+                return nullptr;
             }
             
             SyntaxTreeNode* argument_list;
@@ -510,6 +616,11 @@ namespace XyA
             {
                 this->__try_move_ptr();
                 argument_list = this->__parse_call_argument_list();
+
+                if (argument_list == nullptr)
+                {
+                    return nullptr;
+                }
             }
             else
             {
@@ -521,6 +632,7 @@ namespace XyA
             if (!this->__try_move_ptr() || this->__cur_token()->type != LexicalAnalysis::TokenType::S_RParenthesis)
             {
                 this->__throw_exception("'(' was not closed", this->__cur_token()->start_pos);
+                return nullptr;
             }
             return call_node;
         }
@@ -531,6 +643,11 @@ namespace XyA
             SyntaxTreeNode* argument_list = new SyntaxTreeNode(SyntaxTreeNodeType::Argument_List);
 
             SyntaxTreeNode* first_argument_node = this->__parse_expression();
+            if (first_argument_node == nullptr)
+            {
+                return nullptr;
+            }
+
             argument_list->children.push_back(first_argument_node);
 
             if (!this->__try_move_ptr())
@@ -543,9 +660,15 @@ namespace XyA
                 if (!this->__try_move_ptr())
                 {
                     this->__throw_exception("Expected argument", this->__cur_token()->start_pos);
+                    return nullptr;
                 }
 
                 SyntaxTreeNode* following_argument_node = this->__parse_expression();
+                if (following_argument_node == nullptr)
+                {
+                    return nullptr;
+                }
+
                 argument_list->children.push_back(following_argument_node);
 
                 if (!this->__try_move_ptr())
@@ -617,6 +740,11 @@ namespace XyA
             {
                 this->__try_move_ptr();
                 argument_list = this->__parse_argument_list_definition();
+
+                if (argument_list == nullptr)
+                {
+                    return nullptr;
+                }
             }
             else
             {
@@ -634,6 +762,10 @@ namespace XyA
                 return nullptr;
             }
             SyntaxTreeNode* function_body = this->__parse_block();
+            if (function_body == nullptr)
+            {
+                return nullptr;
+            }
 
             function_defintion->children.reserve(2);
             function_defintion->children.push_back(argument_list);
@@ -652,6 +784,7 @@ namespace XyA
             if (this->__cur_token()->type != LexicalAnalysis::TokenType::Identifier)
             {
                 this->__throw_exception("Expected identifiers as arguments", this->__cur_token()->start_pos);
+                return nullptr;
             }
 
             LexicalAnalysis::Token* first_argument_token = this->__cur_token();
@@ -669,6 +802,7 @@ namespace XyA
                 if (!this->__try_move_ptr() || this->__cur_token()->type != LexicalAnalysis::TokenType::Identifier)
                 {
                     this->__throw_exception("Expected argument", this->__cur_token()->start_pos);
+                    return nullptr;
                 }
 
                 LexicalAnalysis::Token* following_argument_token = this->__cur_token();
@@ -687,16 +821,28 @@ namespace XyA
 
         SyntaxTreeNode* SyntaxParser::__parse_return()
         {
-            // return -> "return" expression?
+            // return -> "return" expression? ";"
             if (!this->__try_move_ptr())
             {
                 this->__throw_exception("Expected expression", this->__cur_token()->start_pos);
+                return nullptr;
             }
             
             SyntaxTreeNode* return_node = new SyntaxTreeNode(SyntaxTreeNodeType::Return);
             SyntaxTreeNode* expression = this->__parse_expression();
+            if (expression == nullptr)
+            {
+                return nullptr;
+            }
+            
             return_node->children.reserve(1);
             return_node->children.push_back(expression);
+
+            if (!this->__try_move_ptr() || this->__cur_token()->type != LexicalAnalysis::TokenType::S_Semicolon)
+            {
+                this->__throw_exception("Expected ';'", this->__cur_token()->start_pos);
+                return nullptr;
+            }
 
             return return_node;
         }
@@ -720,7 +866,7 @@ namespace XyA
                 this->__throw_exception("Expected indented block", this->__cur_token()->start_pos);
                 return nullptr;
             }
-            size_t left_brace_pos = this->__cur_pos;
+            LexicalAnalysis::TokenPos left_brace_pos = this->__cur_token()->start_pos;
 
             if (!this->__try_move_ptr())
             {
@@ -741,7 +887,7 @@ namespace XyA
             return class_definition_node;
         }
 
-        void SyntaxParser::__throw_exception(std::string_view message, size_t pos) const
+        void SyntaxParser::__throw_exception(std::string_view message, LexicalAnalysis::TokenPos pos) const
         {
             for (auto callback : this->exception_callbacks)
             {
