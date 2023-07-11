@@ -28,14 +28,12 @@ namespace XyA
         this->token_analyzer.exception_callbacks.push_back(
             [](std::string_view msg, LexicalAnalysis::TokenPos pos){
                 printf("Lexical Error: %s  Pos: %zu %zu\n", std::string(msg).c_str(), pos.row, pos.column);
-                exit(-1);
             }
         );
 
         this->syntax_parser.exception_callbacks.push_back(
             [](std::string_view msg, LexicalAnalysis::TokenPos pos){
                 printf("Syntax Error: %s  Pos: %zu %zu\n", std::string(msg).c_str(), pos.row, pos.column);
-                // exit(-1);
             }
         );
 

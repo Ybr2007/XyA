@@ -28,4 +28,5 @@ return         -> "return" expression? ";"
 function_unit  -> block | if | while | line | function_definiton | return  // 在__parse_unit实现
 function_block -> "{" function_unit* "}"                                   // 在__parse_block实现
 
-class_definition -> "class" Identifier "{" function_definition* "}"
+method_definition -> VisibilityModifier? function_definition
+class_definition -> "class" Identifier "{" method_definition* "}"

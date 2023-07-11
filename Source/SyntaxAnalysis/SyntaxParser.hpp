@@ -59,6 +59,7 @@ namespace XyA
             SyntaxTreeNode* __parse_function_definition();
             SyntaxTreeNode* __parse_argument_list_definition();
             SyntaxTreeNode* __parse_return();
+            SyntaxTreeNode* __parse_method_definition();
             SyntaxTreeNode* __parse_class_definition();
 
             void __throw_exception(std::string_view message, LexicalAnalysis::TokenPos pos) const;
@@ -77,7 +78,10 @@ namespace XyA
                 LexicalAnalysis::Token* cur_token = this->__cur_token();
                 
                 SyntaxTreeNode* node = this->__parse_unit();
-                this->__parsing_root->children.push_back(node);
+                if (node != nullptr)
+                {
+                    this->__parsing_root->children.push_back(node);
+                }
             }
             while (this->__try_move_ptr());
 
@@ -847,9 +851,46 @@ namespace XyA
             return return_node;
         }
 
+        SyntaxTreeNode* SyntaxParser::__parse_method_definition()
+        {
+            // method_definition -> VisibilityModifier? function_definition
+            if (!this->__cur_token()->is_method_modifier())
+            {
+                SyntaxTreeNode* function_definition_node = this->__parse_function_definition();
+                if (function_definition_node == nullptr)
+                {
+                    return nullptr;
+                }
+
+                function_definition_node->type = SyntaxTreeNodeType::Method_Definition;
+                return function_definition_node;
+            }
+
+            SyntaxTreeNode* modifier_node = new SyntaxTreeNode(SyntaxTreeNodeType::Modifier);
+            modifier_node->token = this->__cur_token();
+
+            if (!this->__try_move_ptr())
+            {
+                this->__throw_exception("Expected method definition", this->__cur_token()->start_pos);
+                return nullptr;
+            }
+
+            SyntaxTreeNode* function_definition_node = this->__parse_function_definition();
+            if (function_definition_node == nullptr)
+            {
+                return nullptr;
+            }
+            function_definition_node->type = SyntaxTreeNodeType::Method_Definition;
+
+            function_definition_node->children.reserve(3);
+            function_definition_node->children.push_back(modifier_node);
+
+            return function_definition_node;
+        }
+
         SyntaxTreeNode* SyntaxParser::__parse_class_definition()
         {
-            // class_definition -> "class" Identifier "{" function_definition* "}"
+            // class_definition -> "class" Identifier "{" method_definition* "}"
             // 调用时已确定当前token的type为Kw_Class
             
             if (!this->__try_move_ptr() || this->__cur_token()->type != LexicalAnalysis::TokenType::Identifier)
@@ -875,7 +916,11 @@ namespace XyA
             }
             while (this->__cur_token()->type != LexicalAnalysis::TokenType::S_RBrace)
             {
-                class_definition_node->children.push_back(this->__parse_function_definition());
+                SyntaxTreeNode* method_definition_node = this->__parse_method_definition();
+                if (method_definition_node != nullptr)
+                {
+                    class_definition_node->children.push_back(method_definition_node);
+                }
 
                 if (!this->__try_move_ptr())
                 {

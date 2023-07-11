@@ -29,6 +29,8 @@ namespace XyA
             Call,                   // chilren: 数量为2，children[0] 为callee表达式，children[1] 为实参列表(Argument_List)
             Attr,                   // token: 属性标识符 children: 数量为1，chilren[0] 为对象
             Return,                 // children: 数量为1，chilren[0] 为返回值表达式
+            Modifier,               // token: 修饰符
+            Method_Definition,      // token: 方法名称标识符 children: 数量为2或3，children[0] 形参列表(Argument_List)，children[1] 函数体(Block)，children[2] 方法可访问性修饰符（可选）
             Class_Definition,       // token: 类名称标识符 chilren: 数量不限，每一个child是一个成员函数定义(Function_Definition)
         };
 
@@ -69,6 +71,10 @@ namespace XyA
                 return "<SyntaxTreeNodeType: Attr>";
             case SyntaxTreeNodeType::Return:
                 return "<SyntaxTreeNodeType: Return>";
+            case SyntaxTreeNodeType::Modifier:
+                return "<SyntaxTreeNodeType: Modifier>";
+            case SyntaxTreeNodeType::Method_Definition:
+                return "<SyntaxTreeNodeType: Method_Definition>";
             case SyntaxTreeNodeType::Class_Definition:
                 return "<SyntaxTreeNodeType: Class_Definition>";
             default:

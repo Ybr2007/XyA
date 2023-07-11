@@ -291,6 +291,20 @@ namespace XyA
                 this->__try_move_ptr(6);
                 return token;
             }
+            if (this->__match("public", true))
+            {
+                token->type = TokenType::Kw_Public;
+                token->end_pos = this->__cur_pos() + 5;
+                this->__try_move_ptr(6);
+                return token;
+            }
+            if (this->__match("private", true))
+            {
+                token->type = TokenType::Kw_Private;
+                token->end_pos = this->__cur_pos() + 6;
+                this->__try_move_ptr(7);
+                return token;
+            }
 
             if (this->__match("true", true))
             {

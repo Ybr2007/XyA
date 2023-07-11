@@ -46,6 +46,8 @@ namespace XyA
             Kw_Return,                      // return
             Kw_Class,                       // class
             Kw_Import,                      // import
+            Kw_Public,                      // public
+            Kw_Private,                     // private
 
             /* Values */
             IntLiteral,                     // 整数字面量
@@ -81,6 +83,7 @@ namespace XyA
 
             std::string to_string() const;
             bool is_literal() const;
+            bool is_method_modifier() const;
         };
 
         std::string Token::to_string() const
@@ -142,6 +145,10 @@ namespace XyA
                 return "<Token: Key Word 'class'>";
             case TokenType::Kw_Import:
                 return "<Token: Key Word 'import'>";
+            case TokenType::Kw_Public:
+                return "<Token: Key Word 'public'>";
+            case TokenType::Kw_Private:
+                return "<Token: Key Word 'private'>";
 
             case TokenType::IntLiteral:
                 return "<Token: Int Literal, Value: '" + value +"'>";
@@ -167,5 +174,11 @@ namespace XyA
                 this->type == TokenType::StringLiteral || this->type == TokenType::BoolLiteral ||
                 this->type == TokenType::NullLiteral;
         }
+
+        bool Token::is_method_modifier() const
+        {
+            return this->type == TokenType::Kw_Public || this->type == TokenType::Kw_Private;
+        }
+
     }  // namespace LexicalAnalysis
 }  // namespace XyA
