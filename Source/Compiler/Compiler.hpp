@@ -183,9 +183,9 @@ namespace XyA
                 this->__compile_expression(code_object, assignment_root->children[1]);
                 Runtime::Instruction* store_attr_instruction = new Runtime::Instruction(Runtime::InstructionType::StoreAttr);;                
 
-                if (!code_object->try_get_name_index(assignment_root->children[0]->token->value, store_attr_instruction->parameter))
+                if (!code_object->try_get_attr_name_index(assignment_root->children[0]->token->value, store_attr_instruction->parameter))
                 {
-                    store_attr_instruction->parameter = code_object->add_name(assignment_root->children[0]->token->value);
+                    store_attr_instruction->parameter = code_object->add_attr_name(assignment_root->children[0]->token->value);
                 }
                 code_object->instructions.push_back(store_attr_instruction);
             }
@@ -211,9 +211,9 @@ namespace XyA
             {
                 this->__compile_expression(code_object, expression_root->children[0]);  // 计算attr所属object的值
                 Runtime::Instruction* get_attr_instruction = new Runtime::Instruction(Runtime::InstructionType::GetAttr);
-                if (!code_object->try_get_name_index(expression_root->token->value, get_attr_instruction->parameter))
+                if (!code_object->try_get_attr_name_index(expression_root->token->value, get_attr_instruction->parameter))
                 {
-                    get_attr_instruction->parameter = code_object->add_name(expression_root->token->value);
+                    get_attr_instruction->parameter = code_object->add_attr_name(expression_root->token->value);
                 }
                 code_object->instructions.push_back(get_attr_instruction);
 
@@ -495,7 +495,7 @@ namespace XyA
 
             for (auto method_definithon_root : class_definition_root->children)
             {
-                cls->attrs[method_definithon_root->token->value] = this->__build_function(method_definithon_root);
+                cls->set_attr(method_definithon_root->token->value, this->__build_function(method_definithon_root));
             }
             Runtime::Object* new_method = XyA_Allocate(
                 Runtime::Builtin::BuiltinFunction,

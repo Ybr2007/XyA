@@ -89,6 +89,11 @@ namespace XyA
             return this->type() == type;
         }
 
+        void Object::set_attr(const std::string& attr_name, Object* attr_object)
+        {
+            this->attrs[attr_name] = attr_object;
+        }
+
         TryGetAttrResult Object::try_get_attr(const std::string& attr_name, Object*& result) const
         {
             if (this->attrs.try_get(attr_name, result))

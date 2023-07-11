@@ -105,11 +105,11 @@ namespace XyA
 
                 Object* attr;
                 TryGetAttrResult operation_result = attr_owner->try_get_attr(
-                    this->cur_context->code_obj->names[instruction->parameter], attr);
+                    this->cur_context->code_obj->attr_names[instruction->parameter], attr);
 
                 if (operation_result == TryGetAttrResult::NotFound)
                 {
-                    this->__throw_exception("The attr '" + this->cur_context->code_obj->names[instruction->parameter] + 
+                    this->__throw_exception("The attr '" + this->cur_context->code_obj->attr_names[instruction->parameter] + 
                         "' is not defined or already deleted.");
                 }
                 this->cur_context->set_top_operand(attr);
@@ -123,11 +123,11 @@ namespace XyA
 
                 Object* attr;
                 TryGetAttrResult operation_result = attr_owner->try_get_attr(
-                    this->cur_context->code_obj->names[instruction->parameter], attr);
+                    this->cur_context->code_obj->attr_names[instruction->parameter], attr);
 
                 if (operation_result == TryGetAttrResult::NotFound)
                 {
-                    this->__throw_exception("The variable '" + this->cur_context->code_obj->names[instruction->parameter] + 
+                    this->__throw_exception("The variable '" + this->cur_context->code_obj->attr_names[instruction->parameter] + 
                         "' is not defined or already deleted.");
                 }
                 this->cur_context->push_operand(attr);
@@ -156,7 +156,7 @@ namespace XyA
                 
                 Object* old_attr;
                 TryGetAttrResult operation_result = attr_owner->try_get_attr(
-                    this->cur_context->code_obj->names[instruction->parameter], old_attr);
+                    this->cur_context->code_obj->attr_names[instruction->parameter], old_attr);
 
                 if (operation_result == TryGetAttrResult::OK)
                 {
@@ -168,7 +168,7 @@ namespace XyA
                         std::format("Variables of type '{}' do not allow external attribute addition", attr_owner->type()->name));
                 }
 
-                attr_owner->attrs[this->cur_context->code_obj->names[instruction->parameter]] = new_attr;
+                attr_owner->attrs[this->cur_context->code_obj->attr_names[instruction->parameter]] = new_attr;
                 new_attr->reference();
 
                 break;

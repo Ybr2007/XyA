@@ -45,6 +45,8 @@ namespace XyA
             void dereference_attrs();
 
             bool is_instance(Type* type) const;
+
+            void set_attr(const std::string& attr_name, Object* attr_object);
             TryGetAttrResult try_get_attr(const std::string& attr_name, Object*& result) const;
             TryGetMethodResult try_get_method(const std::string& method_name, BaseFunction*& result) const;
             virtual ~Object();

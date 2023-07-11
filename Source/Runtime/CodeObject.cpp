@@ -114,17 +114,17 @@ namespace XyA
             }
         }
         
-        bool CodeObject::try_get_name_index(const std::string& name, size_t& result) const
+        bool CodeObject::try_get_attr_name_index(const std::string& attr_name, size_t& result) const
         {
-            auto iter = std::find_if(this->names.begin(), this->names.end(),
+            auto iter = std::find_if(this->attr_names.begin(), this->attr_names.end(),
                 [&](const std::string& defined_name) -> bool
                 {
-                    return defined_name == name;
+                    return defined_name == attr_name;
                 }
             );
-            if (iter != this->names.end()) 
+            if (iter != this->attr_names.end()) 
             {
-                result = std::distance(this->names.begin(), iter);
+                result = std::distance(this->attr_names.begin(), iter);
                 return true;
             } 
             else 
@@ -147,10 +147,10 @@ namespace XyA
             return index;
         }
 
-        size_t CodeObject::add_name(const std::string& name)
+        size_t CodeObject::add_attr_name(const std::string& attr_name)
         {
-            this->names.push_back(name);
-            return this->names.size() - 1;
+            this->attr_names.push_back(attr_name);
+            return this->attr_names.size() - 1;
         }
 
         #ifdef Debug_Display_Object

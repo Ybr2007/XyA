@@ -13,17 +13,17 @@ namespace XyA
             IntType::IntType()
             {
                 this->name = "int";
-                this->attrs[MagicMethodNames::add_method_name] = XyA_Allocate(BuiltinFunction, int_object_add);
-                this->attrs[MagicMethodNames::subtract_method_name] = XyA_Allocate(BuiltinFunction, int_object_subtract);
-                this->attrs[MagicMethodNames::multiply_method_name] = XyA_Allocate(BuiltinFunction, int_object_multiply);
-                this->attrs[MagicMethodNames::divide_method_name] = XyA_Allocate(BuiltinFunction, int_object_divide);
-                this->attrs[MagicMethodNames::equal_method_name] = XyA_Allocate(BuiltinFunction, int_object_equal);
-                this->attrs[MagicMethodNames::str_method_name] = XyA_Allocate(BuiltinFunction, int_object_str);
-                this->attrs[MagicMethodNames::bool_method_name] = XyA_Allocate(BuiltinFunction, int_object_bool);
-                this->attrs[MagicMethodNames::greater_method_name] = XyA_Allocate(BuiltinFunction, int_object_compare_if_greater);
-                this->attrs[MagicMethodNames::greater_equal_method_name] = XyA_Allocate(BuiltinFunction, int_object_compare_if_greater_equal);
-                this->attrs[MagicMethodNames::less_method_name] = XyA_Allocate(BuiltinFunction, int_object_compare_if_less);
-                this->attrs[MagicMethodNames::less_equal_method_name] = XyA_Allocate(BuiltinFunction, int_object_compare_if_less_equal);
+                this->set_attr(MagicMethodNames::add_method_name, XyA_Allocate(BuiltinFunction, int_object_add));
+                this->set_attr(MagicMethodNames::subtract_method_name, XyA_Allocate(BuiltinFunction, int_object_subtract));
+                this->set_attr(MagicMethodNames::multiply_method_name, XyA_Allocate(BuiltinFunction, int_object_multiply));
+                this->set_attr(MagicMethodNames::divide_method_name, XyA_Allocate(BuiltinFunction, int_object_divide));
+                this->set_attr(MagicMethodNames::equal_method_name, XyA_Allocate(BuiltinFunction, int_object_equal));
+                this->set_attr(MagicMethodNames::str_method_name, XyA_Allocate(BuiltinFunction, int_object_str));
+                this->set_attr(MagicMethodNames::bool_method_name, XyA_Allocate(BuiltinFunction, int_object_bool));
+                this->set_attr(MagicMethodNames::greater_method_name, XyA_Allocate(BuiltinFunction, int_object_compare_if_greater));
+                this->set_attr(MagicMethodNames::greater_equal_method_name, XyA_Allocate(BuiltinFunction, int_object_compare_if_greater_equal));
+                this->set_attr(MagicMethodNames::less_method_name, XyA_Allocate(BuiltinFunction, int_object_compare_if_less));
+                this->set_attr(MagicMethodNames::less_equal_method_name, XyA_Allocate(BuiltinFunction, int_object_compare_if_less_equal));
 
                 this->reference_attrs();
             }
