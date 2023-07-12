@@ -101,37 +101,47 @@ namespace XyA
 
             case InstructionType::GetAttr:
             {
+                const std::string& attr_name = this->cur_context->code_obj->attr_names[instruction->parameter];
+
                 Object* attr_owner = this->cur_context->top_operand();
 
-                Object* attr;
-                TryGetAttrResult operation_result = attr_owner->try_get_attr(
-                    this->cur_context->code_obj->attr_names[instruction->parameter], attr);
+                Attr attr;
+                TryGetAttrResult operation_result = attr_owner->try_get_attr(attr_name, attr);
 
                 if (operation_result == TryGetAttrResult::NotFound)
                 {
-                    this->__throw_exception("The attr '" + this->cur_context->code_obj->attr_names[instruction->parameter] + 
-                        "' is not defined or already deleted.");
+                    this->__throw_exception(std::format("The attr '{}' is not defined or already deleted.", attr_name));
                 }
-                this->cur_context->set_top_operand(attr);
 
+                if (attr.visibility == AttrVisibility::Private && this->cur_context->code_obj->cls != attr_owner->type())
+                {
+                    this->__throw_exception(std::format("Can not access private attr '{}'", attr_name));
+                }
+
+                this->cur_context->set_top_operand(attr.object);
                 break;
             }
 
             case InstructionType::GetMethod:
             {
+                const std::string& attr_name = this->cur_context->code_obj->attr_names[instruction->parameter];
+
                 Object* attr_owner = this->cur_context->top_operand();
 
-                Object* attr;
-                TryGetAttrResult operation_result = attr_owner->try_get_attr(
-                    this->cur_context->code_obj->attr_names[instruction->parameter], attr);
+                Attr attr;
+                TryGetAttrResult operation_result = attr_owner->try_get_attr(attr_name, attr);
 
                 if (operation_result == TryGetAttrResult::NotFound)
                 {
-                    this->__throw_exception("The variable '" + this->cur_context->code_obj->attr_names[instruction->parameter] + 
-                        "' is not defined or already deleted.");
+                    this->__throw_exception(std::format("The attr '{}' is not defined or already deleted.", attr_name));
                 }
-                this->cur_context->push_operand(attr);
 
+                if (attr.visibility == AttrVisibility::Private && this->cur_context->code_obj->cls != attr_owner->type())
+                {
+                    this->__throw_exception(std::format("Can not access private attr '{}'", attr_name));
+                }
+
+                this->cur_context->push_operand(attr.object);
                 break;
             }
 
@@ -151,25 +161,35 @@ namespace XyA
 
             case InstructionType::StoreAttr:
             {
+                const std::string& attr_name = this->cur_context->code_obj->attr_names[instruction->parameter];
+
                 Object* new_attr = this->cur_context->pop_operand();
                 Object* attr_owner = this->cur_context->pop_operand();
                 
-                Object* old_attr;
-                TryGetAttrResult operation_result = attr_owner->try_get_attr(
-                    this->cur_context->code_obj->attr_names[instruction->parameter], old_attr);
+                Attr old_attr;
+                TryGetAttrResult operation_result = attr_owner->try_get_attr(attr_name, old_attr);
 
                 if (operation_result == TryGetAttrResult::OK)
                 {
-                    old_attr->dereference();
+                    if (old_attr.visibility == AttrVisibility::Private && this->cur_context->code_obj->cls != attr_owner->type())
+                    {
+                        this->__throw_exception(std::format("Can not access private attr '{}'", attr_name));
+                    }
                 }
-                else if (!attr_owner->type()->instance_allow_external_attr)
+                else
                 {
-                    this->__throw_exception(
-                        std::format("Variables of type '{}' do not allow external attribute addition", attr_owner->type()->name));
+                    if (!attr_owner->type()->instance_allow_external_attr)
+                    {
+                        this->__throw_exception(
+                            std::format("Variables of type '{}' do not allow external attribute addition", attr_owner->type()->name));
+                    }
+                    else
+                    {
+                        old_attr.visibility = AttrVisibility::Public;
+                    }
                 }
 
-                attr_owner->attrs[this->cur_context->code_obj->attr_names[instruction->parameter]] = new_attr;
-                new_attr->reference();
+                attr_owner->set_attr(attr_name, new_attr, old_attr.visibility);
 
                 break;
             }
@@ -248,8 +268,9 @@ namespace XyA
                 else
                 {
                     BaseFunction* bool_method;
+                    AttrVisibility visibility;
                     TryGetMethodResult operation_result =  top_object->try_get_method(
-                        MagicMethodNames::bool_method_name, bool_method);
+                        MagicMethodNames::bool_method_name, bool_method, visibility);
 
                     switch (operation_result)
                     {
@@ -333,7 +354,8 @@ namespace XyA
                     }
 
                     BaseFunction* new_method;
-                    auto result = callee_object->try_get_method(MagicMethodNames::new_method_name, new_method);
+                    AttrVisibility visibility;
+                    auto result = callee_object->try_get_method(MagicMethodNames::new_method_name, new_method, visibility);
 
                     if (result != TryGetMethodResult::OK)
                     {
@@ -408,7 +430,8 @@ namespace XyA
             Object* obj_1 = this->cur_context->pop_operand();
 
             BaseFunction* method;
-            TryGetMethodResult result = obj_1->try_get_method(magic_method_name, method);
+            AttrVisibility visibility;
+            TryGetMethodResult result = obj_1->try_get_method(magic_method_name, method, visibility);
 
             switch (result)
             {
@@ -441,7 +464,8 @@ namespace XyA
             Object* obj_1 = this->cur_context->pop_operand();
 
             BaseFunction* method;
-            TryGetMethodResult result = obj_1->try_get_method(magic_method_name, method);
+            AttrVisibility visibility;
+            TryGetMethodResult result = obj_1->try_get_method(magic_method_name, method, visibility);
 
             switch (result)
             {

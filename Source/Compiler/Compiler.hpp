@@ -1,4 +1,5 @@
 #pragma once
+#include <format>
 #include <SyntaxAnalysis/SyntaxTree.hpp>
 #include <Runtime/Instruction.h>
 #include <Runtime/CodeObject.h>
@@ -9,6 +10,7 @@
 #include <Runtime/Builtin/Null.h>
 #include <Runtime/Function.h>
 #include <Runtime/MemoryManager.hpp>
+#include <Runtime/VirtualMachine.h>
 #include <Utils/StringUtils.hpp>
 
 
@@ -39,7 +41,7 @@ namespace XyA
 
             Runtime::Function* __build_function(
                 Runtime::CodeObject* code_object, SyntaxAnalysis::SyntaxTreeNode* function_definition_root, size_t& function_variable_index);
-            Runtime::Function* __build_function(SyntaxAnalysis::SyntaxTreeNode* function_definition_root);
+            Runtime::Attr __build_method(SyntaxAnalysis::SyntaxTreeNode* method_definition_root, Runtime::Type* cls);
             Runtime::Type* __build_class(
                 Runtime::CodeObject* code_object, SyntaxAnalysis::SyntaxTreeNode* class_definition_root, size_t& class_variable_index);
         };
@@ -463,20 +465,84 @@ namespace XyA
             return function;
         }
 
-        Runtime::Function* Compiler::__build_function(SyntaxAnalysis::SyntaxTreeNode* function_definition_root)
+        Runtime::Attr Compiler::__build_method(SyntaxAnalysis::SyntaxTreeNode* method_definition_root, Runtime::Type* cls)
         {
-            Runtime::Function* function = XyA_Allocate_(Runtime::Function);
-            function->reference();
+            Runtime::Attr attr;
+            Runtime::Function* method = XyA_Allocate_(Runtime::Function);
+            method->code_object->cls = cls;
 
-            function->expected_arg_num = function_definition_root->children[0]->children.size();
-            for (auto arg : function_definition_root->children[0]->children)
+            method->expected_arg_num = method_definition_root->children[0]->children.size();
+            for (auto arg : method_definition_root->children[0]->children)
             {
-                function->code_object->add_variable_name(arg->token->value);
+                method->code_object->add_variable_name(arg->token->value);
             }
 
-            this->__compile_block(function->code_object, function_definition_root->children[1]);
+            this->__compile_block(method->code_object, method_definition_root->children[1]);
+            attr.object = method;
+            
+            if (method_definition_root->children.size() == 3)
+            {
+                switch (method_definition_root->children[2]->token->type)
+                {
+                case LexicalAnalysis::TokenType::Kw_Public:
+                    attr.visibility = Runtime::AttrVisibility::Public;
+                    break;
+                
+                case LexicalAnalysis::TokenType::Kw_Private:
+                    attr.visibility = Runtime::AttrVisibility::Private;
+                    break;
+                }
+            }
 
-            return function;
+            return attr;
+        }
+
+        Runtime::Object* cls_new_method(Runtime::Object** args, size_t arg_num, bool& exception_thrown)
+        {
+            Runtime::Type* cls = static_cast<Runtime::Type*>(args[0]);
+            Runtime::Object* instance = XyA_Allocate_(Runtime::Object);
+            instance->reference();
+            instance->set_type(cls);
+
+            Runtime::BaseFunction* init_method;
+            Runtime::AttrVisibility visibility;
+            auto result = instance->try_get_method(Runtime::MagicMethodNames::init_method_name, init_method, visibility);
+
+            if (visibility == Runtime::AttrVisibility::Private && Runtime::VirtualMachine::get_instance()->cur_context->code_obj->cls != cls)
+            {
+                exception_thrown = true; 
+                return XyA_Allocate(Runtime::Builtin::BuiltinException, std::format("Can not access the private constructor of class {}", cls->name));
+            }
+
+            if (result == Runtime::TryGetMethodResult::OK)
+            {
+                Runtime::Object** init_Method_args = XyA_Allocate_Array_(Runtime::Object*, arg_num);
+                init_Method_args[0] = instance;
+                for (size_t i = 1; i < arg_num; i ++)
+                {
+                    init_Method_args[i] = args[i];
+                }               
+                Runtime::Object* return_object = init_method->call(init_Method_args, arg_num, exception_thrown);
+
+                if (exception_thrown)
+                {
+                    return return_object;
+                }
+
+                if (return_object->type() != Runtime::Builtin::NullType::get_instance())
+                {
+                    exception_thrown = true; 
+                    return XyA_Allocate(Runtime::Builtin::BuiltinException, "The return object of the method __init__ is not null");
+                }
+                else
+                {
+                    XyA_Deallocate(return_object);
+                }
+
+                XyA_Deallocate_Array(init_Method_args, arg_num);
+            }
+            instance->ref_count --;
+            return instance;
         }
 
         Runtime::Type* Compiler::__build_class(
@@ -495,48 +561,10 @@ namespace XyA
 
             for (auto method_definithon_root : class_definition_root->children)
             {
-                cls->set_attr(method_definithon_root->token->value, this->__build_function(method_definithon_root));
+                cls->set_attr(method_definithon_root->token->value, this->__build_method(method_definithon_root, cls));
             }
-            Runtime::Object* new_method = XyA_Allocate(
-                Runtime::Builtin::BuiltinFunction,
-                [](Runtime::Object** args, size_t arg_num, bool& exception_thrown) -> Runtime::Object*
-                {
-                    Runtime::Type* cls = static_cast<Runtime::Type*>(args[0]);
-                    Runtime::Object* instance = XyA_Allocate_(Runtime::Object);
-                    instance->reference();
-                    instance->set_type(cls);
-
-                    Runtime::BaseFunction* init_method;
-                    auto result = instance->try_get_method(Runtime::MagicMethodNames::init_method_name, init_method);
-
-                    if (result == Runtime::TryGetMethodResult::OK)
-                    {
-                        Runtime::Object** init_Method_args = XyA_Allocate_Array_(Runtime::Object*, arg_num);
-                        init_Method_args[0] = instance;
-                        for (size_t i = 1; i < arg_num; i ++)
-                        {
-                            init_Method_args[i] = args[i];
-                        }               
-                        Runtime::Object* return_object = init_method->call(init_Method_args, arg_num, exception_thrown);
-
-                        if (return_object->type() != Runtime::Builtin::NullType::get_instance())
-                        {
-                            exception_thrown = true; 
-                            return XyA_Allocate(Runtime::Builtin::BuiltinException, "The return object of the method __init__ is not null");
-                        }
-                        else
-                        {
-                            XyA_Deallocate(return_object);
-                        }
-
-                        XyA_Deallocate_Array(init_Method_args, arg_num);
-                    }
-                    instance->ref_count --;
-                    return instance;
-                }
-            );
-            new_method->reference();
-            cls->attrs[Runtime::MagicMethodNames::new_method_name] = new_method;
+            Runtime::Object* new_method = XyA_Allocate(Runtime::Builtin::BuiltinFunction, cls_new_method);
+            cls->set_attr(Runtime::MagicMethodNames::new_method_name, new_method);
 
             return cls;
         }

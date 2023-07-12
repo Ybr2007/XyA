@@ -108,7 +108,7 @@ namespace XyA
                 {
                     printf("Method: %s\n", iter->key.c_str());
 
-                    Runtime::Function* method = dynamic_cast<Runtime::Function*>(iter->value);
+                    Runtime::Function* method = dynamic_cast<Runtime::Function*>(iter->value.object);
 
                     for (size_t i = 0; method && i < method->code_object->instructions.size(); i ++)
                     {

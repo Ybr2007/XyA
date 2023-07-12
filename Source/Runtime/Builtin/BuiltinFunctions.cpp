@@ -16,12 +16,12 @@ namespace XyA
                 {
                     Builtin::StringObject* str_obj = dynamic_cast<Runtime::Builtin::StringObject*>(args[i]);
 
-
                     bool object_is_string = (str_obj != nullptr);
                     if (!object_is_string)
                     {
                         Runtime::BaseFunction* str_method; 
-                        auto result = args[i]->try_get_method(MagicMethodNames::str_method_name, str_method);
+                        AttrVisibility visibility;
+                        auto result = args[i]->try_get_method(MagicMethodNames::str_method_name, str_method, visibility);
                         if (result == TryGetMethodResult::NotFound || result == TryGetMethodResult::NotCallable)
                         {
                             str_obj = XyA_Allocate_(StringObject);

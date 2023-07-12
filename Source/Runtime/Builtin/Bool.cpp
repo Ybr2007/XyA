@@ -54,8 +54,6 @@ namespace XyA
                 this->name = "bool";
                 this->set_attr(MagicMethodNames::equal_method_name, XyA_Allocate(BuiltinFunction, bool_object_equal));
                 this->set_attr(MagicMethodNames::str_method_name, XyA_Allocate(BuiltinFunction, bool_object_str));
-
-                this->reference_attrs();
             }
 
             BoolType* BoolType::get_instance()

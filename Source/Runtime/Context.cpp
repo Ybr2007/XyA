@@ -35,8 +35,9 @@ namespace XyA
             {
                 if (this->local_variables[i] != nullptr)
                 {
-                    // printf("Dereference Variable: %s\n", this->local_variables[i]->to_string().c_str());
+                    // printf("Dereference Variable:%s %s %zd\n", this->get_variable_name(i).c_str(), this->local_variables[i]->type()->name.c_str(), this->local_variables[i]->ref_count);
                     this->local_variables[i]->dereference();
+                    // printf("END\n");
                 }
             }
 

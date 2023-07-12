@@ -17,8 +17,6 @@ namespace XyA
                 this->set_attr(MagicMethodNames::multiply_method_name, XyA_Allocate(BuiltinFunction, string_object_multiply));
                 this->set_attr(MagicMethodNames::equal_method_name, XyA_Allocate(BuiltinFunction, string_object_equal));
                 this->set_attr(MagicMethodNames::bool_method_name, XyA_Allocate(BuiltinFunction, string_object_bool));
-
-                this->reference_attrs();
             }
 
             StringType* StringType::get_instance()

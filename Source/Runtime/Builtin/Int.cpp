@@ -24,8 +24,6 @@ namespace XyA
                 this->set_attr(MagicMethodNames::greater_equal_method_name, XyA_Allocate(BuiltinFunction, int_object_compare_if_greater_equal));
                 this->set_attr(MagicMethodNames::less_method_name, XyA_Allocate(BuiltinFunction, int_object_compare_if_less));
                 this->set_attr(MagicMethodNames::less_equal_method_name, XyA_Allocate(BuiltinFunction, int_object_compare_if_less_equal));
-
-                this->reference_attrs();
             }
 
             IntType* IntType::get_instance()

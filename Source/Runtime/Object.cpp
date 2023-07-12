@@ -3,6 +3,7 @@
 #include <Runtime/Builtin/BuiltinFunction.h>
 #include <Runtime/Function.h>
 #include <Runtime/MemoryManager.hpp>
+#include <Runtime/FunctionalUtils.hpp>
 
 
 namespace XyA
@@ -70,17 +71,18 @@ namespace XyA
 
         void Object::reference_attrs()
         {
-            for (const auto& attr : this->attrs)
+            for (auto attr : this->attrs)
             {
-                attr->value->reference();
+                attr->value.object->reference();
             }
         }
 
         void Object::dereference_attrs()
         {
-            for (const auto& attr : this->attrs)
+            for (auto attr : this->attrs)
             {
-                attr->value->dereference();
+                // printf("DRF ATTR %s: %s %zd\n", attr->key.c_str(), attr->value.object->type()->name.c_str(), attr->value.object->ref_count);
+                attr->value.object->dereference();
             }
         }
 
@@ -89,12 +91,33 @@ namespace XyA
             return this->type() == type;
         }
 
-        void Object::set_attr(const std::string& attr_name, Object* attr_object)
+        void Object::set_attr(const std::string& attr_name, Attr attr)
         {
-            this->attrs[attr_name] = attr_object;
+            Attr old_attr;
+            if (this->attrs.try_get(attr_name, old_attr))
+            {
+                old_attr.object->dereference();
+            }
+            attr.object->reference();
+            this->attrs[attr_name] = attr;
         }
 
-        TryGetAttrResult Object::try_get_attr(const std::string& attr_name, Object*& result) const
+        void Object::set_attr(const std::string& attr_name, Object* attr_object, AttrVisibility visibility)
+        {
+            Attr old_attr;
+            if (this->attrs.try_get(attr_name, old_attr))
+            {
+                old_attr.object->dereference();
+            }
+
+            Attr attr;
+            attr.object = attr_object;
+            attr_object->reference();
+            attr.visibility = visibility;
+            this->attrs[attr_name] = attr;
+        }
+
+        TryGetAttrResult Object::try_get_attr(const std::string& attr_name, Attr& result) const
         {
             if (this->attrs.try_get(attr_name, result))
             {
@@ -103,16 +126,22 @@ namespace XyA
             return this->__type == nullptr ? TryGetAttrResult::NotFound : this->__type->try_get_attr(attr_name, result);
         }
 
-        TryGetMethodResult Object::try_get_method(const std::string& method_name, BaseFunction*& result) const
+        TryGetMethodResult Object::try_get_method(
+            const std::string& method_name, BaseFunction*& method_result, AttrVisibility& visibility_result) const
         {
-            Object* attr;
+            Attr attr;
             auto operation_result = this->try_get_attr(method_name, attr);
             if (operation_result == TryGetAttrResult::NotFound)
             {
                 return TryGetMethodResult::NotFound;
             }
-            result = dynamic_cast<BaseFunction*>(attr);
-            return result != nullptr ? TryGetMethodResult::OK : TryGetMethodResult::NotCallable;
+            if (is_function(attr.object))
+            {
+                method_result = static_cast<BaseFunction*>(attr.object);
+                visibility_result = attr.visibility;
+                return TryGetMethodResult::OK;
+            }
+            return TryGetMethodResult::NotCallable;
         }
 
         #ifdef Debug_Display_Object

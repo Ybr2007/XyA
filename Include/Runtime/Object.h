@@ -18,7 +18,7 @@ namespace XyA
         enum class TryGetAttrResult
         {
             OK,
-            NotFound
+            NotFound,
         };
 
         enum class TryGetMethodResult
@@ -28,11 +28,27 @@ namespace XyA
             NotCallable,
         };
 
+        struct ObjectRef
+        {
+            Object* object;
+        };
+
+        enum AttrVisibility
+        {
+            Public,
+            Private,
+        };
+
+        struct Attr : public ObjectRef
+        {
+            AttrVisibility visibility;
+        };
+
         class Object
         {
         public:
             long long ref_count = 0;
-            StrKeyDict<Object*> attrs;
+            StrKeyDict<Attr> attrs;
 
             Type* type() const;
             void set_type(Type* type);
@@ -46,9 +62,11 @@ namespace XyA
 
             bool is_instance(Type* type) const;
 
-            void set_attr(const std::string& attr_name, Object* attr_object);
-            TryGetAttrResult try_get_attr(const std::string& attr_name, Object*& result) const;
-            TryGetMethodResult try_get_method(const std::string& method_name, BaseFunction*& result) const;
+            void set_attr(const std::string& attr_name, Attr attr);
+            void set_attr(const std::string& attr_name, Object* attr_object, AttrVisibility visibility = AttrVisibility::Public);
+            TryGetAttrResult try_get_attr(const std::string& attr_name, Attr& result) const;
+            TryGetMethodResult try_get_method(
+                const std::string& method_name, BaseFunction*& method_result, AttrVisibility& visibility_result) const;
             virtual ~Object();
 
             #ifdef Debug_Display_Object
