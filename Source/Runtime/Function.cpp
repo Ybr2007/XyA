@@ -36,7 +36,7 @@ namespace XyA
         {
             XyA_Function_Check_Arg_Num(this->expected_arg_num)
 
-            Context* function_context = new Context(this->code_object);
+            Context* function_context = XyA_Allocate(Context, this->code_object);
             function_context->back = VirtualMachine::get_instance()->cur_context;
             VirtualMachine::get_instance()->cur_context = function_context;
 

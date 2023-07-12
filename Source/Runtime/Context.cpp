@@ -11,8 +11,8 @@ namespace XyA
         {
             this->code_obj = code_obj;
 
-            this->local_variables = new Object*[code_obj->variable_name_2_index.size()];  // delete于Context::~Context()
-            for (size_t i = 0; i < code_obj->variable_name_2_index.size(); i ++)
+            this->local_variables = XyA_Allocate_Array_(Object*, this->code_obj->variable_name_2_index.size());  // delete于Context::~Context()
+            for (size_t i = 0; i < this->code_obj->variable_name_2_index.size(); i ++)
             {
                 this->local_variables[i] = nullptr;
             }
@@ -41,7 +41,7 @@ namespace XyA
                 }
             }
 
-            delete this->local_variables;
+            XyA_Deallocate_Array(this->local_variables, this->code_obj->variable_name_2_index.size());
         }
 
         Instruction* Context::cur_instruction() const

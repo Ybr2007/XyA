@@ -392,7 +392,7 @@ namespace XyA
             case InstructionType::CallMethod:
             {
                 Object* callee_object = this->cur_context->pop_operand();
-                Object** args = new Object*[instruction->parameter + 1];
+                Object** args = XyA_Allocate_Array_(Object*, instruction->parameter + 1);
                 args[0] = this->cur_context->pop_operand();
                 for (size_t i = 0; i < instruction->parameter; i ++)
                 {
@@ -401,6 +401,7 @@ namespace XyA
                 BaseFunction* callee = dynamic_cast<BaseFunction*>(callee_object);
                 bool exception_thrown = false; 
                 Object* result = callee->call(args, instruction->parameter + 1, exception_thrown);
+                XyA_Deallocate_Array(args, instruction->parameter + 1);
 
                 if (exception_thrown)
                 {
@@ -420,7 +421,7 @@ namespace XyA
         void VirtualMachine::__back_context()
         {
             Context* back = this->cur_context->back;
-            delete this->cur_context;
+            XyA_Deallocate(this->cur_context);
             this->cur_context = back;
         }
 

@@ -29,9 +29,9 @@ namespace XyA
                         }
                         else
                         {
-                            Object** str_method_args = new Object*[1]{args[i]};
+                            Object** str_method_args = XyA_Allocate_Array(Object*, 1, args[i]);
                             Object* result = str_method->call(str_method_args, 1, exception_thrown);
-                            delete[] str_method_args;
+                            XyA_Deallocate_Array(str_method_args, 1);
 
                             if (exception_thrown)
                             {
