@@ -465,7 +465,7 @@ namespace XyA
             return function;
         }
 
-            Runtime::Attr Compiler::__build_method(SyntaxAnalysis::SyntaxTreeNode* method_definition_root, Runtime::Type* cls)
+        Runtime::Attr Compiler::__build_method(SyntaxAnalysis::SyntaxTreeNode* method_definition_root, Runtime::Type* cls)
         {
             Runtime::Attr attr;
             Runtime::Function* method = XyA_Allocate_(Runtime::Function);

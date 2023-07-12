@@ -31,12 +31,6 @@ namespace XyA
             ! 警告：该方法有越界风险，建议调用前使用if(!this->__at_end())进行检查
             */
             LexicalAnalysis::Token* __next_token() const;
-
-            /*
-            * 获取当前指向的上一个Token
-            不会改变__cur_pos的值
-            ! 警告：该方法有越界风险，请确保this->__cur_pos != 0
-            */
             LexicalAnalysis::Token* __prev_token() const;
             bool __try_move_ptr(size_t step=1);
             void __backtrack(size_t step=1);
@@ -98,17 +92,18 @@ namespace XyA
 
         LexicalAnalysis::Token* SyntaxParser::__cur_token() const
         {
-            return this->__parsing_tokens->operator[](this->__cur_pos);
+            return this->__parsing_tokens->at(this->__cur_pos);
         }
 
         LexicalAnalysis::Token* SyntaxParser::__next_token() const
         {
-            return this->__parsing_tokens->operator[](this->__cur_pos + 1);
+            return this->__parsing_tokens->at(this->__cur_pos + 1);
         }
 
         LexicalAnalysis::Token* SyntaxParser::__prev_token() const
         {
-            return this->__parsing_tokens->operator[](this->__cur_pos - 1);
+            return this->__cur_pos <= 0 ? 
+                this->__parsing_tokens->at(0) : this->__parsing_tokens->at(this->__cur_pos - 1);
         }
 
         bool SyntaxParser::__try_move_ptr(size_t step)
@@ -156,7 +151,7 @@ namespace XyA
             case LexicalAnalysis::TokenType::Kw_Return:
                 if (!this->__inside_function)
                 {
-                    this->__throw_exception("'return' outside function", this->__cur_token()->start_pos);
+                    this->__throw_exception("'return' outside functions", this->__cur_token()->start_pos);
                     return nullptr;
                 }
                 else
@@ -189,12 +184,13 @@ namespace XyA
                 }
             }
 
+
             if (!this->__try_move_ptr() || this->__cur_token()->type != LexicalAnalysis::TokenType::S_Semicolon)
             {
-                this->__throw_exception("Expected ';'", this->__prev_token()->end_pos);
+                this->__throw_exception("Expected ';'", this->__cur_token()->start_pos);
                 if (!this->__finished)
                 {
-                    this->__cur_pos --;
+                    this->__backtrack();
                 }
                 return nullptr;
             }
@@ -866,10 +862,10 @@ namespace XyA
 
             if (!this->__try_move_ptr() || this->__cur_token()->type != LexicalAnalysis::TokenType::S_Semicolon)
             {
-                this->__throw_exception("Expected ';'", this->__prev_token()->end_pos);
+                this->__throw_exception("Expected ';'", this->__cur_token()->start_pos);
                 if (!this->__finished)
                 {
-                    this->__cur_pos --;
+                    this->__backtrack();
                 }
                 return nullptr;
             }
