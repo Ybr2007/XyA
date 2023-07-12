@@ -41,7 +41,7 @@ namespace XyA
             Object* float_object_add(Object** args, size_t arg_num, bool& exception_thrown)
             {
                 XyA_Function_Check_Arg_Num(2)
-                XyA_Method_Get_Self(FloatObject)
+                XyA_Builtin_Method_Get_Self(FloatObject)
 
                 IntObject* int_other = dynamic_cast<IntObject*>(args[1]);
                 FloatObject* float_other = nullptr;
@@ -64,7 +64,7 @@ namespace XyA
             Object* float_object_subtract(Object** args, size_t arg_num, bool& exception_thrown)
             {
                 XyA_Function_Check_Arg_Num(2)
-                XyA_Method_Get_Self(FloatObject)
+                XyA_Builtin_Method_Get_Self(FloatObject)
 
                 IntObject* int_other = dynamic_cast<IntObject*>(args[1]);
                 FloatObject* float_other = nullptr;
@@ -87,7 +87,7 @@ namespace XyA
             Object* float_object_multiply(Object** args, size_t arg_num, bool& exception_thrown)
             {
                 XyA_Function_Check_Arg_Num(2)
-                XyA_Method_Get_Self(FloatObject)
+                XyA_Builtin_Method_Get_Self(FloatObject)
 
                 IntObject* int_other = dynamic_cast<IntObject*>(args[1]);
                 FloatObject* float_other = nullptr;
@@ -110,7 +110,7 @@ namespace XyA
             Object* float_object_divide(Object** args, size_t arg_num, bool& exception_thrown)
             {
                 XyA_Function_Check_Arg_Num(2)
-                XyA_Method_Get_Self(FloatObject)
+                XyA_Builtin_Method_Get_Self(FloatObject)
 
                 IntObject* int_other = dynamic_cast<IntObject*>(args[1]);
                 FloatObject* float_other = nullptr;
@@ -138,7 +138,7 @@ namespace XyA
             Object* float_object_equal(Object** args, size_t arg_num, bool& exception_thrown)
             {
                 XyA_Function_Check_Arg_Num(2)
-                XyA_Method_Get_Self(FloatObject)
+                XyA_Builtin_Method_Get_Self(FloatObject)
 
                 IntObject* int_other = dynamic_cast<IntObject*>(args[1]);
                 FloatObject* float_other = nullptr;
@@ -166,7 +166,7 @@ namespace XyA
             Object* float_object_str(Object** args, size_t arg_num, bool& exception_thrown)
             {
                 XyA_Function_Check_Arg_Num(1)
-                XyA_Method_Get_Self(FloatObject)
+                XyA_Builtin_Method_Get_Self(FloatObject)
 
                 StringObject* str = XyA_Allocate_(StringObject);                
                 str->value = std::to_string(self->value);
@@ -177,7 +177,7 @@ namespace XyA
             Object* float_object_bool(Object** args, size_t arg_num, bool& exception_thrown)
             {
                 XyA_Function_Check_Arg_Num(1)
-                XyA_Method_Get_Self(FloatObject)
+                XyA_Builtin_Method_Get_Self(FloatObject)
 
                 return XyA_Allocate(BoolObject, self->value != 0);
             }
@@ -185,7 +185,7 @@ namespace XyA
             Object* float_object_compare_if_greater(Object** args, size_t arg_num, bool& exception_thrown)
             {
                 XyA_Function_Check_Arg_Num(2)
-                XyA_Method_Get_Self(FloatObject)
+                XyA_Builtin_Method_Get_Self(FloatObject)
 
                 IntObject* int_other = dynamic_cast<IntObject*>(args[1]);
                 FloatObject* float_other = nullptr;
@@ -213,7 +213,7 @@ namespace XyA
             Object* float_object_compare_if_less(Object** args, size_t arg_num, bool& exception_thrown)
             {
                 XyA_Function_Check_Arg_Num(2)
-                XyA_Method_Get_Self(FloatObject)
+                XyA_Builtin_Method_Get_Self(FloatObject)
 
                 IntObject* int_other = dynamic_cast<IntObject*>(args[1]);
                 FloatObject* float_other = nullptr;
@@ -241,7 +241,7 @@ namespace XyA
             Object* float_object_compare_if_greater_equal(Object** args, size_t arg_num, bool& exception_thrown)
             {
                 XyA_Function_Check_Arg_Num(2)
-                XyA_Method_Get_Self(FloatObject)
+                XyA_Builtin_Method_Get_Self(FloatObject)
 
                 IntObject* int_other = dynamic_cast<IntObject*>(args[1]);
                 FloatObject* float_other = nullptr;
@@ -269,7 +269,7 @@ namespace XyA
             Object* float_object_compare_if_less_equal(Object** args, size_t arg_num, bool& exception_thrown)
             {
                 XyA_Function_Check_Arg_Num(2)
-                XyA_Method_Get_Self(FloatObject)
+                XyA_Builtin_Method_Get_Self(FloatObject)
 
                 IntObject* int_other = dynamic_cast<IntObject*>(args[1]);
                 FloatObject* float_other = nullptr;

@@ -343,11 +343,12 @@ namespace XyA
                 }
                 if (success)
                 {
+                    token->end_pos = this->__cur_pos();
                     return token;
                 }
                 else
                 {
-                    this->__throw_exception("Invalid syntax", this->__cur_pos());
+                    return nullptr;
                 }
             }   
             
@@ -357,11 +358,12 @@ namespace XyA
                 bool success = this->__get_string_literal(token->value);
                 if (success)
                 {
+                    token->end_pos = this->__cur_pos();
                     return token;
                 }
                 else
                 {
-                    this->__throw_exception("Invalid syntax", this->__cur_pos());
+                    return nullptr;
                 }
             }
 
@@ -370,11 +372,12 @@ namespace XyA
             bool success = this->__get_identifier(token->value);
             if (success)
             {
+                token->end_pos = this->__cur_pos();
                 return token;
             }
             else
             {
-                this->__throw_exception("Invalid syntax", this->__cur_pos());
+                return nullptr;
             }
         }
 
@@ -408,7 +411,7 @@ namespace XyA
                 {
                     if (is_float)
                     {
-                        this->__throw_exception("SyntaxError: Multiple decimal points found.", this->__cur_pos());
+                        this->__throw_exception("Multiple decimal points found.", this->__cur_pos());
                         return false;
                     }
                     is_float = true;
@@ -426,7 +429,7 @@ namespace XyA
         {
             if (!this->__try_move_ptr())  // 从左引号的下一个字符开始
             {
-                this->__throw_exception("SyntaxError: '\"' was not closed", this->__cur_pos());
+                this->__throw_exception("'\"' was not closed", this->__cur_pos());
                 return false;
             }
 
@@ -472,7 +475,7 @@ namespace XyA
 
                 if (!this->__try_move_ptr())  // 从左引号的下一个字符开始
                 {
-                    this->__throw_exception("SyntaxError: '\"' was not closed", this->__cur_pos());
+                    this->__throw_exception("'\"' was not closed", this->__cur_pos());
                     return false;
                 }
             }
@@ -486,7 +489,8 @@ namespace XyA
         {
             if (!Utils::is_letter(this->__cur_char()) && this->__cur_char() != '_')
             {
-                this->__throw_exception("SyntaxError: invalid syntax", this->__cur_pos());
+                this->__throw_exception("Invalid syntax", this->__cur_pos());
+                while(!Utils::is_letter(this->__cur_char()) && this->__cur_char() != '_' && this->__try_move_ptr());
                 return false;
             }
             while(Utils::is_letter(this->__cur_char()) || Utils::is_digit(this->__cur_char()) || this->__cur_char() == '_')

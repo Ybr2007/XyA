@@ -34,7 +34,7 @@ namespace XyA
             Object* string_object_add(Object** args, size_t arg_num, bool& exception_thrown)
             {
                 XyA_Function_Check_Arg_Num(2)
-                XyA_Method_Get_Self(StringObject)
+                XyA_Builtin_Method_Get_Self(StringObject)
 
                 StringObject* other = dynamic_cast<StringObject*>(args[1]);
                 if (other == nullptr)
@@ -50,7 +50,7 @@ namespace XyA
             Object* string_object_multiply(Object** args, size_t arg_num, bool& exception_thrown)
             {
                 XyA_Function_Check_Arg_Num(2)
-                XyA_Method_Get_Self(StringObject)
+                XyA_Builtin_Method_Get_Self(StringObject)
 
                 IntObject* other = dynamic_cast<IntObject*>(args[1]);
                 if (other == nullptr)
@@ -70,7 +70,7 @@ namespace XyA
             Object* string_object_equal(Object** args, size_t arg_num, bool& exception_thrown)
             {
                 XyA_Function_Check_Arg_Num(2)
-                XyA_Method_Get_Self(StringObject)
+                XyA_Builtin_Method_Get_Self(StringObject)
 
                 StringObject* other = dynamic_cast<StringObject*>(args[1]);
                 if (other == nullptr)
@@ -83,7 +83,7 @@ namespace XyA
             Object* string_object_bool(Object** args, size_t arg_num, bool& exception_thrown)
             {
                 XyA_Function_Check_Arg_Num(1)
-                XyA_Method_Get_Self(StringObject)
+                XyA_Builtin_Method_Get_Self(StringObject)
 
                 return XyA_Allocate(BoolObject, !self->value.empty());
             }

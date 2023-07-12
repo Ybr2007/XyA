@@ -36,7 +36,7 @@ namespace XyA
             Object* null_object_equal(Object** args, size_t arg_num, bool& exception_thrown)
             {
                 XyA_Function_Check_Arg_Num(2)
-                XyA_Method_Get_Self(NullObject);
+                XyA_Builtin_Method_Get_Self(NullObject);
 
                 NullObject* other = dynamic_cast<NullObject*>(args[1]);
 
@@ -53,7 +53,7 @@ namespace XyA
             Object* null_object_str(Object** args, size_t arg_num, bool& exception_thrown)
             {
                 XyA_Function_Check_Arg_Num(1)
-                XyA_Method_Get_Self(NullObject);
+                XyA_Builtin_Method_Get_Self(NullObject);
 
                 StringObject* str = XyA_Allocate_(StringObject);
                 str->value = "null";

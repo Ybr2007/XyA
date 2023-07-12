@@ -13,7 +13,7 @@ namespace XyA
             Object* bool_object_equal(Object** args, size_t arg_num, bool& exception_thrown)
             {
                 XyA_Function_Check_Arg_Num(2)
-                XyA_Method_Get_Self(BoolObject)
+                XyA_Builtin_Method_Get_Self(BoolObject)
 
                 BoolObject* bool_other = dynamic_cast<BoolObject*>(args[1]);
                 IntObject* int_other = nullptr;
@@ -41,7 +41,7 @@ namespace XyA
             Object* bool_object_str(Object** args, size_t arg_num, bool& exception_thrown)
             {
                 XyA_Function_Check_Arg_Num(1)
-                XyA_Method_Get_Self(BoolObject)
+                XyA_Builtin_Method_Get_Self(BoolObject)
 
                 StringObject* str = XyA_Allocate_(StringObject);
                 str->value = self->value ? "true" : "false";

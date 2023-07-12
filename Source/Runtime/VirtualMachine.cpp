@@ -138,7 +138,7 @@ namespace XyA
 
                 if (attr.visibility == AttrVisibility::Private && this->cur_context->code_obj->cls != attr_owner->type())
                 {
-                    this->__throw_exception(std::format("Can not access private attr '{}'", attr_name));
+                    this->__throw_exception(std::format("Can not access the private attr '{}'", attr_name));
                 }
 
                 this->cur_context->push_operand(attr.object);
@@ -173,7 +173,7 @@ namespace XyA
                 {
                     if (old_attr.visibility == AttrVisibility::Private && this->cur_context->code_obj->cls != attr_owner->type())
                     {
-                        this->__throw_exception(std::format("Can not access private attr '{}'", attr_name));
+                        this->__throw_exception(std::format("Can not access the private attr '{}'", attr_name));
                     }
                 }
                 else
