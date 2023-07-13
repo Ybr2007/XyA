@@ -99,5 +99,10 @@ namespace XyA
             virtual Object* call(Object** args, size_t arg_num, bool& exception_thrown) const = 0;
         };
         
+        class BaseException : public Object
+        {
+        public:
+            virtual std::string_view message() const = 0;
+        };
     }
 }

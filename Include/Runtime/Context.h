@@ -19,12 +19,20 @@ namespace XyA
             size_t instruction_ptr = 0;
 
             Object* returned_obj = nullptr;
-            Object* thrown_obj = nullptr;
+            BaseException* thrown_exception = nullptr;
 
             Context(CodeObject* code_obj);
             ~Context();
 
             Instruction* cur_instruction() const;
+
+            /*
+            获取该Context的CodeObject所代表的function是哪个类的method
+            如果不是method则返回nullptr
+            */
+            const Type* cls() const;
+
+            void set_exception(BaseException* exception);
 
             Object* get_literal_obj_at(size_t index) const;
             Object* get_variable_at(size_t index) const;

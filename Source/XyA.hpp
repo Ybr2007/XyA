@@ -56,9 +56,8 @@ namespace XyA
         );
 
         this->virtual_machine->exception_callbacks.push_back(
-            [](std::string_view msg){
-                printf("Runtime Error: %s\n", std::string(msg).c_str());
-                exit(-1);
+            [&](std::string_view msg){
+                printf("%sRuntime Error%s: %s\n", error_color, reset_color, std::string(msg).c_str());
             }
         );
     }
@@ -163,11 +162,8 @@ namespace XyA
         delete tokens;
         delete syntax_tree;
 
-        // 构建全局Context
-        Runtime::Context* global_context = new Runtime::Context(code_object);
-
         // 启动虚拟机
-        this->virtual_machine->execute(global_context);
+        this->virtual_machine->execute(code_object);
 
         #ifdef DebugMode
         printf("\nVariables:\n");

@@ -10,9 +10,13 @@ namespace XyA
         {
             BuiltinException::BuiltinException(std::string message)
             {
-                this->message = message;
+                this->__message = message;
             }
             
+            std::string_view BuiltinException::message() const
+            {
+                return this->__message;
+            }
         }
     }
 }

@@ -22,7 +22,7 @@ namespace XyA
             Context* cur_context = nullptr;
 
             static VirtualMachine* get_instance();
-            void execute(Context* global_context);
+            void execute(CodeObject* global_code_object);
             void execute_context();
 
         private:
@@ -36,7 +36,7 @@ namespace XyA
             void __call_binary_operation_magic_method(const std::string& magic_method_name);
             void __call_compare_magic_method(const std::string& magic_method_name);
 
-            void __throw_exception(std::string_view message) const;
+            void __throw_exception();
         };
     }
 }

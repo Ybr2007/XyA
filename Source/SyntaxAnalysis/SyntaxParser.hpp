@@ -732,6 +732,12 @@ namespace XyA
             // function_definition -> "fn" Identifier "(" argument_list_definition? ")" block
             this->__inside_function = true;
 
+            if (this->__cur_token()->type != LexicalAnalysis::TokenType::Kw_Fn)
+            {
+                this->__throw_exception("Expected method definition", this->__cur_token()->start_pos);
+                return nullptr;
+            }
+
             if (!this->__try_move_ptr())
             {
                 this->__throw_exception("Expected function name", this->__cur_token()->start_pos);

@@ -16,8 +16,8 @@ namespace XyA
                 {
                     Builtin::StringObject* str_obj = dynamic_cast<Runtime::Builtin::StringObject*>(args[i]);
 
-                    bool object_is_string = (str_obj != nullptr);
-                    if (!object_is_string)
+                    bool new_string = false;
+                    if (str_obj == nullptr)
                     {
                         Runtime::BaseFunction* str_method; 
                         AttrVisibility visibility;
@@ -26,6 +26,7 @@ namespace XyA
                         {
                             str_obj = XyA_Allocate_(StringObject);
                             str_obj->value = "<XyA Object at " + std::to_string((unsigned long long)args[i]) + ">";
+                            new_string = true;
                         }
                         else
                         {
@@ -44,9 +45,13 @@ namespace XyA
                     }
                     printf("%s%s", str_obj->value.c_str(), i == arg_num - 1 ? "" : " ");
                     
-                    if (!object_is_string)
+                    if (new_string)
                     {
                         XyA_Deallocate(str_obj);
+                    }
+                    else
+                    {
+                        str_obj->deallocate_if_no_ref();
                     }
                 }
                 printf("\n");

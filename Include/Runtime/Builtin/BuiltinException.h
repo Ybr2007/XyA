@@ -8,12 +8,15 @@ namespace XyA
     {
         namespace Builtin
         {
-            class BuiltinException : public Object
+            class BuiltinException : public BaseException
             {
             public:
-                std::string message;
-
                 BuiltinException(std::string message);
+
+                std::string_view message() const override final;
+
+            private:
+                std::string_view __message;
             };
         }
     }

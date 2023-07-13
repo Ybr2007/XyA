@@ -15,11 +15,10 @@ namespace XyA
             return &instance;
         }
 
-        void VirtualMachine::execute(Context* global_context)
+        void VirtualMachine::execute(CodeObject* global_code_object)
         {
-            this->global_context = global_context;
-            this->cur_context = global_context;
-            CodeObject* global_code_object = this->global_context->code_obj;
+            this->global_context = XyA_Allocate(Context, global_code_object);
+            this->cur_context = this->global_context;
 
             this->__init_global_context();
             this->execute_context();
@@ -35,6 +34,12 @@ namespace XyA
                 // printf("Instruction %zd, %s\n", (size_t)VirtualMachine::get_instance()->cur_context, cur_instruction->to_string().c_str());
                 this->__excute_instruction(cur_instruction);
                 // printf("FINISH\n");
+
+                if (this->cur_context == nullptr)
+                {
+                    return;
+                }
+
                 this->cur_context->instruction_ptr ++;
             }
             this->__back_context();
@@ -79,9 +84,11 @@ namespace XyA
                 Object* variable = this->cur_context->get_variable_at(instruction->parameter);
                 if (variable == nullptr)
                 {
-                    std::string variable_name = this->cur_context->get_variable_name(instruction->parameter);
-
-                    this->__throw_exception("The variable '" + variable_name + "' is not defined or already deleted.");
+                    std::string_view variable_name = this->cur_context->get_variable_name(instruction->parameter);
+                    this->cur_context->set_exception(
+                        XyA_Allocate(Builtin::BuiltinException, std::format("The variable '{}' is not defined or already deleted.", variable_name))
+                    );
+                    goto error;
                 }
                 this->cur_context->push_operand(variable);
                 break;
@@ -92,8 +99,11 @@ namespace XyA
                 Object* variable = this->global_context->get_variable_at(instruction->parameter);
                 if (variable == nullptr)
                 {
-                    std::string variable_name = this->global_context->get_variable_name(instruction->parameter);
-                    this->__throw_exception("The variable '" + variable_name + "' is not defined or already deleted.");
+                    std::string_view variable_name = this->cur_context->get_variable_name(instruction->parameter);
+                    this->cur_context->set_exception(
+                        XyA_Allocate(Builtin::BuiltinException, std::format("The variable '{}' is not defined or already deleted.", variable_name))
+                    );
+                    goto error;
                 }
                 this->cur_context->push_operand(variable);
                 break;
@@ -102,7 +112,6 @@ namespace XyA
             case InstructionType::GetAttr:
             {
                 const std::string& attr_name = this->cur_context->code_obj->attr_names[instruction->parameter];
-
                 Object* attr_owner = this->cur_context->top_operand();
 
                 Attr attr;
@@ -110,12 +119,18 @@ namespace XyA
 
                 if (operation_result == TryGetAttrResult::NotFound)
                 {
-                    this->__throw_exception(std::format("The attr '{}' is not defined or already deleted.", attr_name));
+                    this->cur_context->set_exception(
+                        XyA_Allocate(Builtin::BuiltinException, std::format("The attr '{}' is not defined or already deleted.", attr_name))
+                    );
+                    goto error;
                 }
 
-                if (attr.visibility == AttrVisibility::Private && this->cur_context->code_obj->cls != attr_owner->type())
+                if (attr.visibility == AttrVisibility::Private && this->cur_context->cls() != attr_owner->type())
                 {
-                    this->__throw_exception(std::format("Can not access private attr '{}'", attr_name));
+                    this->cur_context->set_exception(
+                        XyA_Allocate(Builtin::BuiltinException, std::format("Can not access the private attr '{}'", attr_name))
+                    );
+                    goto error;
                 }
 
                 this->cur_context->set_top_operand(attr.object);
@@ -133,12 +148,18 @@ namespace XyA
 
                 if (operation_result == TryGetAttrResult::NotFound)
                 {
-                    this->__throw_exception(std::format("The attr '{}' is not defined or already deleted.", attr_name));
+                    this->cur_context->set_exception(
+                        XyA_Allocate(Builtin::BuiltinException, std::format("The attr '{}' is not defined or already deleted.", attr_name))
+                    );
+                    goto error;
                 }
 
-                if (attr.visibility == AttrVisibility::Private && this->cur_context->code_obj->cls != attr_owner->type())
+                if (attr.visibility == AttrVisibility::Private && this->cur_context->cls() != attr_owner->type())
                 {
-                    this->__throw_exception(std::format("Can not access the private attr '{}'", attr_name));
+                    this->cur_context->set_exception(
+                        XyA_Allocate(Builtin::BuiltinException, std::format("Can not access the private attr '{}'", attr_name))
+                    );
+                    goto error;
                 }
 
                 this->cur_context->push_operand(attr.object);
@@ -173,15 +194,21 @@ namespace XyA
                 {
                     if (old_attr.visibility == AttrVisibility::Private && this->cur_context->code_obj->cls != attr_owner->type())
                     {
-                        this->__throw_exception(std::format("Can not access the private attr '{}'", attr_name));
+                        this->cur_context->set_exception(
+                            XyA_Allocate(Builtin::BuiltinException, std::format("Can not access the private attr '{}'", attr_name))
+                        );
+                        goto error;
                     }
                 }
                 else
                 {
                     if (!attr_owner->type()->instance_allow_external_attr)
                     {
-                        this->__throw_exception(
-                            std::format("Variables of type '{}' do not allow external attribute addition", attr_owner->type()->name));
+                        this->cur_context->set_exception(
+                            XyA_Allocate(Builtin::BuiltinException, 
+                                std::format("Variables of type '{}' do not allow external attribute addition", attr_owner->type()->name))
+                        );
+                        goto error;
                     }
                     else
                     {
@@ -259,55 +286,67 @@ namespace XyA
                 Object* top_object = this->cur_context->pop_operand();
 
                 bool exception_thrown = false; 
-                Builtin::BoolObject* bool_result;
+                Builtin::BoolObject* bool_value;
 
                 if (top_object->type() == Builtin::BoolType::get_instance())
                 {
-                    bool_result = static_cast<Builtin::BoolObject*>(top_object);
+                    bool_value = static_cast<Builtin::BoolObject*>(top_object);
                 }
                 else
                 {
                     BaseFunction* bool_method;
                     AttrVisibility visibility;
-                    TryGetMethodResult operation_result =  top_object->try_get_method(
-                        MagicMethodNames::bool_method_name, bool_method, visibility);
+                    TryGetMethodResult operation_result =  top_object->try_get_method(MagicMethodNames::bool_method_name, bool_method, visibility);
+
+                    if (visibility == AttrVisibility::Private && this->cur_context->cls() != top_object->type())
+                    {
+                        this->cur_context->set_exception(
+                            XyA_Allocate(Builtin::BuiltinException, std::format("Can not access the private attr '__bool__'"))
+                        );
+                        goto error;
+                    }
 
                     switch (operation_result)
                     {
                     case TryGetMethodResult::NotFound:
-                        bool_result = XyA_Allocate(Builtin::BoolObject, false);
+                        bool_value = XyA_Allocate(Builtin::BoolObject, false);
                         break;
 
                     case TryGetMethodResult::NotCallable:
-                        this->__throw_exception("__bool__ is not callable");
-                        break;
+                        this->cur_context->set_exception(
+                            XyA_Allocate(Builtin::BuiltinException, "The method '__bool__' is not callable")
+                        );
+                        goto error;
                     
                     case TryGetMethodResult::OK:
                     {
                         Object** args = XyA_Allocate_Array(Object*, 1, top_object);
-                        Object* bool_method_return_object = bool_method->call(args, 1, exception_thrown);
+                        Object* bool_method_return_value = bool_method->call(args, 1, exception_thrown);
                         XyA_Deallocate_Array(args, 1);
 
-                        if (bool_method_return_object->type() != Builtin::BoolType::get_instance())
+                        if (bool_method_return_value->type() != Builtin::BoolType::get_instance())
                         {
-                            this->__throw_exception("The type of the return object of the __bool__ is not bool");
+                            this->cur_context->set_exception(
+                                XyA_Allocate(Builtin::BuiltinException, "The return value of the method '__bool__' is not of bool type")
+                            );
+                            goto error;
                         }
                         else
                         {
-                            bool_result = static_cast<Builtin::BoolObject*>(bool_method_return_object);
+                            bool_value = static_cast<Builtin::BoolObject*>(bool_method_return_value);
                         }
                     }                     
                     }
                 }
 
-                if (!bool_result->value)
+                if (!bool_value->value)
                 {
                     // 在执行完该函数后有this->cur_context->instruction_ptr ++语句
                     // 所以要减去一以在下一轮循环中跳转到正确位置
                     this->cur_context->instruction_ptr = instruction->parameter - 1;
                 }
 
-                bool_result->deallocate_if_no_ref();
+                bool_value->deallocate_if_no_ref();
 
                 break;
             }
@@ -340,7 +379,7 @@ namespace XyA
                 Object** args;
                 size_t arg_num;
                 bool exception_thrown = false;
-                Object* return_object;
+                Object* return_value;
 
                 // 被调用的对象是类型，则调用__new__魔术方法初始化一个该类型的示例，并将类型对象本身作为第一个参数传入__new__方法
                 if (callee_object->type() == Type::get_instance())
@@ -359,10 +398,13 @@ namespace XyA
 
                     if (result != TryGetMethodResult::OK)
                     {
-                        this->__throw_exception("Cannot call the __new__");
+                        this->cur_context->set_exception(
+                            XyA_Allocate(Builtin::BuiltinException, "Cannot call the method '__new__'")
+                        );
+                        goto error;
                     }
 
-                    return_object = new_method->call(args, arg_num, exception_thrown);
+                    return_value = new_method->call(args, arg_num, exception_thrown);
                 }
                 else if (is_function(callee_object))
                 {
@@ -375,17 +417,17 @@ namespace XyA
                         args[arg_num - i - 1] = this->cur_context->pop_operand();
                     }
 
-                    return_object = callee_function->call(args, arg_num, exception_thrown);
+                    return_value = callee_function->call(args, arg_num, exception_thrown);
                 }
                 XyA_Deallocate_Array(args, arg_num);
 
                 if (exception_thrown)
                 {
-                    Builtin::BuiltinException* exception = static_cast<Builtin::BuiltinException*>(return_object);
-                    this->__throw_exception(exception->message);
+                    this->cur_context->set_exception(static_cast<Builtin::BuiltinException*>(return_value));
+                    goto error;
                 }
                 
-                this->cur_context->push_operand(return_object);
+                this->cur_context->push_operand(return_value);
                 break;
             }
 
@@ -400,22 +442,26 @@ namespace XyA
                 }
                 BaseFunction* callee = dynamic_cast<BaseFunction*>(callee_object);
                 bool exception_thrown = false; 
-                Object* result = callee->call(args, instruction->parameter + 1, exception_thrown);
+                Object* return_value = callee->call(args, instruction->parameter + 1, exception_thrown);
                 XyA_Deallocate_Array(args, instruction->parameter + 1);
 
                 if (exception_thrown)
                 {
-                    Builtin::BuiltinException* exception = static_cast<Builtin::BuiltinException*>(result);
-                    this->__throw_exception(exception->message);
+                    this->cur_context->set_exception(static_cast<Builtin::BuiltinException*>(return_value));
                 }
                 
-                this->cur_context->push_operand(result);
+                this->cur_context->push_operand(return_value);
                 break;
             }
             
             default:
                 break;
             }
+
+            return;
+
+            error:
+            this->__throw_exception();
         }
 
         void VirtualMachine::__back_context()
@@ -437,26 +483,42 @@ namespace XyA
             switch (result)
             {
             case TryGetMethodResult::NotFound:
-                this->__throw_exception("The method was not found");
-                break;
+                this->cur_context->set_exception(
+                    XyA_Allocate(Builtin::BuiltinException, "The method was not found")
+                );
+                this->__throw_exception();
+                return;
             
             case TryGetMethodResult::NotCallable:
-                this->__throw_exception("The method was not callable");
-                break;
+                this->cur_context->set_exception(
+                    XyA_Allocate(Builtin::BuiltinException, "The method was not callable")
+                );
+                this->__throw_exception();
+                return;
+            }
+
+            if (visibility == AttrVisibility::Private && this->cur_context->cls() != obj_1->type())
+            {
+                this->cur_context->set_exception(
+                    XyA_Allocate(Builtin::BuiltinException, std::format("Can not access the private attr '{}'", magic_method_name))
+                );
+                this->__throw_exception();
+                return;
             }
 
             Object** args = XyA_Allocate_Array(Object*, 2, obj_1, obj_2);
             bool exception_thrown = false;
-            Object* result_obj = method->call(args, 2, exception_thrown);
+            Object* return_value = method->call(args, 2, exception_thrown);
             XyA_Deallocate_Array(args, 2);
 
             if (exception_thrown)
             {
-                Builtin::BuiltinException* exception = static_cast<Builtin::BuiltinException*>(result_obj);
-                this->__throw_exception(exception->message);
+                this->cur_context->set_exception(static_cast<Builtin::BuiltinException*>(return_value));
+                this->__throw_exception();
+                return;
             }
             
-            this->cur_context->push_operand(result_obj);
+            this->cur_context->push_operand(return_value);
         }
 
         void VirtualMachine::__call_compare_magic_method(const std::string& magic_method_name)
@@ -468,42 +530,64 @@ namespace XyA
             AttrVisibility visibility;
             TryGetMethodResult result = obj_1->try_get_method(magic_method_name, method, visibility);
 
+            if (visibility == AttrVisibility::Private && this->cur_context->cls() != obj_1->type())
+            {
+                this->cur_context->set_exception(
+                    XyA_Allocate(Builtin::BuiltinException, std::format("Can not access the private attr '{}'", magic_method_name))
+                );
+                this->__throw_exception();
+                return;
+            }
+
             switch (result)
             {
             case TryGetMethodResult::NotFound:
-                this->__throw_exception("The method was not found");
-                break;
+                this->cur_context->set_exception(
+                    XyA_Allocate(Builtin::BuiltinException, "The method was not found")
+                );
+                this->__throw_exception();
+                return;
             
             case TryGetMethodResult::NotCallable:
-                this->__throw_exception("The method was not callable");
-                break;
+                this->cur_context->set_exception(
+                    XyA_Allocate(Builtin::BuiltinException, "The method was not callable")
+                );
+                this->__throw_exception();
+                return;
             }
 
             Object** args = XyA_Allocate_Array(Object*, 2, obj_1, obj_2);
             bool exception_thrown = false;
-            Object* result_obj = method->call(args, 2, exception_thrown);
+            Object* return_value = method->call(args, 2, exception_thrown);
             XyA_Deallocate_Array(args, 2);
 
             if (exception_thrown)
             {
-                Builtin::BuiltinException* exception = static_cast<Builtin::BuiltinException*>(result_obj);
-                this->__throw_exception(exception->message);
+                this->cur_context->set_exception(static_cast<Builtin::BuiltinException*>(return_value));
+                this->__throw_exception();
+                return;
             }
 
-            Builtin::BoolObject* bool_result = dynamic_cast<Builtin::BoolObject*>(result_obj);
-            if (bool_result == nullptr)
+            Builtin::BoolObject* bool_value = dynamic_cast<Builtin::BoolObject*>(return_value);
+            if (bool_value == nullptr)
             {
-                this->__throw_exception("The type of the return value of the method is not bool");
+                this->cur_context->set_exception(
+                    XyA_Allocate(Builtin::BuiltinException, std::format("The return value of the method '{}' is not of bool type", magic_method_name))
+                );
+                this->__throw_exception();
+                return;
             }
-            this->cur_context->push_operand(bool_result);            
+            this->cur_context->push_operand(bool_value);            
         }
 
-        void VirtualMachine::__throw_exception(std::string_view message) const
+        void VirtualMachine::__throw_exception()
         {
             for (auto callback : this->exception_callbacks)
             {
-                callback(message);
+                callback(this->cur_context->thrown_exception->message());
             }
+
+            this->__back_context();
         }
     }
 }

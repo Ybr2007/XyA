@@ -48,6 +48,16 @@ namespace XyA
         {
             return this->code_obj->instructions[this->instruction_ptr];
         }
+        
+        const Type* Context::cls() const
+        {
+            return this->code_obj->cls;
+        }
+
+        void Context::set_exception(BaseException* exception)
+        {
+            this->thrown_exception = exception;
+        }
 
         Object* Context::get_literal_obj_at(size_t index) const
         {

@@ -508,7 +508,7 @@ namespace XyA
             Runtime::AttrVisibility visibility;
             auto result = instance->try_get_method(Runtime::MagicMethodNames::init_method_name, init_method, visibility);
 
-            if (visibility == Runtime::AttrVisibility::Private && Runtime::VirtualMachine::get_instance()->cur_context->code_obj->cls != cls)
+            if (visibility == Runtime::AttrVisibility::Private && Runtime::VirtualMachine::get_instance()->cur_context->cls() != cls)
             {
                 exception_thrown = true; 
                 return XyA_Allocate(Runtime::Builtin::BuiltinException, std::format("Can not access the private constructor of class {}", cls->name));
