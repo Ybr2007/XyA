@@ -13,6 +13,7 @@ namespace XyA
             StringType::StringType()
             {
                 this->name = "string";
+                this->ref_count_enabled = false;
                 this->set_attr(MagicMethodNames::add_method_name, XyA_Allocate(BuiltinFunction, string_object_add));
                 this->set_attr(MagicMethodNames::multiply_method_name, XyA_Allocate(BuiltinFunction, string_object_multiply));
                 this->set_attr(MagicMethodNames::equal_method_name, XyA_Allocate(BuiltinFunction, string_object_equal));
@@ -25,10 +26,15 @@ namespace XyA
                 return &instance;
             }
 
-
             StringObject::StringObject()
             {
                 this->__type = StringType::get_instance();
+            }
+
+            StringObject::StringObject(const std::string& value)
+            {
+                this->__type = StringType::get_instance();
+                this->value = value;
             }
 
             Object* string_object_add(Object** args, size_t arg_num, bool& exception_thrown)

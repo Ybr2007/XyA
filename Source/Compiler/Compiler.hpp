@@ -51,6 +51,10 @@ namespace XyA
             // delete于Runtime::Context::~Context
             this->__global_code_object = XyA_Allocate_(Runtime::CodeObject);
 
+            this->__global_code_object->add_variable_name("int");
+            this->__global_code_object->add_variable_name("float");
+            this->__global_code_object->add_variable_name("str");
+            this->__global_code_object->add_variable_name("bool");
             this->__global_code_object->add_variable_name("print");
             this->__global_code_object->add_variable_name("_get_ref_count");
             this->__global_code_object->add_variable_name("_get_id");
@@ -208,6 +212,21 @@ namespace XyA
         void Compiler::__compile_expression(Runtime::CodeObject* code_object, SyntaxAnalysis::SyntaxTreeNode* expression_root, bool pop)
         {
             expression_root->try_fold_literal();
+
+            if (expression_root->type == SyntaxAnalysis::SyntaxTreeNodeType::Type_Conversion)
+            {
+                this->__compile_expression(code_object, expression_root->children[0]);  // 计算被转换对象的值
+                this->__compile_expression(code_object, expression_root->children[1]);  // 计算目标类型对象的值
+                Runtime::Instruction* convert_type_instruction = new Runtime::Instruction(Runtime::InstructionType::ConvertType);
+                code_object->instructions.push_back(convert_type_instruction);
+
+                if (pop)
+                {
+                    Runtime::Instruction* pop_top_instruction = new Runtime::Instruction(Runtime::InstructionType::PopTop);
+                    code_object->instructions.push_back(pop_top_instruction);
+                }
+                return;
+            }
 
             if (expression_root->type == SyntaxAnalysis::SyntaxTreeNodeType::Attr)
             {

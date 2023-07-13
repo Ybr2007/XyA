@@ -392,7 +392,7 @@ namespace XyA
             ~MemoryPool()
             {
                 #ifdef Debug_Display_Memory_Leaks
-                printf("\nLEAKS: %d\n", this->allocated_objects.size());
+                printf("\nLEAKS: %zd\n", this->allocated_objects.size());
 
                 for (auto iter = this->allocated_objects.begin(); iter != this->allocated_objects.end(); iter ++)
                 {

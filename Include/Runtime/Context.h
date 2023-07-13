@@ -32,6 +32,7 @@ namespace XyA
             */
             const Type* cls() const;
 
+            void set_exception(std::string_view exception_message);
             void set_exception(BaseException* exception);
 
             Object* get_literal_obj_at(size_t index) const;

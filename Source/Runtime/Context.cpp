@@ -54,6 +54,11 @@ namespace XyA
             return this->code_obj->cls;
         }
 
+        void Context::set_exception(std::string_view exception_message)
+        {
+            this->thrown_exception = XyA_Allocate(Builtin::BuiltinException, exception_message);
+        }
+
         void Context::set_exception(BaseException* exception)
         {
             this->thrown_exception = exception;

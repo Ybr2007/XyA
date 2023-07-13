@@ -1,4 +1,5 @@
 #pragma once
+#include <format>
 #include <Runtime/Builtin/Int.h>
 #include <Runtime/Builtin/BuiltinFunction.h>
 #include <Runtime/MemoryManager.hpp>
@@ -13,6 +14,7 @@ namespace XyA
             IntType::IntType()
             {
                 this->name = "int";
+                this->ref_count_enabled = false;
                 this->set_attr(MagicMethodNames::add_method_name, XyA_Allocate(BuiltinFunction, int_object_add));
                 this->set_attr(MagicMethodNames::subtract_method_name, XyA_Allocate(BuiltinFunction, int_object_subtract));
                 this->set_attr(MagicMethodNames::multiply_method_name, XyA_Allocate(BuiltinFunction, int_object_multiply));
@@ -24,6 +26,7 @@ namespace XyA
                 this->set_attr(MagicMethodNames::greater_equal_method_name, XyA_Allocate(BuiltinFunction, int_object_compare_if_greater_equal));
                 this->set_attr(MagicMethodNames::less_method_name, XyA_Allocate(BuiltinFunction, int_object_compare_if_less));
                 this->set_attr(MagicMethodNames::less_equal_method_name, XyA_Allocate(BuiltinFunction, int_object_compare_if_less_equal));
+                this->set_attr(MagicMethodNames::as_method_name, XyA_Allocate(BuiltinFunction, int_object_as));
             }
 
             IntType* IntType::get_instance()
@@ -31,9 +34,16 @@ namespace XyA
                 static IntType instance;
                 return &instance;
             }
+
             IntObject::IntObject()
             {
                 this->__type = IntType::get_instance();
+            }
+
+            IntObject::IntObject(long long value)
+            {
+                this->__type = IntType::get_instance();
+                this->value = value;
             }
 
             /* Int Methods */
@@ -365,6 +375,32 @@ namespace XyA
                 {
                     return XyA_Allocate(BoolObject, self->value <= float_other->value);
                 }  
+            }
+
+            Object* int_object_as(Object** args, size_t arg_num, bool& exception_thrown)
+            {
+                XyA_Function_Check_Arg_Num(2)
+                XyA_Builtin_Method_Get_Self(IntObject)
+                
+                if (!args[1]->is_instance(Type::get_instance()))
+                {
+                    exception_thrown = true;
+                    return XyA_Allocate(BuiltinException, "The argument 1 is not type");
+                }
+
+                Type* target_type = static_cast<Type*>(args[1]);
+                if (target_type == IntType::get_instance())
+                {
+                    return self;
+                }
+                if (target_type == StringType::get_instance())
+                {
+                    StringObject* string_object = XyA_Allocate(StringObject, std::to_string(self->value));
+                    return string_object;
+                }
+
+                exception_thrown = true;
+                return XyA_Allocate(BuiltinException, std::format("Unsupported type-conversion ('int' to '{}')", target_type->name));
             }
 
             #ifdef Debug_Display_Object

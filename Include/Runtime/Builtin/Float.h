@@ -25,6 +25,7 @@ namespace XyA
             inline Object* float_object_compare_if_greater_equal(Object** args, size_t arg_num, bool& exception_thrown);
             inline Object* float_object_compare_if_less(Object** args, size_t arg_num, bool& exception_thrown);
             inline Object* float_object_compare_if_less_equal(Object** args, size_t arg_num, bool& exception_thrown);
+            inline Object* float_object_as(Object** args, size_t arg_num, bool& exception_thrown);
 
             class FloatType : public Type
             {

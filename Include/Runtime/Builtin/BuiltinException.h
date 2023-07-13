@@ -11,7 +11,7 @@ namespace XyA
             class BuiltinException : public BaseException
             {
             public:
-                BuiltinException(std::string message);
+                BuiltinException(std::string_view message);
 
                 std::string_view message() const override final;
 

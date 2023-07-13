@@ -25,6 +25,7 @@ namespace XyA
             inline Object* int_object_compare_if_greater_equal(Object** args, size_t arg_num, bool& exception_thrown);
             inline Object* int_object_compare_if_less(Object** args, size_t arg_num, bool& exception_thrown);
             inline Object* int_object_compare_if_less_equal(Object** args, size_t arg_num, bool& exception_thrown);
+            inline Object* int_object_as(Object** args, size_t arg_num, bool& exception_thrown);
 
             class IntType : public Type
             {
@@ -40,6 +41,7 @@ namespace XyA
                 long long value;
 
                 IntObject();
+                IntObject(long long value);
 
                 #ifdef Debug_Display_Object
                 std::string to_string() const;

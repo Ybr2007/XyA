@@ -31,6 +31,7 @@ namespace XyA
                 std::string value;
 
                 StringObject();
+                StringObject(const std::string& value);
             };
             
         }  // namespace Builtin

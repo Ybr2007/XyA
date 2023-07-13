@@ -23,6 +23,7 @@ namespace XyA
             const std::string str_method_name = "__str__";
             const std::string new_method_name = "__new__";
             const std::string init_method_name = "__init__";
+            const std::string as_method_name = "__as__";
         }
     }
 }

@@ -32,6 +32,7 @@ namespace XyA
             Modifier,               // token: 修饰符
             Method_Definition,      // token: 方法名称标识符 children: 数量为2或3，children[0] 形参列表(Argument_List)，children[1] 函数体(Block)，children[2] 方法可访问性修饰符（可选）
             Class_Definition,       // token: 类名称标识符 chilren: 数量不限，每一个child是一个成员函数定义(Function_Definition)
+            Type_Conversion,        // children: 数量为2，children[0] 为对象表达式，children[1] 为目标类型标识符(Primary)
         };
 
         #ifdef Debug_Write_AST_To_Json_File
@@ -77,6 +78,8 @@ namespace XyA
                 return "<SyntaxTreeNodeType: Method_Definition>";
             case SyntaxTreeNodeType::Class_Definition:
                 return "<SyntaxTreeNodeType: Class_Definition>";
+            case SyntaxTreeNodeType::Type_Conversion:
+                return "<SyntaxTreeNodeType: Type_Conversion>";
             default:
                 return "<Unknown>";
             }
@@ -131,7 +134,8 @@ namespace XyA
                 this->type == SyntaxTreeNodeType::Unary ||
                 this->type == SyntaxTreeNodeType::Primary ||
                 this->type == SyntaxTreeNodeType::Call ||
-                this->type == SyntaxTreeNodeType::Attr;
+                this->type == SyntaxTreeNodeType::Attr ||
+                this->type == SyntaxTreeNodeType::Type_Conversion;
         }
 
         bool SyntaxTreeNode::__flod_number_literals()

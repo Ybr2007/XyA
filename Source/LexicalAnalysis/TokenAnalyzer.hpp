@@ -305,6 +305,13 @@ namespace XyA
                 this->__try_move_ptr(7);
                 return token;
             }
+            if (this->__match("as", true))
+            {
+                token->type = TokenType::Kw_As;
+                token->end_pos = this->__cur_pos() + 1;
+                this->__try_move_ptr(2);
+                return token;
+            }
 
             if (this->__match("true", true))
             {

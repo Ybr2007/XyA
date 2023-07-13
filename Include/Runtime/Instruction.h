@@ -27,6 +27,8 @@ namespace XyA
             PopTop,
             Return,
 
+            ConvertType,
+
             /* 有参数 */
             LoadLiteral,
             LoadVariable,

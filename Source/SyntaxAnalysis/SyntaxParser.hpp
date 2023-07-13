@@ -57,12 +57,13 @@ namespace XyA
             SyntaxTreeNode* __parse_primary();
             SyntaxTreeNode* __parse_call(SyntaxTreeNode* callee_expression);
             SyntaxTreeNode* __parse_call_argument_list();
-            SyntaxTreeNode* __parse_attr(SyntaxTreeNode* object_expression);
+            SyntaxTreeNode* __parse_attr(SyntaxTreeNode* attr_owner_expression);
             SyntaxTreeNode* __parse_function_definition();
             SyntaxTreeNode* __parse_argument_list_definition();
             SyntaxTreeNode* __parse_return();
             SyntaxTreeNode* __parse_method_definition();
             SyntaxTreeNode* __parse_class_definition();
+            SyntaxTreeNode* __parse_type_conversion(SyntaxTreeNode* object_expression);
 
             void __throw_exception(std::string_view message, LexicalAnalysis::TokenPos pos) const;
         };
@@ -532,7 +533,7 @@ namespace XyA
 
         SyntaxTreeNode* SyntaxParser::__parse_primary()
         {
-            // primary -> Literal | Identifier | "(" expression ")" | call
+            // primary -> Literal | Identifier | ( "(" expression ")" ) | call | attr | type_conversion
             switch (this->__cur_token()->type)
             {
             case LexicalAnalysis::TokenType::IntLiteral:
@@ -553,6 +554,10 @@ namespace XyA
                     else if (this->__next_token()->type == LexicalAnalysis::TokenType::Op_Dot)
                     {
                         node = this->__parse_attr(node);
+                    }
+                    else if (this->__next_token()->type == LexicalAnalysis::TokenType::Kw_As)
+                    {
+                        node = this->__parse_type_conversion(node);
                     }
                     else
                     {
@@ -707,12 +712,12 @@ namespace XyA
             [object_expression].[attr_identifier]
                               ^_
         */
-        SyntaxTreeNode* SyntaxParser::__parse_attr(SyntaxTreeNode* object_expression)
+        SyntaxTreeNode* SyntaxParser::__parse_attr(SyntaxTreeNode* attr_owner_expression)
         {
             // attr -> expression "." Identifier
             SyntaxTreeNode* attr_node = new SyntaxTreeNode(SyntaxTreeNodeType::Attr);
             attr_node->children.reserve(1);
-            attr_node->children.push_back(object_expression);
+            attr_node->children.push_back(attr_owner_expression);
 
             this->__try_move_ptr();  // 已经确定下一个字符是点号，可以直接移动
             if (this->__at_end())
@@ -958,6 +963,29 @@ namespace XyA
             }
 
             return class_definition_node;
+        }
+
+        /* 当前情况：
+            type_conversion -> expression "as" Identifier
+                               ^^^^^^^^^^  ~~
+         */
+        SyntaxTreeNode* SyntaxParser::__parse_type_conversion(SyntaxTreeNode* object_expression)
+        {
+            // type_conversion -> expression "as" Identifier
+            if (!this->__try_move_ptr(2) || this->__cur_token()->type != LexicalAnalysis::TokenType::Identifier)
+            {
+                this->__throw_exception("Expected the target type", this->__cur_token()->end_pos);
+                return nullptr;
+            }
+
+            SyntaxTreeNode* type_conversion_node = new SyntaxTreeNode(SyntaxTreeNodeType::Type_Conversion);
+            SyntaxTreeNode* target_type_node = new SyntaxTreeNode(SyntaxTreeNodeType::Primary);
+            target_type_node->token = this->__cur_token();
+            type_conversion_node->children.reserve(2);
+            type_conversion_node->children.push_back(object_expression);
+            type_conversion_node->children.push_back(target_type_node);
+
+            return type_conversion_node;
         }
 
         void SyntaxParser::__throw_exception(std::string_view message, LexicalAnalysis::TokenPos pos) const

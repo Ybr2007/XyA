@@ -14,7 +14,7 @@ comparison     -> addition ( ( "!=" | "==" | ">" | ">=" | "<" | "<=" ) addition 
 addition       -> multiplication ( ( "-" | "+" ) multiplication )*
 multiplication -> unary ( ( "/" | "*" ) unary )*
 unary          -> ( "!" | "-" ) unary | primary
-primary        -> Literal | Identifier | "(" expression ")" | call | attr
+primary        -> Literal | Identifier | ( "(" expression ")" ) | call | attr | type_conversion
 
 call           -> expression "(" call_argument_list? ")"
 call_argument_list -> expression ("," expression)*
@@ -30,3 +30,5 @@ function_block -> "{" function_unit* "}"                                   // åœ
 
 method_definition -> VisibilityModifier? function_definition
 class_definition -> "class" Identifier "{" method_definition* "}"
+
+type_conversion -> expression "as" Identifier

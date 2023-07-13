@@ -27,11 +27,20 @@ namespace XyA
 
         void Object::reference()
         {
+            if (!this->ref_count_enabled)
+            {
+                return;
+            }
             this->ref_count ++;
         }
 
         bool Object::dereference()
         {
+            if (!this->ref_count_enabled)
+            {
+                return false;
+            }
+
             if (this->ref_count == 0)
             {
                 printf("ERROR: ref_count < 0\n");
@@ -51,6 +60,11 @@ namespace XyA
 
         bool Object::deallocate_if_no_ref()
         {
+            if (!this->ref_count_enabled)
+            {
+                return false;
+            }
+
             if (this->ref_count < 0)
             {
                 printf("ERROR: ref_count < 0\n");

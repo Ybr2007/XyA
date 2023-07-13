@@ -77,6 +77,10 @@ namespace XyA
                 str += "Return";
                 break;
 
+            case InstructionType::ConvertType:
+                str += "Convert Type";
+                break;
+
             case InstructionType::LoadLiteral:
                 str += "Load Literal";
                 str += " " + std::to_string(this->parameter);

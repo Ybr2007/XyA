@@ -47,23 +47,28 @@ namespace XyA
 
         void VirtualMachine::__init_global_context()
         {
-            Object*& builtin_print_function = this->global_context->local_variables[0]; // 0: global_context->code_obj->variable_name_indices["print"]
+            this->global_context->local_variables[0] = Builtin::IntType::get_instance();  // 0: global_context->code_obj->variable_name_indices["int"]
+            this->global_context->local_variables[1] = Builtin::FloatType::get_instance();  // 1: global_context->code_obj->variable_name_indices["float"]
+            this->global_context->local_variables[2] = Builtin::StringType::get_instance();  // 2: global_context->code_obj->variable_name_indices["str"]
+            this->global_context->local_variables[3] = Builtin::BoolType::get_instance();  // 3: global_context->code_obj->variable_name_indices["bool"]
+
+            Object*& builtin_print_function = this->global_context->local_variables[4];  // 4: global_context->code_obj->variable_name_indices["print"]
             builtin_print_function = XyA_Allocate(Builtin::BuiltinFunction, Builtin::print);
             builtin_print_function->reference();
 
-            Object*& builtin__get_ref_count_function = this->global_context->local_variables[1]; // 1: global_context->code_obj->variable_name_indices["_get_ref_count"]
+            Object*& builtin__get_ref_count_function = this->global_context->local_variables[5];  // 5: global_context->code_obj->variable_name_indices["_get_ref_count"]
             builtin__get_ref_count_function = XyA_Allocate(Builtin::BuiltinFunction, Builtin::_get_ref_count);
             builtin__get_ref_count_function->reference();
 
-            Object*& builtin__get_id_function = this->global_context->local_variables[2];  // 2: global_context->code_obj->variable_name_indices["_get_id"]
+            Object*& builtin__get_id_function = this->global_context->local_variables[6];  // 6: global_context->code_obj->variable_name_indices["_get_id"]
             builtin__get_id_function = XyA_Allocate(Builtin::BuiltinFunction, Builtin::_get_id);
             builtin__get_id_function->reference();
 
-            Object*& builtin_clock_function = this->global_context->local_variables[3];  // 3: global_context->code_obj->variable_name_indices["clock"]
+            Object*& builtin_clock_function = this->global_context->local_variables[7];  // 7: global_context->code_obj->variable_name_indices["clock"]
             builtin_clock_function = XyA_Allocate(Builtin::BuiltinFunction, Builtin::clock_);
             builtin_clock_function->reference();
 
-            Object*& builtin_sizeof_function = this->global_context->local_variables[4];  // 4: global_context->code_obj->variable_name_indices["clock"]
+            Object*& builtin_sizeof_function = this->global_context->local_variables[8];  // 8: global_context->code_obj->variable_name_indices["clock"]
             builtin_sizeof_function = XyA_Allocate(Builtin::BuiltinFunction, Builtin::sizeof_);
             builtin_sizeof_function->reference();
         }
@@ -373,6 +378,85 @@ namespace XyA
                 break;
             }
 
+            case InstructionType::ConvertType:
+            {
+                Object* target_type_object = this->cur_context->pop_operand();
+                if (!target_type_object->is_instance(Type::get_instance()))
+                {
+                    this->cur_context->set_exception("The type-conversion target is not type");
+                    this->__throw_exception();
+                    return;
+                }
+
+                bool convert_to_string = target_type_object == Builtin::StringType::get_instance();
+                bool convert_to_bool = target_type_object == Builtin::BoolType::get_instance();
+
+                Object* original_object = this->cur_context->top_operand();
+
+                std::string method_name;
+                if (convert_to_string)
+                {
+                    method_name = MagicMethodNames::str_method_name;
+                }
+                else if (convert_to_bool)
+                {
+                    method_name = MagicMethodNames::bool_method_name;   
+                }
+                else
+                {
+                    method_name = MagicMethodNames::as_method_name;
+                }
+
+                BaseFunction* method;
+                AttrVisibility visibility;
+                TryGetMethodResult result = original_object->try_get_method(method_name, method, visibility);
+
+                switch (result)
+                {
+                case TryGetMethodResult::NotFound:
+                    this->cur_context->set_exception(std::format("The method '{}' was not found", method_name));
+                    this->__throw_exception();
+                    return;
+                
+                case TryGetMethodResult::NotCallable:
+                    this->cur_context->set_exception(std::format("The method '{}' was not callable", method_name));
+                    this->__throw_exception();
+                    return;
+                }
+
+                if (visibility == AttrVisibility::Private && this->cur_context->cls() != original_object->type())
+                {
+                    this->cur_context->set_exception(std::format("Can not access the private attr '{}'", method_name));
+                    this->__throw_exception();
+                    return;
+                }
+
+                Object** args = (convert_to_string || convert_to_bool) ? 
+                    XyA_Allocate_Array(Object*, 1, original_object) : XyA_Allocate_Array(Object*, 2, original_object, target_type_object);
+                size_t arg_num = (convert_to_string || convert_to_bool) ? 1 : 2;
+                bool exception_thrown = false;
+
+                Object* return_value = method->call(args, arg_num, exception_thrown);
+                XyA_Deallocate_Array(args, arg_num);
+
+                if (exception_thrown)
+                {
+                    this->cur_context->set_exception(static_cast<Builtin::BuiltinException*>(return_value));
+                    this->__throw_exception();
+                    return;
+                }
+                if (!return_value->is_instance(static_cast<Type*>(target_type_object)))
+                {
+                    this->cur_context->set_exception(
+                        std::format("The return value of method '{}' is not of target type", MagicMethodNames::as_method_name));
+                    this->__throw_exception();
+                    return;
+                }
+                
+                this->cur_context->set_top_operand(return_value);
+                break;
+            }
+
             case InstructionType::CallFunction:
             {
                 Object* callee_object = this->cur_context->pop_operand();
@@ -382,7 +466,7 @@ namespace XyA
                 Object* return_value;
 
                 // 被调用的对象是类型，则调用__new__魔术方法初始化一个该类型的示例，并将类型对象本身作为第一个参数传入__new__方法
-                if (callee_object->type() == Type::get_instance())
+                if (callee_object->is_instance(Type::get_instance()))
                 {
                     arg_num = instruction->parameter + 1;
                     args = XyA_Allocate_Array_(Object*, arg_num);
@@ -474,7 +558,7 @@ namespace XyA
         void VirtualMachine::__call_binary_operation_magic_method(const std::string& magic_method_name)
         {
             Object* obj_2 = this->cur_context->pop_operand();
-            Object* obj_1 = this->cur_context->pop_operand();
+            Object* obj_1 = this->cur_context->top_operand();
 
             BaseFunction* method;
             AttrVisibility visibility;
@@ -518,13 +602,13 @@ namespace XyA
                 return;
             }
             
-            this->cur_context->push_operand(return_value);
+            this->cur_context->set_top_operand(return_value);
         }
 
         void VirtualMachine::__call_compare_magic_method(const std::string& magic_method_name)
         {
             Object* obj_2 = this->cur_context->pop_operand();
-            Object* obj_1 = this->cur_context->pop_operand();
+            Object* obj_1 = this->cur_context->top_operand();
 
             BaseFunction* method;
             AttrVisibility visibility;
@@ -577,7 +661,7 @@ namespace XyA
                 this->__throw_exception();
                 return;
             }
-            this->cur_context->push_operand(bool_value);            
+            this->cur_context->set_top_operand(bool_value);            
         }
 
         void VirtualMachine::__throw_exception()

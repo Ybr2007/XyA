@@ -48,6 +48,7 @@ namespace XyA
             Kw_Import,                      // import
             Kw_Public,                      // public
             Kw_Private,                     // private
+            Kw_As,                          // as
 
             /* Values */
             IntLiteral,                     // 整数字面量
@@ -149,6 +150,8 @@ namespace XyA
                 return "<Token: Key Word 'public'>";
             case TokenType::Kw_Private:
                 return "<Token: Key Word 'private'>";
+            case TokenType::Kw_As:
+                return "<Token: Key Word 'as'>";
 
             case TokenType::IntLiteral:
                 return "<Token: Int Literal, Value: '" + value +"'>";

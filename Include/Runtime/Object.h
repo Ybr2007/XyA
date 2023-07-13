@@ -2,6 +2,7 @@
 #include <string>
 #include <array>
 #include <unordered_map>
+#include <format>
 #include <Runtime/MagicMethodNames.hpp>
 #include <Utils/StrKeyDict.hpp>
 #include <Config.h>
@@ -47,8 +48,9 @@ namespace XyA
         class Object
         {
         public:
-            long long ref_count = 0;
             StrKeyDict<Attr> attrs;
+            long long ref_count = 0;
+            bool ref_count_enabled = true;
 
             Type* type() const;
             void set_type(Type* type);
@@ -90,7 +92,8 @@ namespace XyA
                 if (arg_num != expected_arg_num_) \
                 { \
                     exception_thrown = true; \
-                    return new Builtin::BuiltinException("Expected " + std::to_string(expected_arg_num_) + " arguments, got " + std::to_string(arg_num)); \
+                    return XyA_Allocate(Builtin::BuiltinException, \
+                        std::format("Expected {} arguments, got {}", expected_arg_num_, arg_num)); \
                 }
 
         class BaseFunction : public Object
