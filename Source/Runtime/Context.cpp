@@ -35,7 +35,7 @@ namespace XyA
             {
                 if (this->local_variables[i] != nullptr)
                 {
-                    // printf("Dereference Variable:%s %s %zd\n", this->get_variable_name(i).c_str(), this->local_variables[i]->type()->name.c_str(), this->local_variables[i]->ref_count);
+                    // printf("Dereference Variable:%s %s %zd\n", this->get_variable_name_at(i).c_str(), this->local_variables[i]->type()->name.c_str(), this->local_variables[i]->ref_count);
                     this->local_variables[i]->dereference();
                     // printf("END\n");
                 }
@@ -74,7 +74,19 @@ namespace XyA
             return this->local_variables[index];
         }
 
-        const std::string& Context::get_variable_name(size_t index) const
+        void Context::set_variable_at(size_t index, Object* new_object)
+        {
+            Object* old_object = this->local_variables[index];
+            if (old_object != nullptr)
+            {
+                old_object->dereference();
+            }
+
+            this->local_variables[index] = new_object;
+            new_object->reference();
+        }
+
+        const std::string& Context::get_variable_name_at(size_t index) const
         {
             for (auto& item : this->code_obj->variable_name_2_index)
             {

@@ -37,6 +37,11 @@ namespace XyA
                 this->value = value;
             }
 
+            StringType* StringObject::static_type()
+            {
+                return StringType::get_instance();
+            }
+
             Object* string_object_add(Object** args, size_t arg_num, bool& exception_thrown)
             {
                 XyA_Function_Check_Arg_Num(2)
@@ -81,9 +86,9 @@ namespace XyA
                 StringObject* other = dynamic_cast<StringObject*>(args[1]);
                 if (other == nullptr)
                 {
-                    return XyA_Allocate(BoolObject, false);
+                    return BoolObject::get_instance(false);
                 }
-                return XyA_Allocate(BoolObject, self->value == other->value);
+                return BoolObject::get_instance(self->value == other->value);
             }
 
             Object* string_object_bool(Object** args, size_t arg_num, bool& exception_thrown)
@@ -91,7 +96,7 @@ namespace XyA
                 XyA_Function_Check_Arg_Num(1)
                 XyA_Builtin_Method_Get_Self(StringObject)
 
-                return XyA_Allocate(BoolObject, !self->value.empty());
+                return BoolObject::get_instance(!self->value.empty());
             }
             
         }  // namespace Builtin

@@ -22,15 +22,21 @@ namespace XyA
                 return &instance;
             }
 
-            NullObject::NullObject(bool value)
+            NullObject::NullObject()
             {
+                this->ref_count_enabled = false;
                 this->__type = NullType::get_instance();
             }
 
             NullObject* NullObject::get_instance()
             {
-                static NullObject* instance = XyA_Allocate_(NullObject);
-                return instance;
+                static NullObject instance;
+                return &instance;
+            }
+
+            NullType* NullObject::static_type()
+            {
+                return NullType::get_instance();
             }
 
             Object* null_object_equal(Object** args, size_t arg_num, bool& exception_thrown)
@@ -42,11 +48,11 @@ namespace XyA
 
                 if (other != nullptr)
                 {
-                    return XyA_Allocate(BoolObject, true);
+                    return BoolObject::get_instance(true);
                 }
                 else  // other == nullptr
                 {
-                    return XyA_Allocate(BoolObject, false);
+                    return BoolObject::get_instance(false);
                 }
             }
 

@@ -14,18 +14,18 @@ namespace XyA
     {
         namespace Builtin
         {
-            inline Object* float_object_add(Object** args, size_t arg_num, bool& exception_thrown);
-            inline Object* float_object_subtract(Object** args, size_t arg_num, bool& exception_thrown);
-            inline Object* float_object_multiply(Object** args, size_t arg_num, bool& exception_thrown);
-            inline Object* float_object_divide(Object** args, size_t arg_num, bool& exception_thrown);
-            inline Object* float_object_equal(Object** args, size_t arg_num, bool& exception_thrown);
-            inline Object* float_object_str(Object** args, size_t arg_num, bool& exception_thrown);
-            inline Object* float_object_bool(Object** args, size_t arg_num, bool& exception_thrown);
-            inline Object* float_object_compare_if_greater(Object** args, size_t arg_num, bool& exception_thrown);
-            inline Object* float_object_compare_if_greater_equal(Object** args, size_t arg_num, bool& exception_thrown);
-            inline Object* float_object_compare_if_less(Object** args, size_t arg_num, bool& exception_thrown);
-            inline Object* float_object_compare_if_less_equal(Object** args, size_t arg_num, bool& exception_thrown);
-            inline Object* float_object_as(Object** args, size_t arg_num, bool& exception_thrown);
+            Object* float_object_add_method(Object** args, size_t arg_num, bool& exception_thrown);
+            Object* float_object_sub_method(Object** args, size_t arg_num, bool& exception_thrown);
+            Object* float_object_mul_method(Object** args, size_t arg_num, bool& exception_thrown);
+            Object* float_object_div_method(Object** args, size_t arg_num, bool& exception_thrown);
+            Object* float_object_equal_method(Object** args, size_t arg_num, bool& exception_thrown);
+            Object* float_object_str_method(Object** args, size_t arg_num, bool& exception_thrown);
+            Object* float_object_bool_method(Object** args, size_t arg_num, bool& exception_thrown);
+            Object* float_object_greater_than_method(Object** args, size_t arg_num, bool& exception_thrown);
+            Object* float_object_greater_equal_method(Object** args, size_t arg_num, bool& exception_thrown);
+            Object* float_object_less_than_method(Object** args, size_t arg_num, bool& exception_thrown);
+            Object* float_object_less_equal_method(Object** args, size_t arg_num, bool& exception_thrown);
+            Object* float_object_as_method(Object** args, size_t arg_num, bool& exception_thrown);
 
             class FloatType : public Type
             {
@@ -41,6 +41,8 @@ namespace XyA
                 double value;
 
                 FloatObject();
+
+                static FloatType* static_type();
             };
 
         }

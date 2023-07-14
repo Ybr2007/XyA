@@ -13,7 +13,7 @@ namespace XyA
 {
     namespace Runtime
     {
-        class Function;
+        class CustomFunction;
         
         class CodeObject : public Object
         {

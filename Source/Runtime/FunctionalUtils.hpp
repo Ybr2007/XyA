@@ -1,6 +1,6 @@
 #pragma once
 #include <Runtime/Object.h>
-#include <Runtime/Function.h>
+#include <Runtime/CustomFunction.h>
 #include <Runtime/Builtin/BuiltinFunction.h>
 
 

@@ -25,9 +25,13 @@ namespace XyA
             class BoolObject : public Object
             {
             public:
-                bool value;
+                const bool value;
 
-                BoolObject(bool value=false);
+                static BoolObject* get_instance(bool value);
+                static BoolType* static_type();
+            
+            private:
+                BoolObject(bool value);
             };
         }
     }

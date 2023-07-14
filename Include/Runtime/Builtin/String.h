@@ -32,6 +32,8 @@ namespace XyA
 
                 StringObject();
                 StringObject(const std::string& value);
+
+                static StringType* static_type();
             };
             
         }  // namespace Builtin

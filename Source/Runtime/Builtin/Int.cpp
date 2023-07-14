@@ -15,18 +15,18 @@ namespace XyA
             {
                 this->name = "int";
                 this->ref_count_enabled = false;
-                this->set_attr(MagicMethodNames::add_method_name, XyA_Allocate(BuiltinFunction, int_object_add));
-                this->set_attr(MagicMethodNames::subtract_method_name, XyA_Allocate(BuiltinFunction, int_object_subtract));
-                this->set_attr(MagicMethodNames::multiply_method_name, XyA_Allocate(BuiltinFunction, int_object_multiply));
+                this->set_attr(MagicMethodNames::add_method_name, XyA_Allocate(BuiltinFunction, int_object_add_method));
+                this->set_attr(MagicMethodNames::subtract_method_name, XyA_Allocate(BuiltinFunction, int_object_sub_method));
+                this->set_attr(MagicMethodNames::multiply_method_name, XyA_Allocate(BuiltinFunction, int_object_mul_method));
                 this->set_attr(MagicMethodNames::divide_method_name, XyA_Allocate(BuiltinFunction, int_object_divide));
                 this->set_attr(MagicMethodNames::equal_method_name, XyA_Allocate(BuiltinFunction, int_object_equal));
-                this->set_attr(MagicMethodNames::str_method_name, XyA_Allocate(BuiltinFunction, int_object_str));
-                this->set_attr(MagicMethodNames::bool_method_name, XyA_Allocate(BuiltinFunction, int_object_bool));
-                this->set_attr(MagicMethodNames::greater_method_name, XyA_Allocate(BuiltinFunction, int_object_compare_if_greater));
-                this->set_attr(MagicMethodNames::greater_equal_method_name, XyA_Allocate(BuiltinFunction, int_object_compare_if_greater_equal));
-                this->set_attr(MagicMethodNames::less_method_name, XyA_Allocate(BuiltinFunction, int_object_compare_if_less));
-                this->set_attr(MagicMethodNames::less_equal_method_name, XyA_Allocate(BuiltinFunction, int_object_compare_if_less_equal));
-                this->set_attr(MagicMethodNames::as_method_name, XyA_Allocate(BuiltinFunction, int_object_as));
+                this->set_attr(MagicMethodNames::str_method_name, XyA_Allocate(BuiltinFunction, int_object_str_method));
+                this->set_attr(MagicMethodNames::bool_method_name, XyA_Allocate(BuiltinFunction, int_object_bool_method));
+                this->set_attr(MagicMethodNames::greater_method_name, XyA_Allocate(BuiltinFunction, int_object_greater_than_method));
+                this->set_attr(MagicMethodNames::greater_equal_method_name, XyA_Allocate(BuiltinFunction, int_object_greater_equal_method));
+                this->set_attr(MagicMethodNames::less_method_name, XyA_Allocate(BuiltinFunction, int_object_less_than_method));
+                this->set_attr(MagicMethodNames::less_equal_method_name, XyA_Allocate(BuiltinFunction, int_object_less_equal_method));
+                this->set_attr(MagicMethodNames::as_method_name, XyA_Allocate(BuiltinFunction, int_object_as_method));
             }
 
             IntType* IntType::get_instance()
@@ -46,8 +46,13 @@ namespace XyA
                 this->value = value;
             }
 
+            IntType* IntObject::static_type()
+            {
+                return IntType::get_instance();
+            }
+
             /* Int Methods */
-            Object* int_object_add(Object** args, size_t arg_num, bool& exception_thrown)
+            Object* int_object_add_method(Object** args, size_t arg_num, bool& exception_thrown)
             {
                 XyA_Function_Check_Arg_Num(2)
                 XyA_Builtin_Method_Get_Self(IntObject)
@@ -83,7 +88,7 @@ namespace XyA
                 }   
             }
 
-            Object* int_object_subtract(Object** args, size_t arg_num, bool& exception_thrown)
+            Object* int_object_sub_method(Object** args, size_t arg_num, bool& exception_thrown)
             {
                 XyA_Function_Check_Arg_Num(2)
                 XyA_Builtin_Method_Get_Self(IntObject)
@@ -118,7 +123,7 @@ namespace XyA
                 }                
             }
 
-            Object* int_object_multiply(Object** args, size_t arg_num, bool& exception_thrown)
+            Object* int_object_mul_method(Object** args, size_t arg_num, bool& exception_thrown)
             {
                 XyA_Function_Check_Arg_Num(2)
                 XyA_Builtin_Method_Get_Self(IntObject)
@@ -226,15 +231,15 @@ namespace XyA
 
                 if (int_other != nullptr)
                 {
-                    return XyA_Allocate(BoolObject, self->value == int_other->value);
+                    return BoolObject::get_instance(self->value == int_other->value);
                 }
                 else  // float_other != nullptr
                 {
-                    return XyA_Allocate(BoolObject, self->value == float_other->value);
+                    return BoolObject::get_instance(self->value == float_other->value);
                 }   
             }
 
-            Object* int_object_str(Object** args, size_t arg_num, bool& exception_thrown)
+            Object* int_object_str_method(Object** args, size_t arg_num, bool& exception_thrown)
             {
                 XyA_Function_Check_Arg_Num(1)
                 XyA_Builtin_Method_Get_Self(IntObject)
@@ -245,15 +250,15 @@ namespace XyA
                 return str;
             }
 
-            Object* int_object_bool(Object** args, size_t arg_num, bool& exception_thrown)
+            Object* int_object_bool_method(Object** args, size_t arg_num, bool& exception_thrown)
             {
                 XyA_Function_Check_Arg_Num(1)
                 XyA_Builtin_Method_Get_Self(IntObject)
 
-                return XyA_Allocate(BoolObject, self->value != 0);
+                return BoolObject::get_instance(self->value != 0);
             }
 
-            Object* int_object_compare_if_greater(Object** args, size_t arg_num, bool& exception_thrown)
+            Object* int_object_greater_than_method(Object** args, size_t arg_num, bool& exception_thrown)
             {
                 XyA_Function_Check_Arg_Num(2)
                 XyA_Builtin_Method_Get_Self(IntObject)
@@ -276,15 +281,15 @@ namespace XyA
 
                 if (int_other != nullptr)
                 {
-                    return XyA_Allocate(BoolObject, self->value > int_other->value);
+                    return BoolObject::get_instance(self->value > int_other->value);
                 }
                 else  // float_other != nullptr
                 {
-                    return XyA_Allocate(BoolObject, self->value > float_other->value);
+                    return BoolObject::get_instance(self->value > float_other->value);
                 }   
             }
 
-            Object* int_object_compare_if_less(Object** args, size_t arg_num, bool& exception_thrown)
+            Object* int_object_less_than_method(Object** args, size_t arg_num, bool& exception_thrown)
             {
                 XyA_Function_Check_Arg_Num(2)
                 XyA_Builtin_Method_Get_Self(IntObject)
@@ -307,15 +312,15 @@ namespace XyA
 
                 if (int_other != nullptr)
                 {
-                    return XyA_Allocate(BoolObject, self->value < int_other->value);
+                    return BoolObject::get_instance(self->value < int_other->value);
                 }
                 else  // float_other != nullptr
                 {
-                    return XyA_Allocate(BoolObject, self->value < float_other->value);
+                    return BoolObject::get_instance(self->value < float_other->value);
                 }  
             }
 
-            Object* int_object_compare_if_greater_equal(Object** args, size_t arg_num, bool& exception_thrown)
+            Object* int_object_greater_equal_method(Object** args, size_t arg_num, bool& exception_thrown)
             {
                 XyA_Function_Check_Arg_Num(2)
                 XyA_Builtin_Method_Get_Self(IntObject)
@@ -338,15 +343,15 @@ namespace XyA
 
                 if (int_other != nullptr)
                 {
-                    return XyA_Allocate(BoolObject, self->value >= int_other->value);
+                    return BoolObject::get_instance(self->value >= int_other->value);
                 }
                 else  // float_other != nullptr
                 {
-                    return XyA_Allocate(BoolObject, self->value >= float_other->value);
+                    return BoolObject::get_instance(self->value >= float_other->value);
                 }  
             }
 
-            Object* int_object_compare_if_less_equal(Object** args, size_t arg_num, bool& exception_thrown)
+            Object* int_object_less_equal_method(Object** args, size_t arg_num, bool& exception_thrown)
             {
                 XyA_Function_Check_Arg_Num(2)
                 XyA_Builtin_Method_Get_Self(IntObject)
@@ -369,15 +374,15 @@ namespace XyA
 
                 if (int_other != nullptr)
                 {
-                    return XyA_Allocate(BoolObject, self->value <= int_other->value);
+                    return BoolObject::get_instance(self->value <= int_other->value);
                 }
                 else  // float_other != nullptr
                 {
-                    return XyA_Allocate(BoolObject, self->value <= float_other->value);
+                    return BoolObject::get_instance(self->value <= float_other->value);
                 }  
             }
 
-            Object* int_object_as(Object** args, size_t arg_num, bool& exception_thrown)
+            Object* int_object_as_method(Object** args, size_t arg_num, bool& exception_thrown)
             {
                 XyA_Function_Check_Arg_Num(2)
                 XyA_Builtin_Method_Get_Self(IntObject)

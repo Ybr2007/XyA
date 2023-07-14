@@ -10,45 +10,6 @@ namespace XyA
     {
         namespace Builtin
         {
-            Object* bool_object_equal(Object** args, size_t arg_num, bool& exception_thrown)
-            {
-                XyA_Function_Check_Arg_Num(2)
-                XyA_Builtin_Method_Get_Self(BoolObject)
-
-                BoolObject* bool_other = dynamic_cast<BoolObject*>(args[1]);
-                IntObject* int_other = nullptr;
-                if (bool_other == nullptr)
-                {
-                    int_other = dynamic_cast<IntObject*>(args[1]);
-                }
-
-                if (bool_other == nullptr && int_other == nullptr)
-                {
-                    exception_thrown = true;
-                    return XyA_Allocate(BuiltinException, "Type Error");
-                }
-
-                if (bool_other != nullptr)
-                {
-                    return XyA_Allocate(BoolObject, self->value == bool_other->value);
-                }
-                else  // int_other != nullptr
-                {
-                    return XyA_Allocate(BoolObject, self->value == int_other->value);
-                }
-            }
-            
-            Object* bool_object_str(Object** args, size_t arg_num, bool& exception_thrown)
-            {
-                XyA_Function_Check_Arg_Num(1)
-                XyA_Builtin_Method_Get_Self(BoolObject)
-
-                StringObject* str = XyA_Allocate_(StringObject);
-                str->value = self->value ? "true" : "false";
-
-                return str;
-            }
-
             BoolType::BoolType()
             {
                 this->name = "bool";
@@ -63,10 +24,57 @@ namespace XyA
                 return &instance;
             }
 
-            BoolObject::BoolObject(bool value)
+            BoolObject::BoolObject(bool value_) : value(value_)
             {
+                this->ref_count_enabled = false;
                 this->__type = BoolType::get_instance();
-                this->value = value;
+            }
+
+            BoolObject* BoolObject::get_instance(bool value)
+            {
+                static BoolObject true_instance = BoolObject(true);
+                static BoolObject flase_instance = BoolObject(false);
+                return value ? &true_instance : &flase_instance;
+            }
+
+            BoolType* BoolObject::static_type()
+            {
+                return BoolType::get_instance();
+            }
+
+            Object* bool_object_equal(Object** args, size_t arg_num, bool& exception_thrown)
+            {
+                XyA_Function_Check_Arg_Num(2)
+                XyA_Builtin_Method_Get_Self(BoolObject)
+
+                IntObject* int_other = nullptr;
+                BoolObject* bool_other = nullptr;
+                if (args[1]->is_instance(IntType::get_instance()))
+                {
+                    int_other = dynamic_cast<IntObject*>(args[1]);
+                }
+                else if (args[1]->is_instance(BoolType::get_instance()))
+                {
+                    bool_other = dynamic_cast<BoolObject*>(args[1]);
+                }
+                else
+                {
+                    exception_thrown = true;
+                    return XyA_Allocate(BuiltinException, "Type Error");
+                }
+
+                return BoolObject::get_instance(self->value == (bool_other != nullptr ? bool_other->value : int_other->value));
+            }
+            
+            Object* bool_object_str(Object** args, size_t arg_num, bool& exception_thrown)
+            {
+                XyA_Function_Check_Arg_Num(1)
+                XyA_Builtin_Method_Get_Self(BoolObject)
+
+                StringObject* str = XyA_Allocate_(StringObject);
+                str->value = self->value ? "true" : "false";
+
+                return str;
             }
         }
     }

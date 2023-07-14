@@ -1,5 +1,5 @@
 #pragma once
-#include <Runtime/Function.h>
+#include <Runtime/CustomFunction.h>
 #include <Runtime/Builtin/BuiltinException.h>
 #include <Runtime/VirtualMachine.h>
 #include <Runtime/Builtin/Null.h>
@@ -21,18 +21,18 @@ namespace XyA
             return &instance;
         }
 
-        Function::Function()
+        CustomFunction::CustomFunction()
         {
             this->__type = FunctionType::get_instance();
             this->code_object = XyA_Allocate_(CodeObject);
         }
 
-        Function::~Function()
+        CustomFunction::~CustomFunction()
         {
             XyA_Deallocate(this->code_object);
         }
 
-        Object* Function::call(Object** args, size_t arg_num, bool& exception_thrown) const
+        Object* CustomFunction::call(Object** args, size_t arg_num, bool& exception_thrown) const
         {
             XyA_Function_Check_Arg_Num(this->expected_arg_num)
 
@@ -60,7 +60,7 @@ namespace XyA
         }
 
         #ifdef Debug_Display_Object
-        std::string Function::to_string() const
+        std::string CustomFunction::to_string() const
         {
             return "<Funtion Object at " + std::to_string((size_t)this) + ">";
         }

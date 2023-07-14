@@ -126,7 +126,7 @@ namespace XyA
         for (auto iter : code_object->prebuilt_objects)
         {
             printf("-----------------------\n");
-            Runtime::Function* function = dynamic_cast<Runtime::Function*>(iter.second);
+            Runtime::CustomFunction* function = dynamic_cast<Runtime::CustomFunction*>(iter.second);
             if (function)
             {
                 for (size_t i = 0; i < function->code_object->instructions.size(); i ++)
@@ -140,7 +140,7 @@ namespace XyA
                 {
                     printf("Method: %s\n", iter->key.c_str());
 
-                    Runtime::Function* method = dynamic_cast<Runtime::Function*>(iter->value.object);
+                    Runtime::CustomFunction* method = dynamic_cast<Runtime::CustomFunction*>(iter->value.object);
 
                     for (size_t i = 0; method && i < method->code_object->instructions.size(); i ++)
                     {

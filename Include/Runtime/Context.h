@@ -37,7 +37,9 @@ namespace XyA
 
             Object* get_literal_obj_at(size_t index) const;
             Object* get_variable_at(size_t index) const;
-            const std::string& get_variable_name(size_t index) const;
+            void set_variable_at(size_t index, Object* new_object);
+
+            const std::string& get_variable_name_at(size_t index) const;
 
             void push_operand(Object* obj);
             Object* pop_operand();

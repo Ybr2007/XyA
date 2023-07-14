@@ -83,10 +83,9 @@ namespace XyA
         bool CodeObject::try_get_literal_index(Builtin::BoolObject* literal_object, size_t& result) const
         {
             auto iter = std::find_if(literals.begin(), literals.end(),
-                [&](Object* obj) 
+                [&](Object* definied_object) 
                 {
-                    auto defined_obj = dynamic_cast<Builtin::BoolObject*>(obj);
-                    return defined_obj && defined_obj->value == literal_object->value;
+                    return definied_object == literal_object;
                 }
             );
             if (iter != literals.end()) 

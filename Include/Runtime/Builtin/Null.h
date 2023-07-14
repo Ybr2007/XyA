@@ -27,9 +27,10 @@ namespace XyA
             class NullObject : public Object
             {
             public:
-                NullObject(bool value=false);
+                NullObject();
 
                 static NullObject* get_instance();
+                static NullType* static_type();
             };
         }
     }

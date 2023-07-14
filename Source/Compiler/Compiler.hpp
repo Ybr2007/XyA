@@ -8,7 +8,7 @@
 #include <Runtime/Builtin/String.h>
 #include <Runtime/Builtin/Bool.h>
 #include <Runtime/Builtin/Null.h>
-#include <Runtime/Function.h>
+#include <Runtime/CustomFunction.h>
 #include <Runtime/MemoryManager.hpp>
 #include <Runtime/VirtualMachine.h>
 #include <Utils/StringUtils.hpp>
@@ -39,7 +39,7 @@ namespace XyA
             void __compile_expression(Runtime::CodeObject* code_object, SyntaxAnalysis::SyntaxTreeNode* expression_root, bool pop=false);
             void __compile_return(Runtime::CodeObject* code_object, SyntaxAnalysis::SyntaxTreeNode* return_root);
 
-            Runtime::Function* __build_function(
+            Runtime::CustomFunction* __build_function(
                 Runtime::CodeObject* code_object, SyntaxAnalysis::SyntaxTreeNode* function_definition_root, size_t& function_variable_index);
             Runtime::Attr __build_method(SyntaxAnalysis::SyntaxTreeNode* method_definition_root, Runtime::Type* cls);
             Runtime::Type* __build_class(
@@ -88,7 +88,7 @@ namespace XyA
             case SyntaxAnalysis::SyntaxTreeNodeType::Function_Definition:
             {
                 size_t function_variable_index;
-                Runtime::Function* function = this->__build_function(code_object, unit_root, function_variable_index);
+                Runtime::CustomFunction* function = this->__build_function(code_object, unit_root, function_variable_index);
                 code_object->prebuilt_objects.emplace_back(function_variable_index, function);
                 break;
             }
@@ -327,15 +327,10 @@ namespace XyA
 
                 case LexicalAnalysis::TokenType::BoolLiteral:
                 {
-                    Runtime::Builtin::BoolObject* bool_obj = XyA_Allocate_(Runtime::Builtin::BoolObject);
-                    bool_obj->value = expression_root->token->value == "true" ? true : false;
+                    Runtime::Builtin::BoolObject* bool_obj = Runtime::Builtin::BoolObject::get_instance(expression_root->token->value == "true");
                     if (!code_object->try_get_literal_index(bool_obj, load_literal_instruction->parameter))
                     {
                         load_literal_instruction->parameter = code_object->add_literal_object(bool_obj);
-                    }   
-                    else  // 已经有了该对象，则需要释放掉多余的
-                    {
-                        XyA_Deallocate(bool_obj);
                     }
                     break;
                 }
@@ -461,10 +456,10 @@ namespace XyA
             code_object->instructions.push_back(return_instruction);
         }
 
-        Runtime::Function* Compiler::__build_function(
+        Runtime::CustomFunction* Compiler::__build_function(
             Runtime::CodeObject* code_object, SyntaxAnalysis::SyntaxTreeNode* function_definition_root, size_t& function_variable_index)
         {
-            Runtime::Function* function = XyA_Allocate_(Runtime::Function);
+            Runtime::CustomFunction* function = XyA_Allocate_(Runtime::CustomFunction);
             function->reference();
 
             if (code_object != nullptr && 
@@ -487,7 +482,7 @@ namespace XyA
         Runtime::Attr Compiler::__build_method(SyntaxAnalysis::SyntaxTreeNode* method_definition_root, Runtime::Type* cls)
         {
             Runtime::Attr attr;
-            Runtime::Function* method = XyA_Allocate_(Runtime::Function);
+            Runtime::CustomFunction* method = XyA_Allocate_(Runtime::CustomFunction);
             method->code_object->cls = cls;
 
             method->expected_arg_num = method_definition_root->children[0]->children.size();

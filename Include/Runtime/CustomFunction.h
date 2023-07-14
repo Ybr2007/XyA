@@ -15,14 +15,14 @@ namespace XyA
             static FunctionType* get_instance();
         };
 
-        class Function : public BaseFunction
+        class CustomFunction : public BaseFunction
         {
         public:
             CodeObject* code_object;
             size_t expected_arg_num;
 
-            Function();
-            ~Function();
+            CustomFunction();
+            ~CustomFunction();
             virtual Object* call(Object** args, size_t arg_num, bool& exception_thrown) const; 
             
             #ifdef Debug_Display_Object

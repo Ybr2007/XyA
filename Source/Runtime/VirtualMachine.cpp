@@ -89,7 +89,7 @@ namespace XyA
                 Object* variable = this->cur_context->get_variable_at(instruction->parameter);
                 if (variable == nullptr)
                 {
-                    std::string_view variable_name = this->cur_context->get_variable_name(instruction->parameter);
+                    std::string_view variable_name = this->cur_context->get_variable_name_at(instruction->parameter);
                     this->cur_context->set_exception(
                         XyA_Allocate(Builtin::BuiltinException, std::format("The variable '{}' is not defined or already deleted.", variable_name))
                     );
@@ -104,7 +104,7 @@ namespace XyA
                 Object* variable = this->global_context->get_variable_at(instruction->parameter);
                 if (variable == nullptr)
                 {
-                    std::string_view variable_name = this->cur_context->get_variable_name(instruction->parameter);
+                    std::string_view variable_name = this->cur_context->get_variable_name_at(instruction->parameter);
                     this->cur_context->set_exception(
                         XyA_Allocate(Builtin::BuiltinException, std::format("The variable '{}' is not defined or already deleted.", variable_name))
                     );
@@ -173,15 +173,7 @@ namespace XyA
 
             case InstructionType::StroeVariable:
             {
-                Object* old_variable = this->cur_context->local_variables[instruction->parameter];
-                if (old_variable != nullptr)
-                {
-                    old_variable->dereference();
-                }
-
-                this->cur_context->local_variables[instruction->parameter] = this->cur_context->pop_operand();
-                this->cur_context->local_variables[instruction->parameter]->reference();
-
+                this->cur_context->set_variable_at(instruction->parameter, this->cur_context->pop_operand());
                 break;
             }
 
@@ -314,7 +306,7 @@ namespace XyA
                     switch (operation_result)
                     {
                     case TryGetMethodResult::NotFound:
-                        bool_value = XyA_Allocate(Builtin::BoolObject, false);
+                        bool_value = Builtin::BoolObject::get_instance(false);
                         break;
 
                     case TryGetMethodResult::NotCallable:
