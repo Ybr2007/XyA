@@ -25,7 +25,11 @@ namespace XyA
             auto iter = std::find_if(literals.begin(), literals.end(),
                 [&](Object* obj) 
                 {
-                    auto int_obj = dynamic_cast<Builtin::IntObject*>(obj);
+                    if (!obj->is_instance(Builtin::IntType::get_instance()))
+                    {
+                        return false;
+                    }
+                    auto int_obj = static_cast<Builtin::IntObject*>(obj);
                     return int_obj && int_obj->value == literal_object->value;
                 }
             );
@@ -45,7 +49,11 @@ namespace XyA
             auto iter = std::find_if(literals.begin(), literals.end(),
                 [&](Object* obj) 
                 {
-                    auto defined_obj = dynamic_cast<Builtin::FloatObject*>(obj);
+                    if (!obj->is_instance(Builtin::FloatType::get_instance()))
+                    {
+                        return false;
+                    }
+                    auto defined_obj = static_cast<Builtin::FloatObject*>(obj);
                     return defined_obj && defined_obj->value == literal_object->value;
                 }
             );
@@ -65,7 +73,11 @@ namespace XyA
             auto iter = std::find_if(literals.begin(), literals.end(),
                 [&](Object* obj) 
                 {
-                    auto defined_obj = dynamic_cast<Builtin::StringObject*>(obj);
+                    if (!obj->is_instance(Builtin::StringType::get_instance()))
+                    {
+                        return false;
+                    }
+                    auto defined_obj = static_cast<Builtin::StringObject*>(obj);
                     return defined_obj && defined_obj->value == literal_object->value;
                 }
             );

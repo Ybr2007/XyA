@@ -51,11 +51,11 @@ namespace XyA
                 BoolObject* bool_other = nullptr;
                 if (args[1]->is_instance(IntType::get_instance()))
                 {
-                    int_other = dynamic_cast<IntObject*>(args[1]);
+                    int_other = static_cast<IntObject*>(args[1]);
                 }
                 else if (args[1]->is_instance(BoolType::get_instance()))
                 {
-                    bool_other = dynamic_cast<BoolObject*>(args[1]);
+                    bool_other = static_cast<BoolObject*>(args[1]);
                 }
                 else
                 {

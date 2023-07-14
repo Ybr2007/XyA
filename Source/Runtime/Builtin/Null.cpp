@@ -44,16 +44,7 @@ namespace XyA
                 XyA_Function_Check_Arg_Num(2)
                 XyA_Builtin_Method_Get_Self(NullObject);
 
-                NullObject* other = dynamic_cast<NullObject*>(args[1]);
-
-                if (other != nullptr)
-                {
-                    return BoolObject::get_instance(true);
-                }
-                else  // other == nullptr
-                {
-                    return BoolObject::get_instance(false);
-                }
+                return BoolObject::get_instance(args[1]->is_instance(NullType::get_instance()));
             }
 
             Object* null_object_str(Object** args, size_t arg_num, bool& exception_thrown)

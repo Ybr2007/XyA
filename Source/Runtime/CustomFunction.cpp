@@ -49,7 +49,7 @@ namespace XyA
 
             if (function_context->returned_obj == nullptr)
             {
-                function_context->returned_obj = XyA_Allocate_(Builtin::NullObject);
+                function_context->returned_obj = Builtin::NullObject::get_instance();
             }
             else
             {

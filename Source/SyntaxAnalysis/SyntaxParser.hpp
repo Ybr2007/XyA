@@ -601,6 +601,10 @@ namespace XyA
                     {
                         expression = this->__parse_attr(expression);
                     }
+                    else if (this->__next_token()->type == LexicalAnalysis::TokenType::Kw_As)
+                    {
+                        expression = this->__parse_type_conversion(expression);
+                    }
                     else
                     {
                         break;
@@ -966,12 +970,12 @@ namespace XyA
         }
 
         /* 当前情况：
-            type_conversion -> expression "as" Identifier
-                               ^^^^^^^^^^  ~~
+            type_conversion -> primary "as" Identifier
+                               ^^^^^^^  ~~
          */
         SyntaxTreeNode* SyntaxParser::__parse_type_conversion(SyntaxTreeNode* object_expression)
         {
-            // type_conversion -> expression "as" Identifier
+            // type_conversion -> primary "as" Identifier
             if (!this->__try_move_ptr(2) || this->__cur_token()->type != LexicalAnalysis::TokenType::Identifier)
             {
                 this->__throw_exception("Expected the target type", this->__cur_token()->end_pos);

@@ -8,7 +8,7 @@ namespace XyA
     {
         namespace Builtin
         {
-            BuiltinException::BuiltinException(std::string_view message)
+            BuiltinException::BuiltinException(std::string message)
             {
                 this->__message = message;
             }

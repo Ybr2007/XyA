@@ -1,6 +1,7 @@
 #pragma once
-#include <Runtime/Builtin/BuiltinFunctions.h>
+#include <format>
 #include <time.h>
+#include <Runtime/Builtin/BuiltinFunctions.h>
 #include <Runtime/MemoryManager.hpp>
 
 
@@ -14,49 +15,56 @@ namespace XyA
             {
                 for (size_t i = 0; i < arg_num; i ++)
                 {
-                    Builtin::StringObject* str_obj = dynamic_cast<Runtime::Builtin::StringObject*>(args[i]);
+                    bool is_string = args[i]->is_instance(StringType::get_instance());
+                    Builtin::StringObject* string_object = is_string ? static_cast<StringObject*>(args[i]) : nullptr;
 
                     bool new_string = false;
-                    if (str_obj == nullptr)
+                    if (!is_string)
                     {
                         Runtime::BaseFunction* str_method; 
                         AttrVisibility visibility;
                         auto result = args[i]->try_get_method(MagicMethodNames::str_method_name, str_method, visibility);
                         if (result == TryGetMethodResult::NotFound || result == TryGetMethodResult::NotCallable)
                         {
-                            str_obj = XyA_Allocate_(StringObject);
-                            str_obj->value = "<XyA Object at " + std::to_string((unsigned long long)args[i]) + ">";
+                            string_object = XyA_Allocate_(StringObject);
+                            string_object->value = "<XyA Object at " + std::to_string((unsigned long long)args[i]) + ">";
                             new_string = true;
                         }
                         else
                         {
                             Object** str_method_args = XyA_Allocate_Array(Object*, 1, args[i]);
-                            Object* result = str_method->call(str_method_args, 1, exception_thrown);
+                            Object* str_method_return_value = str_method->call(str_method_args, 1, exception_thrown);
                             XyA_Deallocate_Array(str_method_args, 1);
 
                             if (exception_thrown)
                             {
-                                
-                                return result;
+                                return str_method_return_value;
                             }
 
-                            str_obj = dynamic_cast<Builtin::StringObject*>(result);
+                            if (!str_method_return_value->is_instance(StringType::get_instance()))
+                            {
+                                exception_thrown = true;
+                                return XyA_Allocate(BuiltinException, 
+                                    std::format("The return value of method '__str__' is not of str type, but of '{}' type", str_method_return_value->type()->name));
+                            }
+
+                            string_object = static_cast<Builtin::StringObject*>(str_method_return_value);
                         }
                     }
-                    printf("%s%s", str_obj->value.c_str(), i == arg_num - 1 ? "" : " ");
+                    printf("%s%s", string_object->value.c_str(), i == arg_num - 1 ? "" : " ");
                     
                     if (new_string)
                     {
-                        XyA_Deallocate(str_obj);
+                        XyA_Deallocate(string_object);
                     }
                     else
                     {
-                        str_obj->deallocate_if_no_ref();
+                        string_object->deallocate_if_no_ref();
                     }
                 }
                 printf("\n");
                 
-                return XyA_Allocate_(NullObject);
+                return NullObject::get_instance();
             }
 
             Object* _get_ref_count(Object** args, size_t arg_num, bool& exception_thrown)

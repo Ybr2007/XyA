@@ -47,8 +47,12 @@ namespace XyA
                 XyA_Function_Check_Arg_Num(2)
                 XyA_Builtin_Method_Get_Self(StringObject)
 
-                StringObject* other = dynamic_cast<StringObject*>(args[1]);
-                if (other == nullptr)
+                StringObject* other = nullptr;
+                if (!args[1]->is_instance(StringType::get_instance()))
+                {
+                    other = static_cast<StringObject*>(args[1]);
+                }
+                else
                 {
                     exception_thrown = true;
                     return XyA_Allocate(BuiltinException, "Type Error");
@@ -63,8 +67,12 @@ namespace XyA
                 XyA_Function_Check_Arg_Num(2)
                 XyA_Builtin_Method_Get_Self(StringObject)
 
-                IntObject* other = dynamic_cast<IntObject*>(args[1]);
-                if (other == nullptr)
+                IntObject* other = nullptr;
+                if (!args[1]->is_instance(IntType::get_instance()))
+                {
+                    other = static_cast<IntObject*>(args[1]);
+                }
+                else
                 {
                     exception_thrown = true;
                     return XyA_Allocate(BuiltinException, "Type Error");
@@ -83,8 +91,12 @@ namespace XyA
                 XyA_Function_Check_Arg_Num(2)
                 XyA_Builtin_Method_Get_Self(StringObject)
 
-                StringObject* other = dynamic_cast<StringObject*>(args[1]);
-                if (other == nullptr)
+                StringObject* other = nullptr;
+                if (!args[1]->is_instance(StringType::get_instance()))
+                {
+                    other = static_cast<StringObject*>(args[1]);
+                }
+                else
                 {
                     return BoolObject::get_instance(false);
                 }

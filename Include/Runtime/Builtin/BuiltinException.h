@@ -11,12 +11,12 @@ namespace XyA
             class BuiltinException : public BaseException
             {
             public:
-                BuiltinException(std::string_view message);
+                BuiltinException(std::string message);
 
                 std::string_view message() const override final;
 
             private:
-                std::string_view __message;
+                std::string __message;
             };
         }
     }

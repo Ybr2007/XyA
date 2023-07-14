@@ -30,7 +30,7 @@ namespace XyA
                 return str;
             }
 
-            BuiltinFunction::BuiltinFunction(std::function<Object*(Object**, size_t, bool&)> cpp_function)
+            BuiltinFunction::BuiltinFunction(builtin_cpp_function_ptr cpp_function)
             {
                 this->__type = BuiltinFunctionType::get_instance();
                 this->cpp_function = cpp_function;

@@ -15,7 +15,7 @@ namespace XyA
     {
         class CustomFunction;
         
-        class CodeObject : public Object
+        class CodeObject
         {
         public:
             std::vector<Instruction*> instructions;  

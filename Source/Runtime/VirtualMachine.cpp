@@ -285,7 +285,7 @@ namespace XyA
                 bool exception_thrown = false; 
                 Builtin::BoolObject* bool_value;
 
-                if (top_object->type() == Builtin::BoolType::get_instance())
+                if (top_object->is_instance(Builtin::BoolType::get_instance()))
                 {
                     bool_value = static_cast<Builtin::BoolObject*>(top_object);
                 }
@@ -516,7 +516,7 @@ namespace XyA
                 {
                     args[instruction->parameter - i] = this->cur_context->pop_operand();
                 }
-                BaseFunction* callee = dynamic_cast<BaseFunction*>(callee_object);
+                BaseFunction* callee = static_cast<BaseFunction*>(callee_object);  // TODO
                 bool exception_thrown = false; 
                 Object* return_value = callee->call(args, instruction->parameter + 1, exception_thrown);
                 XyA_Deallocate_Array(args, instruction->parameter + 1);
@@ -643,9 +643,7 @@ namespace XyA
                 this->__throw_exception();
                 return;
             }
-
-            Builtin::BoolObject* bool_value = dynamic_cast<Builtin::BoolObject*>(return_value);
-            if (bool_value == nullptr)
+            if (!return_value->is_instance(Builtin::BoolType::get_instance()))
             {
                 this->cur_context->set_exception(
                     XyA_Allocate(Builtin::BuiltinException, std::format("The return value of the method '{}' is not of bool type", magic_method_name))
@@ -653,6 +651,9 @@ namespace XyA
                 this->__throw_exception();
                 return;
             }
+
+            Builtin::BoolObject* bool_value = static_cast<Builtin::BoolObject*>(return_value);
+            
             this->cur_context->set_top_operand(bool_value);            
         }
 
@@ -664,6 +665,7 @@ namespace XyA
             }
 
             this->__back_context();
+            exit(-1);
         }
     }
 }
