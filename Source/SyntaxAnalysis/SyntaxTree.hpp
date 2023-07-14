@@ -13,26 +13,60 @@ namespace XyA
     {
         enum class SyntaxTreeNodeType
         {
-            Root,                   // children: 数量不限，每个child是一个语句（块）
-            Block,                  // children: 数量不限，每个child是一个语句（块）
-            If,                     // children: 数量为2或3，children[0] 是判断条件表达式，children[1] 是如果为真执行的语句块，children[2] 是如果为假执行的语句块（可选）
-            While,                  // children: 数量为2，children[0] 是判断条件表达式，children[1] 是如果为真执行的语句块
-            Assignment,             // children: 数量为2，chilren[0]是赋值目标，children[1] 是值的表达式
-            Comparison,             // token: 运算符 chilren: 数量为2，为两个运算数
-            Addition,               // token: 运算符 chilren: 数量为2，为两个运算数
-            Multiplication,         // token: 运算符 chilren: 数量为2，为两个运算数
-            Unary,                  // token: 运算符 chilren: 数量为1，为运算数
-            Primary,                // token: 标识符或字面量
-            Function_Definition,    // token: 函数名称标识符 children: 数量为2，children[0] 形参列表(Argument_List)，children[1] 函数体(Block)
-            Argument_List,          // children: 数量不限，每一个child是一个参数（对于Definition_Argument_List，是形参标识符；对于Call_Argument_List，是实参表达式）
-            Argument,               // token: 形参名称标识符
-            Call,                   // chilren: 数量为2，children[0] 为callee表达式，children[1] 为实参列表(Argument_List)
-            Attr,                   // token: 属性标识符 children: 数量为1，chilren[0] 为对象
-            Return,                 // children: 数量为1，chilren[0] 为返回值表达式
-            Modifier,               // token: 修饰符
-            Method_Definition,      // token: 方法名称标识符 children: 数量为2或3，children[0] 形参列表(Argument_List)，children[1] 函数体(Block)，children[2] 方法可访问性修饰符（可选）
-            Class_Definition,       // token: 类名称标识符 chilren: 数量不限，每一个child是一个成员函数定义(Function_Definition)
-            Type_Conversion,        // children: 数量为2，children[0] 为对象表达式，children[1] 为目标类型标识符(Primary)
+            // children: 数量不限, 每个child是一个语句（块）
+            Root,
+            // children: 数量不限, 每个child是一个语句（块）
+            Block,
+            // children: 数量为2或3, children[0] 是判断条件表达式, children[1] 是如果为真执行的语句块, children[2] 是如果为假执行的语句块（可选）
+            If,
+            // children: 数量为2, children[0] 是判断条件表达式, children[1] 是如果为真执行的语句块
+            While,
+            // children: 数量为2或3, chilren[0]是赋值目标, children[1] 是值的表达式, children[2]是类型标注(可选)
+            Assignment,
+            // token: 运算符
+            // chilren: 数量为2, 为两个运算数
+            Comparison,
+            // token: 运算符
+            // chilren: 数量为2, 为两个运算数
+            Addition,
+            // token: 运算符
+            // chilren: 数量为2, 为两个运算数
+            Multiplication,
+            // token: 运算符
+            // chilren: 数量为1, 为运算数
+            Unary,
+            // token: 标识符或字面量
+            Primary,
+            // token: 函数名称标识符
+            // children: 数量为2, children[0] 形参列表(Argument_List), children[1] 函数体(Block)
+            Function_Definition,
+            // children: 数量不限, 每一个child是一个参数（对于Definition_Argument_List, 是形参标识符；对于Call_Argument_List, 是实参表达式）
+            Argument_List,
+            // token: 形参名称标识符
+            Argument,
+            // chilren: 数量为2, children[0] 为callee表达式, children[1] 为实参列表(Argument_List)
+            Call,
+            // token: 属性标识符
+            // children: 数量为1, chilren[0] 为对象
+            Attr,
+            // children: 数量为1, chilren[0] 为返回值表达式
+            Return,
+            // token: 修饰符
+            Modifier,
+            // token: 方法名称标识符
+            // children: 数量为2或3, children[0] 形参列表(Argument_List), children[1] 函数体(Block), children[2] 方法可访问性修饰符（可选）
+            Method_Definition,
+            // token: 类名称标识符
+            // chilren: 数量不限, 每一个child是一个成员函数定义(Function_Definition)
+            Class_Definition,
+            // token: 类型标识符(Identifier)
+            Type,
+            // children: 数量不限,每一个child是一个可能的类型(Type)
+            Union_Type_Hint,
+            // children: 数量不限,每一个child是一个除null外可能的类型(Type)
+            Optional_Type_Hint,
+            // children: 数量为2, children[0] 为对象表达式, children[1] 为目标类型标识符(Identifier Primary)
+            Type_Conversion,
         };
 
         #ifdef Debug_Write_AST_To_Json_File
@@ -78,6 +112,12 @@ namespace XyA
                 return "<SyntaxTreeNodeType: Method_Definition>";
             case SyntaxTreeNodeType::Class_Definition:
                 return "<SyntaxTreeNodeType: Class_Definition>";
+            case SyntaxTreeNodeType::Type:
+                return "<SyntaxTreeNodeType: Type>";
+            case SyntaxTreeNodeType::Union_Type_Hint:
+                return "<SyntaxTreeNodeType: Union_Type_Hint>";
+            case SyntaxTreeNodeType::Optional_Type_Hint:
+                return "<SyntaxTreeNodeType: Optional_Type_Hint>";
             case SyntaxTreeNodeType::Type_Conversion:
                 return "<SyntaxTreeNodeType: Type_Conversion>";
             default:
@@ -100,10 +140,10 @@ namespace XyA
 
             /*
             * 尝试进行常量折叠
-            ! 警告：不会检查node类型，调用前确定is_expression()为true
+            ! 警告：不会检查node类型, 调用前确定is_expression()为true
             */
             bool try_fold_literal();
-            
+
             #ifdef Debug_Write_AST_To_Json_File
             YJson::Object* to_json() const;
             #endif
@@ -124,7 +164,7 @@ namespace XyA
                 delete child;
             }
         }
-        
+
 
         bool SyntaxTreeNode::is_expression() const
         {
@@ -140,37 +180,37 @@ namespace XyA
 
         bool SyntaxTreeNode::__flod_number_literals()
         {
-            bool result_is_float = this->children[0]->token->type == LexicalAnalysis::TokenType::FloatLiteral || 
+            bool result_is_float = this->children[0]->token->type == LexicalAnalysis::TokenType::FloatLiteral ||
                 (this->children.size() == 2 && this->children[1]->token->type == LexicalAnalysis::TokenType::FloatLiteral) ||
                 this->token->type == LexicalAnalysis::TokenType::Op_Devide;
-                
+
             if (!result_is_float)
             {
                 long long floded_value = std::stoll(this->children[0]->token->value);
                 switch (this->token->type)
                 {
                 case LexicalAnalysis::TokenType::Op_Plus:
-                    floded_value += std::stoll(this->children[1]->token->value);
-                    break;
+  floded_value += std::stoll(this->children[1]->token->value);
+  break;
 
                 case LexicalAnalysis::TokenType::Op_Minus:
-                    if (this->children.size() == 2)
-                    {
-                        floded_value -= std::stoll(this->children[1]->token->value);
-                    }
-                    else
-                    {
-                        floded_value = -floded_value;
-                    }
-                    break;
+  if (this->children.size() == 2)
+  {
+      floded_value -= std::stoll(this->children[1]->token->value);
+  }
+  else
+  {
+      floded_value = -floded_value;
+  }
+  break;
 
                 case LexicalAnalysis::TokenType::Op_Multiply:
-                    floded_value *= std::stoll(this->children[1]->token->value);
-                    break;
-                
+  floded_value *= std::stoll(this->children[1]->token->value);
+  break;
+
                 default:
-                    // TODO
-                    return false;
+  // TODO
+  return false;
                 }
 
                 this->type = SyntaxTreeNodeType::Primary;
@@ -184,35 +224,35 @@ namespace XyA
                 switch (this->token->type)
                 {
                 case LexicalAnalysis::TokenType::Op_Plus:
-                    floded_value += std::stod(this->children[1]->token->value);
-                    break;
+  floded_value += std::stod(this->children[1]->token->value);
+  break;
 
                 case LexicalAnalysis::TokenType::Op_Minus:
-                    if (this->children.size() == 2)
-                    {
-                        floded_value -= std::stod(this->children[1]->token->value);
-                    }
-                    else
-                    {
-                        floded_value = -floded_value;
-                    }
-                    break;
+  if (this->children.size() == 2)
+  {
+      floded_value -= std::stod(this->children[1]->token->value);
+  }
+  else
+  {
+      floded_value = -floded_value;
+  }
+  break;
 
                 case LexicalAnalysis::TokenType::Op_Multiply:
-                    floded_value *= std::stod(this->children[1]->token->value);
-                    break;
+  floded_value *= std::stod(this->children[1]->token->value);
+  break;
 
                 case LexicalAnalysis::TokenType::Op_Devide:
-                    if (this->children[1]->token->value == "0")
-                    {
-                        return false;  // TODO
-                    }
-                    floded_value /= std::stod(this->children[1]->token->value);
-                    break;
-                
+  if (this->children[1]->token->value == "0")
+  {
+      return false;  // TODO
+  }
+  floded_value /= std::stod(this->children[1]->token->value);
+  break;
+
                 default:
-                    // TODO
-                    return false;
+  // TODO
+  return false;
                 }
 
                 this->type = SyntaxTreeNodeType::Primary;
@@ -223,7 +263,7 @@ namespace XyA
                 ss.precision(20);
                 ss << floded_value;
                 this->token->value = ss.str();
-                
+
                 return true;
             }
         }
@@ -241,30 +281,30 @@ namespace XyA
                 LexicalAnalysis::TokenType token_type_2 = LexicalAnalysis::TokenType::Unknown;
                 if (this->children.size() == 2)
                 {
-                    token_type_2 = this->children[1]->token->type;
+  token_type_2 = this->children[1]->token->type;
                 }
 
-                bool both_are_number = 
-                    (token_type_1 == LexicalAnalysis::TokenType::IntLiteral || token_type_1 == LexicalAnalysis::TokenType::FloatLiteral) &&
-                    (token_type_2 == LexicalAnalysis::TokenType::IntLiteral || token_type_2 == LexicalAnalysis::TokenType::FloatLiteral || 
-                    token_type_2 == LexicalAnalysis::TokenType::Unknown);
+                bool both_are_number =
+  (token_type_1 == LexicalAnalysis::TokenType::IntLiteral || token_type_1 == LexicalAnalysis::TokenType::FloatLiteral) &&
+  (token_type_2 == LexicalAnalysis::TokenType::IntLiteral || token_type_2 == LexicalAnalysis::TokenType::FloatLiteral ||
+  token_type_2 == LexicalAnalysis::TokenType::Unknown);
 
                 if (both_are_number)
                 {
-                    if (!this->__flod_number_literals())
-                    {
-                        return false;
-                    }
+  if (!this->__flod_number_literals())
+  {
+      return false;
+  }
                 }
                 else  // both_are_number == false
                 {
-                    return false;
+  return false;
                 }
-                
+
                 delete this->children[0];
                 if (this->children.size() == 2)
                 {
-                    delete this->children[1];
+  delete this->children[1];
                 }
                 this->children.clear();
                 return true;
@@ -282,14 +322,14 @@ namespace XyA
                 YJson::String str = "";
                 for (char chr : this->token->to_string())
                 {
-                    if (chr == '"')
-                    {
-                        str += "\\\"";
-                    }
-                    else
-                    {
-                        str.push_back(chr);
-                    }
+  if (chr == '"')
+  {
+      str += "\\\"";
+  }
+  else
+  {
+      str.push_back(chr);
+  }
                 }
                 dict["value"] = new YJson::Object(str);
             }
@@ -298,7 +338,7 @@ namespace XyA
                 YJson::List children_jsons;
                 for (auto child : this->children)
                 {
-                    children_jsons.push_back(child->to_json());
+  children_jsons.push_back(child->to_json());
                 }
                 dict["children"] = new YJson::Object(children_jsons);
             }

@@ -24,7 +24,7 @@ namespace XyA
             Runtime::CodeObject* compile(SyntaxAnalysis::SyntaxTreeNode* syntax_tree_root);
 
         private:
-            /* 
+            /*
             在以下__compile_xxx中new的Instructions都会在Runtime::CodeObject::~CodeObject释放
             在以下__compile_xxx中new的Literals会被GC机制释放
              */
@@ -60,7 +60,7 @@ namespace XyA
             this->__global_code_object->add_variable_name("_get_id");
             this->__global_code_object->add_variable_name("clock");
             this->__global_code_object->add_variable_name("sizeof");
-            
+
             for (auto unit : syntax_tree_root->children)
             {
                 this->__compile_unit(this->__global_code_object, unit);
@@ -99,7 +99,7 @@ namespace XyA
                 Runtime::Type* class_type = this->__build_class(code_object, unit_root, class_variable_index);
                 code_object->prebuilt_objects.emplace_back(class_variable_index, class_type);
                 break;
-            } 
+            }
 
             case SyntaxAnalysis::SyntaxTreeNodeType::Return:
             {
@@ -140,7 +140,7 @@ namespace XyA
                 if (if_root->children[2]->type == SyntaxAnalysis::SyntaxTreeNodeType::If)
                 {
                     this->__compile_if(code_object, if_root->children[2]);
-                }                
+                }
                 else  // if_root->children[2]->type == SyntaxAnalysis::SyntaxTreeNodeType::Block
                 {
                     this->__compile_block(code_object, if_root->children[2]);
@@ -187,7 +187,7 @@ namespace XyA
                 this->__compile_expression(code_object, assignment_root->children[0]);
                 code_object->instructions.pop_back();
                 this->__compile_expression(code_object, assignment_root->children[1]);
-                Runtime::Instruction* store_attr_instruction = new Runtime::Instruction(Runtime::InstructionType::StoreAttr);;                
+                Runtime::Instruction* store_attr_instruction = new Runtime::Instruction(Runtime::InstructionType::StoreAttr);;
 
                 if (!code_object->try_get_attr_name_index(assignment_root->children[0]->token->value, store_attr_instruction->parameter))
                 {
@@ -199,7 +199,7 @@ namespace XyA
             {
                 this->__compile_expression(code_object, assignment_root->children[1]);
 
-                Runtime::Instruction* store_variable_instruction = new Runtime::Instruction(Runtime::InstructionType::StroeVariable);;                
+                Runtime::Instruction* store_variable_instruction = new Runtime::Instruction(Runtime::InstructionType::StroeVariable);;
 
                 if (!code_object->try_get_variable_index(assignment_root->children[0]->token->value, store_variable_instruction->parameter))
                 {
@@ -256,14 +256,14 @@ namespace XyA
                 }
 
                 this->__compile_expression(code_object, expression_root->children[0]);  // 计算callee的值
-                if (callee_is_method)  // 如果调用的是method，则将最后的Get_Attr指令改为Get_Method
+                if (callee_is_method)  // 如果调用的是method, 则将最后的Get_Attr指令改为Get_Method
                 {
                     code_object->instructions[code_object->instructions.size() - 1]->type = Runtime::InstructionType::GetMethod;
                 }
 
                 Runtime::Instruction* call_function_instruction = new Runtime::Instruction(
                      callee_is_method ? Runtime::InstructionType::CallMethod : Runtime::InstructionType::CallFunction);
-                call_function_instruction->parameter = expression_root->children[1]->children.size();                
+                call_function_instruction->parameter = expression_root->children[1]->children.size();
                 code_object->instructions.push_back(call_function_instruction);
 
                 if (pop)
@@ -288,7 +288,7 @@ namespace XyA
                     {
                         load_literal_instruction->parameter = code_object->add_literal_object(int_obj);
                     }
-                    else  // 已经有了该对象，则需要释放掉多余的
+                    else  // 已经有了该对象, 则需要释放掉多余的
                     {
                         XyA_Deallocate(int_obj);
                     }
@@ -303,7 +303,7 @@ namespace XyA
                     {
                         load_literal_instruction->parameter = code_object->add_literal_object(float_obj);
                     }
-                    else  // 已经有了该对象，则需要释放掉多余的
+                    else  // 已经有了该对象, 则需要释放掉多余的
                     {
                         XyA_Deallocate(float_obj);
                     }
@@ -317,8 +317,8 @@ namespace XyA
                     if (!code_object->try_get_literal_index(str_obj, load_literal_instruction->parameter))
                     {
                         load_literal_instruction->parameter = code_object->add_literal_object(str_obj);
-                    }   
-                    else  // 已经有了该对象，则需要释放掉多余的
+                    }
+                    else  // 已经有了该对象, 则需要释放掉多余的
                     {
                         XyA_Deallocate(str_obj);
                     }
@@ -337,9 +337,9 @@ namespace XyA
 
                 case LexicalAnalysis::TokenType::NullLiteral:
                 {
-                    // TODO   
+                    // TODO
                 }
-                
+
                 default:
                     break;
                 }
@@ -356,12 +356,12 @@ namespace XyA
 
             if (expression_root->token->type == LexicalAnalysis::TokenType::Identifier)
             {
-                Runtime::Instruction* load_variable_instruction = new Runtime::Instruction(Runtime::InstructionType::LoadVariable);          
+                Runtime::Instruction* load_variable_instruction = new Runtime::Instruction(Runtime::InstructionType::LoadVariable);
 
                 if (!code_object->try_get_variable_index(expression_root->token->value, load_variable_instruction->parameter))
                 {
                     load_variable_instruction->type = Runtime::InstructionType::LoadGlobal;
-                    
+
                     if (!this->__global_code_object->try_get_variable_index(
                         expression_root->token->value, load_variable_instruction->parameter))
                     {
@@ -393,7 +393,7 @@ namespace XyA
                 break;
 
             case LexicalAnalysis::TokenType::Op_Minus:
-                operation_instruction->type = expression_root->children.size() == 2 ? 
+                operation_instruction->type = expression_root->children.size() == 2 ?
                     Runtime::InstructionType::BinarySubtract : Runtime::InstructionType::UnaryNegative;
                 break;
 
@@ -404,7 +404,7 @@ namespace XyA
             case LexicalAnalysis::TokenType::Op_Devide:
                 operation_instruction->type = Runtime::InstructionType::BinaryDevide;
                 break;
-            
+
             case LexicalAnalysis::TokenType::Op_Equal:
                 operation_instruction->type = Runtime::InstructionType::CompareIfEqual;
                 break;
@@ -431,12 +431,12 @@ namespace XyA
             case LexicalAnalysis::TokenType::Op_Not:
                 operation_instruction->type = Runtime::InstructionType::UnaryNot;
                 break;
-            
+
             default:
                 // TODO
                 break;
             }
-            
+
             code_object->instructions.push_back(operation_instruction);
 
             if (pop)
@@ -462,7 +462,7 @@ namespace XyA
             Runtime::CustomFunction* function = XyA_Allocate_(Runtime::CustomFunction);
             function->reference();
 
-            if (code_object != nullptr && 
+            if (code_object != nullptr &&
                 !code_object->try_get_variable_index(function_definition_root->token->value, function_variable_index))
             {
                 function_variable_index = code_object->add_variable_name(function_definition_root->token->value);
@@ -493,7 +493,7 @@ namespace XyA
 
             this->__compile_block(method->code_object, method_definition_root->children[1]);
             attr.object = method;
-            
+
             if (method_definition_root->children.size() == 3)
             {
                 switch (method_definition_root->children[2]->token->type)
@@ -501,7 +501,7 @@ namespace XyA
                 case LexicalAnalysis::TokenType::Kw_Public:
                     attr.visibility = Runtime::AttrVisibility::Public;
                     break;
-                
+
                 case LexicalAnalysis::TokenType::Kw_Private:
                     attr.visibility = Runtime::AttrVisibility::Private;
                     break;
@@ -524,7 +524,7 @@ namespace XyA
 
             if (visibility == Runtime::AttrVisibility::Private && Runtime::VirtualMachine::get_instance()->cur_context->cls() != cls)
             {
-                exception_thrown = true; 
+                exception_thrown = true;
                 return XyA_Allocate(Runtime::Builtin::BuiltinException, std::format("Can not access the private constructor of class {}", cls->name));
             }
 
@@ -535,7 +535,7 @@ namespace XyA
                 for (size_t i = 1; i < arg_num; i ++)
                 {
                     init_Method_args[i] = args[i];
-                }               
+                }
                 Runtime::Object* return_object = init_method->call(init_Method_args, arg_num, exception_thrown);
 
                 if (exception_thrown)
@@ -545,7 +545,7 @@ namespace XyA
 
                 if (return_object->type() != Runtime::Builtin::NullType::get_instance())
                 {
-                    exception_thrown = true; 
+                    exception_thrown = true;
                     return XyA_Allocate(Runtime::Builtin::BuiltinException, "The return object of the method __init__ is not null");
                 }
                 else
@@ -567,7 +567,7 @@ namespace XyA
             cls->instance_allow_external_attr = true;
             cls->ref_count = 1;
 
-            if (code_object != nullptr && 
+            if (code_object != nullptr &&
                 !code_object->try_get_variable_index(class_definition_root->token->value, class_variable_index))
             {
                 class_variable_index = code_object->add_variable_name(class_definition_root->token->value);

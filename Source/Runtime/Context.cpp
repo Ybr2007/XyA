@@ -30,7 +30,7 @@ namespace XyA
                 printf("WARNING: The stack was not empty when the context exits.");
             }
 
-            /* 离开作用域，所有变量引用计数减一 */
+            /* 离开作用域, 所有变量引用计数减一 */
             for (size_t i = 0; i < this->code_obj->variable_name_2_index.size(); i ++)
             {
                 if (this->local_variables[i] != nullptr)
@@ -48,7 +48,7 @@ namespace XyA
         {
             return this->code_obj->instructions[this->instruction_ptr];
         }
-        
+
         const Type* Context::cls() const
         {
             return this->code_obj->cls;

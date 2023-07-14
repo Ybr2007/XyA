@@ -38,7 +38,7 @@ namespace XyA
         this->token_analyzer.exception_callbacks.push_back(
             [&](std::string_view msg, LexicalAnalysis::TokenPos pos){
                 this->error_messages.push_back(
-                    std::make_pair(std::format("{}Lexical Error: {} {}  Pos: row {}, column {}\n", 
+                    std::make_pair(std::format("{}Lexical Error: {} {}  Pos: row {}, column {}\n",
                         error_color, reset_color, std::string(msg).c_str(), pos.row, pos.column), pos)
                 );
                 this->exception_thrown = true;
@@ -48,7 +48,7 @@ namespace XyA
         this->syntax_parser.exception_callbacks.push_back(
             [&](std::string_view msg, LexicalAnalysis::TokenPos pos){
                 this->error_messages.push_back(
-                    std::make_pair(std::format("{}Syntax Error: {} {}  Pos: row {}, column {}\n", 
+                    std::make_pair(std::format("{}Syntax Error: {} {}  Pos: row {}, column {}\n",
                         error_color, reset_color, std::string(msg).c_str(), pos.row, pos.column), pos)
                 );
                 this->exception_thrown = true;
@@ -72,7 +72,7 @@ namespace XyA
         this->exception_thrown = false;
         this->excuting_source = source;
 
-        // 词法分析，生成Tokens
+        // 词法分析, 生成Tokens
         std::vector<LexicalAnalysis::Token*>* tokens = this->token_analyzer.analyze_source(source);
 
         if (this->exception_thrown)
@@ -90,7 +90,7 @@ namespace XyA
         printf("\n\n");
         #endif
 
-        // 语法分析，生成语法树
+        // 语法分析, 生成语法树
         SyntaxAnalysis::SyntaxTreeNode* syntax_tree = this->syntax_parser.parse_tokens(tokens);
 
         if (this->exception_thrown)
@@ -105,7 +105,7 @@ namespace XyA
         delete syntax_tree_json;
         #endif
 
-        // 编译，生成CodeObject
+        // 编译, 生成CodeObject
         Runtime::CodeObject* code_object = this->compiler.compile(syntax_tree);
 
         #ifdef Debug_Write_AST_To_Json_File
@@ -121,7 +121,7 @@ namespace XyA
             printf("%d %s\n", (int)i, code_object->instructions[i]->to_string().c_str());
         }
         printf("\n");
-        
+
         printf("Function Instructions:\n");
         for (auto iter : code_object->prebuilt_objects)
         {
@@ -148,13 +148,13 @@ namespace XyA
                     }
                 }
             }
-            
+
             printf("\n");
         }
         printf("\n");
         #endif
 
-        // 编译结束，Tokens、SyntaxTree不再使用，释放
+        // 编译结束, Tokens、SyntaxTree不再使用, 释放
         for (LexicalAnalysis::Token* token : *tokens)
         {
             delete token;
@@ -184,7 +184,7 @@ namespace XyA
                 str_obj = dynamic_cast<Runtime::Builtin::StringObject*>(str_method->call(args, 1, exception_thrown));
             }
 
-            printf("index: %d  name: %s  value: %s  ref_count: %d\n", 
+            printf("index: %d  name: %s  value: %s  ref_count: %d\n",
                 item.second, item.first.c_str(), str_obj->value.c_str(), global_context->local_variables[item.second]->ref_count);
         }
         printf("\n");

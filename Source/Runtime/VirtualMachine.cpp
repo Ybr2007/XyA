@@ -183,7 +183,7 @@ namespace XyA
 
                 Object* new_attr = this->cur_context->pop_operand();
                 Object* attr_owner = this->cur_context->pop_operand();
-                
+
                 Attr old_attr;
                 TryGetAttrResult operation_result = attr_owner->try_get_attr(attr_name, old_attr);
 
@@ -202,7 +202,7 @@ namespace XyA
                     if (!attr_owner->type()->instance_allow_external_attr)
                     {
                         this->cur_context->set_exception(
-                            XyA_Allocate(Builtin::BuiltinException, 
+                            XyA_Allocate(Builtin::BuiltinException,
                                 std::format("Variables of type '{}' do not allow external attribute addition", attr_owner->type()->name))
                         );
                         goto error;
@@ -282,7 +282,7 @@ namespace XyA
             {
                 Object* top_object = this->cur_context->pop_operand();
 
-                bool exception_thrown = false; 
+                bool exception_thrown = false;
                 Builtin::BoolObject* bool_value;
 
                 if (top_object->is_instance(Builtin::BoolType::get_instance()))
@@ -314,7 +314,7 @@ namespace XyA
                             XyA_Allocate(Builtin::BuiltinException, "The method '__bool__' is not callable")
                         );
                         goto error;
-                    
+
                     case TryGetMethodResult::OK:
                     {
                         Object** args = XyA_Allocate_Array(Object*, 1, top_object);
@@ -332,7 +332,7 @@ namespace XyA
                         {
                             bool_value = static_cast<Builtin::BoolObject*>(bool_method_return_value);
                         }
-                    }                     
+                    }
                     }
                 }
 
@@ -392,7 +392,7 @@ namespace XyA
                 }
                 else if (convert_to_bool)
                 {
-                    method_name = MagicMethodNames::bool_method_name;   
+                    method_name = MagicMethodNames::bool_method_name;
                 }
                 else
                 {
@@ -409,7 +409,7 @@ namespace XyA
                     this->cur_context->set_exception(std::format("The method '{}' was not found", method_name));
                     this->__throw_exception();
                     return;
-                
+
                 case TryGetMethodResult::NotCallable:
                     this->cur_context->set_exception(std::format("The method '{}' was not callable", method_name));
                     this->__throw_exception();
@@ -423,7 +423,7 @@ namespace XyA
                     return;
                 }
 
-                Object** args = (convert_to_string || convert_to_bool) ? 
+                Object** args = (convert_to_string || convert_to_bool) ?
                     XyA_Allocate_Array(Object*, 1, original_object) : XyA_Allocate_Array(Object*, 2, original_object, target_type_object);
                 size_t arg_num = (convert_to_string || convert_to_bool) ? 1 : 2;
                 bool exception_thrown = false;
@@ -444,7 +444,7 @@ namespace XyA
                     this->__throw_exception();
                     return;
                 }
-                
+
                 this->cur_context->set_top_operand(return_value);
                 break;
             }
@@ -457,7 +457,7 @@ namespace XyA
                 bool exception_thrown = false;
                 Object* return_value;
 
-                // 被调用的对象是类型，则调用__new__魔术方法初始化一个该类型的示例，并将类型对象本身作为第一个参数传入__new__方法
+                // 被调用的对象是类型, 则调用__new__魔术方法初始化一个该类型的示例, 并将类型对象本身作为第一个参数传入__new__方法
                 if (callee_object->is_instance(Type::get_instance()))
                 {
                     arg_num = instruction->parameter + 1;
@@ -502,7 +502,7 @@ namespace XyA
                     this->cur_context->set_exception(static_cast<Builtin::BuiltinException*>(return_value));
                     goto error;
                 }
-                
+
                 this->cur_context->push_operand(return_value);
                 break;
             }
@@ -517,7 +517,7 @@ namespace XyA
                     args[instruction->parameter - i] = this->cur_context->pop_operand();
                 }
                 BaseFunction* callee = static_cast<BaseFunction*>(callee_object);  // TODO
-                bool exception_thrown = false; 
+                bool exception_thrown = false;
                 Object* return_value = callee->call(args, instruction->parameter + 1, exception_thrown);
                 XyA_Deallocate_Array(args, instruction->parameter + 1);
 
@@ -525,11 +525,11 @@ namespace XyA
                 {
                     this->cur_context->set_exception(static_cast<Builtin::BuiltinException*>(return_value));
                 }
-                
+
                 this->cur_context->push_operand(return_value);
                 break;
             }
-            
+
             default:
                 break;
             }
@@ -564,7 +564,7 @@ namespace XyA
                 );
                 this->__throw_exception();
                 return;
-            
+
             case TryGetMethodResult::NotCallable:
                 this->cur_context->set_exception(
                     XyA_Allocate(Builtin::BuiltinException, "The method was not callable")
@@ -593,7 +593,7 @@ namespace XyA
                 this->__throw_exception();
                 return;
             }
-            
+
             this->cur_context->set_top_operand(return_value);
         }
 
@@ -623,7 +623,7 @@ namespace XyA
                 );
                 this->__throw_exception();
                 return;
-            
+
             case TryGetMethodResult::NotCallable:
                 this->cur_context->set_exception(
                     XyA_Allocate(Builtin::BuiltinException, "The method was not callable")
@@ -653,8 +653,8 @@ namespace XyA
             }
 
             Builtin::BoolObject* bool_value = static_cast<Builtin::BoolObject*>(return_value);
-            
-            this->cur_context->set_top_operand(bool_value);            
+
+            this->cur_context->set_top_operand(bool_value);
         }
 
         void VirtualMachine::__throw_exception()

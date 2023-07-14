@@ -7,7 +7,7 @@ namespace XyA
     /* 词法分析相关命名空间 */
     namespace LexicalAnalysis
     {
-        /* 
+        /*
         * Token类型
         分为: 分隔符(Separator), 操作符(Operator), 关键字(Keyword), 值(Value) 几大类
         分隔符类型名称以"S_"开头, 操作符类型名称以"Op_"开头, 关键字类型名称以"Kw_"开头
@@ -17,10 +17,14 @@ namespace XyA
             /* Separators */
             S_LParenthesis,                 // (
             S_RParenthesis,                 // )
+            S_LBracket,                     // [
+            S_RBracket,                     // ]
             S_LBrace,                       // {
             S_RBrace,                       // }
             S_Semicolon,                    // ;
             S_Comma,                        // ,
+            S_Colon,                        // :
+            S_VerticalBar,                  // |
 
             /* Operators */
             Op_Assignment,                  // =
@@ -35,7 +39,7 @@ namespace XyA
             Op_Minus,                       // -
             Op_Multiply,                    // *
             Op_Devide,                      // /
-            Op_Dot,                         // .            
+            Op_Dot,                         // .
 
             /* Keywords */
             Kw_If,                          // if
@@ -78,7 +82,7 @@ namespace XyA
         {
         public:
             TokenType type;     // Token的类型
-            std::string value;  // Token的值，只有在type为Literal或Indentifier时才有效
+            std::string value;  // Token的值, 只有在type为Literal或Indentifier时才有效
             TokenPos start_pos;
             TokenPos end_pos;
 
@@ -95,6 +99,10 @@ namespace XyA
                 return "<Token: Separator '('>";
             case TokenType::S_RParenthesis:
                 return "<Token: Separator ')'>";
+            case TokenType::S_LBracket:
+                return "<Token: Separator '['>";
+            case TokenType::S_RBracket:
+                return "<Token: Separator ']'>";
             case TokenType::S_LBrace:
                 return "<Token: Separator '{'>";
             case TokenType::S_RBrace:
@@ -103,6 +111,10 @@ namespace XyA
                 return "<Token: Separator ';'>";
             case TokenType::S_Comma:
                 return "<Token: Separator ','>";
+            case TokenType::S_Colon:
+                return "<Token: Separator ':'>";
+            case TokenType::S_VerticalBar:
+                return "<Token: Separator '|'>";
 
             case TokenType::Op_Assignment:
                 return "<Token: Operator '='>";
@@ -128,8 +140,8 @@ namespace XyA
                 return "<Token: Operator '/'>";
             case TokenType::Op_Dot:
                 return "<Token: Operator '.'>";
-            
-                
+
+
             case TokenType::Kw_If:
                 return "<Token: Key Word 'if'>";
             case TokenType::Kw_Else:
@@ -156,16 +168,16 @@ namespace XyA
             case TokenType::IntLiteral:
                 return "<Token: Int Literal, Value: '" + value +"'>";
             case TokenType::FloatLiteral:
-                return "<Token: Float Literal, Value: '" + value +"'>";  
+                return "<Token: Float Literal, Value: '" + value +"'>";
             case TokenType::StringLiteral:
-                return "<Token: String Literal, Value: '" + value +"'>";  
+                return "<Token: String Literal, Value: '" + value +"'>";
             case TokenType::BoolLiteral:
-                return "<Token: Bool Literal, Value: '" + value +"'>"; 
+                return "<Token: Bool Literal, Value: '" + value +"'>";
             case TokenType::NullLiteral:
-                return "<Token: Null Literal>";            
+                return "<Token: Null Literal>";
             case TokenType::Identifier:
                 return "<Token: Identifier, Value: '" + value +"'>";
-            
+
             default:
                 return "<Unknown Token>";
             }
@@ -173,7 +185,7 @@ namespace XyA
 
         bool Token::is_literal() const
         {
-            return this->type == TokenType::IntLiteral || this->type == TokenType::FloatLiteral || 
+            return this->type == TokenType::IntLiteral || this->type == TokenType::FloatLiteral ||
                 this->type == TokenType::StringLiteral || this->type == TokenType::BoolLiteral ||
                 this->type == TokenType::NullLiteral;
         }

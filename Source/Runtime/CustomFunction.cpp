@@ -53,7 +53,7 @@ namespace XyA
             }
             else
             {
-                function_context->returned_obj->ref_count --;  // 不能使用dereference()，防止返回值被释放
+                function_context->returned_obj->ref_count --;  // 不能使用dereference(), 防止返回值被释放
             }
 
             return function_context->returned_obj;

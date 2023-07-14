@@ -100,17 +100,17 @@ namespace YJson
         case '8':
         case '9':
             return this->__parseNumber();
-        case '"': 
+        case '"':
             return this->__parseString();
-        case 't': 
+        case 't':
             return this->__parseTrue();
-        case 'f': 
-            return this->__parseFalse(); 
-        case 'n': 
+        case 'f':
+            return this->__parseFalse();
+        case 'n':
             return this->__parseNull();
-        case '{': 
+        case '{':
             return this->__parseDict();
-        case '[': 
+        case '[':
             return this->__parseList();
 
         default: throw ParsingException("Unknown object.", this->__curPos);
@@ -133,7 +133,7 @@ namespace YJson
     {
         Pos numberBeginPos = this->__curPos;  // 数字第一个字符的位置
         Pos numberEndPos;  // 数字最后一位的位置
-        
+
         bool foundDecimalDot = false;
         bool foundExponentSymbol = false;
         bool foundMinusSign = false;
@@ -166,7 +166,7 @@ namespace YJson
                 {
                     throw ParsingException("Illegal number: Found a decimal dot following the minus sign.", this->__curPos);
                 }
-                if (!foundDecimalDot && !foundExponentSymbol)  // 只能有一个小数点，并且小数点不能在指数中
+                if (!foundDecimalDot && !foundExponentSymbol)  // 只能有一个小数点, 并且小数点不能在指数中
                 {
                     foundDecimalDot = true;
                     decimalDotPos = this->__curPos;
@@ -175,7 +175,7 @@ namespace YJson
                 {
                     throw ParsingException("Illegal number: Found a decimal dot after the first dot or exponent symbol.", this->__curPos);
                 }
-            } 
+            }
             else if (this->__curChar() == '-')
             {
                 // 如果负号不在数字的开头或指数的开头则属于非法数字
@@ -187,14 +187,14 @@ namespace YJson
             }
             else if (!this->__isDigit(__curChar()))
             {
-                numberEndPos = this->__curPos - 1;  // 如果这一位不是数字/负号/e/小数，那么数字的最后一位应该是当前位的前一位
+                numberEndPos = this->__curPos - 1;  // 如果这一位不是数字/负号/e/小数, 那么数字的最后一位应该是当前位的前一位
                 break;
             }
             else
             {
                 if (this->__curChar() == '0')
                 {
-                    if ((foundMinusSign && this->__curPos == numberBeginPos + 1) || 
+                    if ((foundMinusSign && this->__curPos == numberBeginPos + 1) ||
                         (!foundMinusSign && this->__curPos == numberBeginPos))
                     {
                         foundZeroAtBegin = true;
@@ -203,7 +203,7 @@ namespace YJson
                 }
             }
 
-            if (!this->__tryMovePtr())  // 如果这一位是合法的，但是是json的最后一个字符，那么数字的最后一位应该是当前位
+            if (!this->__tryMovePtr())  // 如果这一位是合法的, 但是是json的最后一个字符, 那么数字的最后一位应该是当前位
             {
                 numberEndPos = this->__curPos;
                 break;
@@ -215,7 +215,7 @@ namespace YJson
             throw ParsingException("Illegal number: Found a zero at beginning.", beginningZeroPos);
         }
 
-       if (this->__isExponentSymbol(this->__jsonString[numberEndPos]) || this->__jsonString[numberEndPos] == '.' || 
+       if (this->__isExponentSymbol(this->__jsonString[numberEndPos]) || this->__jsonString[numberEndPos] == '.' ||
             this->__jsonString[numberEndPos] == '-')
         {
             throw ParsingException("Illegal number: 'e', '-' or '.' can not be the end of the number.", numberEndPos);
@@ -238,7 +238,7 @@ namespace YJson
         String result = "";
 
         while (this->__curChar() != '"' || escape)
-        {  
+        {
             if (this->__curChar() == '\\')
             {
                 escape = true;
@@ -418,7 +418,7 @@ namespace YJson
                 }
             }
 
-            if (this->__curChar() == '}') 
+            if (this->__curChar() == '}')
             {
                 throw ParsingException("Value not found.", this->__curPos);
             }
@@ -480,7 +480,7 @@ namespace YJson
 
         return new Object(dict);
     }
-    
+
 
     char Parser::__curChar()
     {
@@ -511,7 +511,7 @@ namespace YJson
 
     bool Parser::__isDigit(char chr)
     {
-        return chr == '0' || chr == '1' || chr == '2' || chr == '3' || chr == '4' || chr == '5' || chr == '6' || 
+        return chr == '0' || chr == '1' || chr == '2' || chr == '3' || chr == '4' || chr == '5' || chr == '6' ||
             chr == '7' || chr == '8' || chr == '9';
     }
 

@@ -6,7 +6,13 @@ line           -> (assignment | expression) ";"
 if             -> "if" expression block ("else" (if | block))?
 while          -> "while" expression block
 
-assignment     -> assignable "=" expression
+type           -> Identifier
+union_type_hint -> type ( "|" type)*
+optional_type_hint -> "[" union_type_hint "]"
+type_hint      -> union_type_hint | optional_type_hint
+type_conversion -> expression "as" type
+
+assignment     -> assignable (":" type_hint)? "=" expression
 assignable     -> Identifier | attr
 
 expression     -> comparison
@@ -30,5 +36,3 @@ function_block -> "{" function_unit* "}"                                   // åœ
 
 method_definition -> VisibilityModifier? function_definition
 class_definition -> "class" Identifier "{" method_definition* "}"
-
-type_conversion -> expression "as" Identifier

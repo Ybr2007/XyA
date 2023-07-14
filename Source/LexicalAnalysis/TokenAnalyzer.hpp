@@ -14,18 +14,18 @@ namespace XyA
         class TokenAnalyzer
         {
         public:
-            /* 
+            /*
             * 异常回调列表
             当在词法分析流程中发现了源码中的异常时, 调用异常回调列表中的所有回调
 
             回调函数类型: std::function<void(std::string_view, size_t)>
-            回调函数参数: 
+            回调函数参数:
                 std::string_view: 异常信息
                 size_t: 异常位置
              */
             std::vector<std::function<void(std::string_view, TokenPos)>> exception_callbacks;
 
-            /* 
+            /*
             * 将源码分析为Token序列
             ! 注意: 返回值类型为std::vecotr<Token*>*, 在Token和Token Vector使用完毕后均需要在外部delete
             参数：
@@ -44,6 +44,10 @@ namespace XyA
             bool __finished;
 
             Token* __analyze_token();
+            bool __try_match_char_token(Token* token, char chr, TokenType token_type);
+            bool __try_match_string_token(Token* token, const std::string& str, TokenType token_type, bool keyword_mode = false);
+
+
             void __skip_space();
             void __skip_comment();
 
@@ -51,7 +55,7 @@ namespace XyA
             bool __get_string_literal(std::string& result);
             bool __get_identifier(std::string& result);
 
-            bool __try_move_ptr(size_t step=1);
+            bool __try_move_ptr(size_t step = 1);
             bool __at_end() const;
             bool __match(std::string str, bool keyword_mode = false) const;
             char __cur_char() const;
@@ -69,7 +73,7 @@ namespace XyA
             this->__cur_column = 1;
             this->__finished = false;
 
-            // 在XyA.hpp的Core::execute中，当编译完成，tokens和其中的Token*会被释放
+            // 在XyA.hpp的Core::execute中, 当编译完成, tokens和其中的Token*会被释放
             std::vector<Token*>* tokens = new std::vector<Token*>;
 
             while (!this->__finished)
@@ -103,240 +107,50 @@ namespace XyA
             token->start_pos = this->__cur_pos();
 
             // Separators
-            if (this->__cur_char() == '(')
-            {
-                token->type = TokenType::S_LParenthesis;
-                token->end_pos = this->__cur_pos();
-                this->__try_move_ptr();
-                return token;
-            }
-            if (this->__cur_char() == ')')
-            {
-                token->type = TokenType::S_RParenthesis;
-                token->end_pos = this->__cur_pos();
-                this->__try_move_ptr();
-                return token;
-            }
-            if (this->__cur_char() == '{')
-            {
-                token->type = TokenType::S_LBrace;
-                token->end_pos = this->__cur_pos();
-                this->__try_move_ptr();
-                return token;
-            }
-            if (this->__cur_char() == '}')
-            {
-                token->type = TokenType::S_RBrace;
-                token->end_pos = this->__cur_pos();
-                this->__try_move_ptr();
-                return token;
-            }
-            if (this->__cur_char() == ';')
-            {
-                token->type = TokenType::S_Semicolon;
-                token->end_pos = this->__cur_pos();
-                this->__try_move_ptr();
-                return token;
-            }
-            if (this->__cur_char() == ',')
-            {
-                token->type = TokenType::S_Comma;
-                token->end_pos = this->__cur_pos();
-                this->__try_move_ptr();
-                return token;
-            }
+            if (this->__try_match_char_token(token, '(', TokenType::S_LParenthesis)) return token;
+            if (this->__try_match_char_token(token, ')', TokenType::S_RParenthesis)) return token;
+            if (this->__try_match_char_token(token, '[', TokenType::S_LBracket)) return token;
+            if (this->__try_match_char_token(token, ']', TokenType::S_RBracket)) return token;
+            if (this->__try_match_char_token(token, '{', TokenType::S_LBrace)) return token;
+            if (this->__try_match_char_token(token, '}', TokenType::S_RBrace)) return token;
+            if (this->__try_match_char_token(token, ';', TokenType::S_Semicolon)) return token;
+            if (this->__try_match_char_token(token, ',', TokenType::S_Comma)) return token;
+            if (this->__try_match_char_token(token, ':', TokenType::S_Colon)) return token;
+            if (this->__try_match_char_token(token, '|', TokenType::S_VerticalBar)) return token;
 
             // Operators
-            if (this->__match("=="))
-            {
-                token->type = TokenType::Op_Equal;
-                token->end_pos = this->__cur_pos() + 1;
-                this->__try_move_ptr(2);
-                return token;
-            }
-            if (this->__match("!="))
-            {
-                token->type = TokenType::Op_Equal;
-                token->end_pos = this->__cur_pos() + 1;
-                this->__try_move_ptr(2);
-                return token;
-            }
-            if (this->__cur_char() == '=')
-            {
-                token->type = TokenType::Op_Assignment;
-                token->end_pos = this->__cur_pos();
-                this->__try_move_ptr();
-                return token;
-            }
-            if (this->__match(">="))
-            {
-                token->type = TokenType::Op_GreaterEqual;
-                token->end_pos = this->__cur_pos() + 1;
-                this->__try_move_ptr(2);
-                return token;
-            }
-            if (this->__cur_char() == '>')
-            {
-                token->type = TokenType::Op_GreaterThan;
-                token->end_pos = this->__cur_pos();
-                this->__try_move_ptr();
-                return token;
-            }
-            if (this->__match("<="))
-            {
-                token->type = TokenType::Op_LessEqual;
-                token->end_pos = this->__cur_pos() + 1;
-                this->__try_move_ptr(2);
-                return token;
-            }
-            if (this->__cur_char() == '<')
-            {
-                token->type = TokenType::Op_LessThan;
-                token->end_pos = this->__cur_pos();
-                this->__try_move_ptr();
-                return token;
-            }
-            if (this->__cur_char() == '+')
-            {
-                token->type = TokenType::Op_Plus;
-                token->end_pos = this->__cur_pos();
-                this->__try_move_ptr();
-                return token;
-            }
+            if (this->__try_match_string_token(token, "==", TokenType::Op_Equal)) return token;
+            if (this->__try_match_string_token(token, "!=", TokenType::Op_NotEqual)) return token;
+            if (this->__try_match_char_token(token, '=', TokenType::Op_Assignment)) return token;
+            if (this->__try_match_string_token(token, ">=", TokenType::Op_GreaterEqual)) return token;
+            if (this->__try_match_char_token(token, '>', TokenType::Op_GreaterThan)) return token;
+            if (this->__try_match_string_token(token, "<=", TokenType::Op_LessEqual)) return token;
+            if (this->__try_match_char_token(token, '<', TokenType::Op_LessThan)) return token;
+            if (this->__try_match_char_token(token, '+', TokenType::Op_Plus)) return token;
             // 该分支会对负数字面量的负号进行识别
-            // 由于编译期字面量折叠，不会影响运行性能
-            if (this->__cur_char() == '-')
-            {
-                token->type = TokenType::Op_Minus;
-                token->end_pos = this->__cur_pos();
-                this->__try_move_ptr();
-                return token;
-            }
-            if (this->__cur_char() == '*')
-            {
-                token->type = TokenType::Op_Multiply;
-                token->end_pos = this->__cur_pos();
-                this->__try_move_ptr();
-                return token;
-            }
-            if (this->__cur_char() == '/')
-            {
-                token->type = TokenType::Op_Devide;
-                token->end_pos = this->__cur_pos();
-                this->__try_move_ptr();
-                return token;
-            }
-            if (this->__cur_char() == '.')
-            {
-                token->type = TokenType::Op_Dot;
-                token->end_pos = this->__cur_pos();
-                this->__try_move_ptr();
-                return token;
-            }
+            // 由于编译期字面量折叠, 不会影响运行性能
+            if (this->__try_match_char_token(token, '-', TokenType::Op_Minus)) return token;
+            if (this->__try_match_char_token(token, '*', TokenType::Op_Multiply)) return token;
+            if (this->__try_match_char_token(token, '/', TokenType::Op_Devide)) return token;
+            if (this->__try_match_char_token(token, '.', TokenType::Op_Dot)) return token;
 
             // Keywords
-            if (this->__match("if", true))
-            {
-                token->type = TokenType::Kw_If;
-                token->end_pos = this->__cur_pos() + 1;
-                this->__try_move_ptr(2);
-                return token;
-            }
-            if (this->__match("else", true))
-            {
-                token->type = TokenType::Kw_Else;
-                token->end_pos = this->__cur_pos() + 3;
-                this->__try_move_ptr(4);
-                return token;
-            }
-            if (this->__match("for", true))
-            {
-                token->type = TokenType::Kw_For;
-                token->end_pos = this->__cur_pos() + 2;
-                this->__try_move_ptr(3);
-                return token;
-            }
-            if (this->__match("while", true))
-            {
-                token->type = TokenType::Kw_While;
-                token->end_pos = this->__cur_pos() + 4;
-                this->__try_move_ptr(5);
-                return token;
-            }
-            if (this->__match("fn", true))
-            {
-                token->type = TokenType::Kw_Fn;
-                token->end_pos = this->__cur_pos() + 1;
-                this->__try_move_ptr(2);
-                return token;
-            }
-            if (this->__match("return", true))
-            {
-                token->type = TokenType::Kw_Return;
-                token->end_pos = this->__cur_pos() + 5;
-                this->__try_move_ptr(6);
-                return token;
-            }
-            if (this->__match("class", true))
-            {
-                token->type = TokenType::Kw_Class;
-                token->end_pos = this->__cur_pos() + 4;
-                this->__try_move_ptr(5);
-                return token;
-            }
-            if (this->__match("import", true))
-            {
-                token->type = TokenType::Kw_Import;
-                token->end_pos = this->__cur_pos() + 5;
-                this->__try_move_ptr(6);
-                return token;
-            }
-            if (this->__match("public", true))
-            {
-                token->type = TokenType::Kw_Public;
-                token->end_pos = this->__cur_pos() + 5;
-                this->__try_move_ptr(6);
-                return token;
-            }
-            if (this->__match("private", true))
-            {
-                token->type = TokenType::Kw_Private;
-                token->end_pos = this->__cur_pos() + 6;
-                this->__try_move_ptr(7);
-                return token;
-            }
-            if (this->__match("as", true))
-            {
-                token->type = TokenType::Kw_As;
-                token->end_pos = this->__cur_pos() + 1;
-                this->__try_move_ptr(2);
-                return token;
-            }
+            if (this->__try_match_string_token(token, "if", TokenType::Kw_If, true)) return token;
+            if (this->__try_match_string_token(token, "else", TokenType::Kw_Else, true)) return token;
+            if (this->__try_match_string_token(token, "for", TokenType::Kw_For, true)) return token;
+            if (this->__try_match_string_token(token, "while", TokenType::Kw_While, true)) return token;
+            if (this->__try_match_string_token(token, "fn", TokenType::Kw_Fn, true)) return token;
+            if (this->__try_match_string_token(token, "return", TokenType::Kw_Return, true)) return token;
+            if (this->__try_match_string_token(token, "class", TokenType::Kw_Class, true)) return token;
+            if (this->__try_match_string_token(token, "import", TokenType::Kw_Import, true)) return token;
+            if (this->__try_match_string_token(token, "public", TokenType::Kw_Public, true)) return token;
+            if (this->__try_match_string_token(token, "private", TokenType::Kw_Private, true)) return token;
+            if (this->__try_match_string_token(token, "as", TokenType::Kw_As, true)) return token;
+            if (this->__try_match_string_token(token, "true", TokenType::BoolLiteral, true)) return token;
+            if (this->__try_match_string_token(token, "false", TokenType::BoolLiteral, true)) return token;
+            if (this->__try_match_string_token(token, "null", TokenType::NullLiteral, true)) return token;
 
-            if (this->__match("true", true))
-            {
-                token->type = TokenType::BoolLiteral;
-                token->value = "true";
-                token->end_pos = this->__cur_pos() + 3;
-                this->__try_move_ptr(4);
-                return token;
-            }
-            if (this->__match("false", true))
-            {
-                token->type = TokenType::BoolLiteral;
-                token->value = "false";
-                token->end_pos = this->__cur_pos() + 4;
-                this->__try_move_ptr(5);
-                return token;
-            }
-            if (this->__match("null", true))
-            {
-                token->type = TokenType::NullLiteral;
-                token->end_pos = this->__cur_pos() + 3;
-                this->__try_move_ptr(4);
-                return token;
-            }
-            if (Utils::is_digit(this->__cur_char()))  // Number Literal，由于负号已经被事先识别，所以只考虑首字符为数字
+            if (Utils::is_digit(this->__cur_char()))  // Number Literal, 由于负号已经被事先识别, 所以只考虑首字符为数字
             {
                 bool is_float = false;
                 bool success = this->__get_number_literal(token->value, is_float);
@@ -357,8 +171,8 @@ namespace XyA
                 {
                     return nullptr;
                 }
-            }   
-            
+            }
+
             if (this->__cur_char() == '"')  // String Literal
             {
                 token->type = TokenType::StringLiteral;
@@ -374,7 +188,7 @@ namespace XyA
                 }
             }
 
-            // Identifier    
+            // Identifier
             token->type = TokenType::Identifier;
             bool success = this->__get_identifier(token->value);
             if (success)
@@ -386,6 +200,30 @@ namespace XyA
             {
                 return nullptr;
             }
+        }
+
+        bool TokenAnalyzer::__try_match_char_token(Token* token, char chr, TokenType token_type)
+        {
+            if (this->__cur_char() == chr)
+            {
+                token->type = token_type;
+                token->end_pos = this->__cur_pos();
+                this->__try_move_ptr();
+                return true;
+            }
+            return false;
+        }
+
+        bool TokenAnalyzer::__try_match_string_token(Token* token, const std::string& str, TokenType token_type, bool keyword_mode)
+        {
+            if (this->__match(str, keyword_mode))
+            {
+                token->type = token_type;
+                token->end_pos = this->__cur_pos() + (str.length() - 1);
+                this->__try_move_ptr(str.length());
+                return true;
+            }
+            return false;
         }
 
         void TokenAnalyzer::__skip_space()
@@ -444,7 +282,7 @@ namespace XyA
 
             result.push_back('"');
             while (this->__cur_char() != '"')
-            {  
+            {
                 if (this->__cur_char() == '\n')
                 {
                     break;
@@ -464,7 +302,7 @@ namespace XyA
                             result.push_back('"');
                             this->__try_move_ptr();
                             break;
-                        
+
                         default:
                             result.push_back('\\');
                             break;
@@ -562,8 +400,8 @@ namespace XyA
                 }
                 else
                 {
-                    if (Utils::is_letter(this->__analyzing_source[this->__cur_char_ptr + str.length()]) || 
-                        Utils::is_digit(this->__analyzing_source[this->__cur_char_ptr + str.length()]) || 
+                    if (Utils::is_letter(this->__analyzing_source[this->__cur_char_ptr + str.length()]) ||
+                        Utils::is_digit(this->__analyzing_source[this->__cur_char_ptr + str.length()]) ||
                         this->__analyzing_source[this->__cur_char_ptr + str.length()] == '_')
                     {
                         return false;
