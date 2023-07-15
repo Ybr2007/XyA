@@ -35,7 +35,7 @@
 
 示例：
 
-`Source/Compiler/TokenAnalyzer.hpp` 文件中的 `TokenAnalyzer::analyze_source` 方法，注释如下：
+`Source/Compiler/TokenAnalyzer.h` 文件中的 `TokenAnalyzer::analyze_source` 方法，注释如下：
 
 ```cpp
 /* 

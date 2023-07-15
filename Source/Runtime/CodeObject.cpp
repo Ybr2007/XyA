@@ -1,4 +1,3 @@
-#pragma once
 #include <Runtime/CodeObject.h>
 #include <Runtime/MemoryManager.hpp>
 

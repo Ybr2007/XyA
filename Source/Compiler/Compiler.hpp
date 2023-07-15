@@ -1,6 +1,6 @@
 #pragma once
 #include <format>
-#include <SyntaxAnalysis/SyntaxTree.hpp>
+#include <SyntaxAnalysis/SyntaxTree.h>
 #include <Runtime/Instruction.h>
 #include <Runtime/CodeObject.h>
 #include <Runtime/Builtin/Int.h>

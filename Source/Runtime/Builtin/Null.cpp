@@ -1,4 +1,3 @@
-#pragma once
 #include <Runtime/Builtin/Null.h>
 #include <Runtime/MemoryManager.hpp>
 

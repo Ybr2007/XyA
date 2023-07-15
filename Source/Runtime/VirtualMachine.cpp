@@ -1,4 +1,3 @@
-#pragma once
 #include <format>
 #include <Runtime/MemoryManager.hpp>
 #include <Runtime/VirtualMachine.h>
@@ -414,6 +413,9 @@ namespace XyA
                     this->cur_context->set_exception(std::format("The method '{}' was not callable", method_name));
                     this->__throw_exception();
                     return;
+
+                default:
+                    break;
                 }
 
                 if (visibility == AttrVisibility::Private && this->cur_context->cls() != original_object->type())
@@ -474,15 +476,13 @@ namespace XyA
 
                     if (result != TryGetMethodResult::OK)
                     {
-                        this->cur_context->set_exception(
-                            XyA_Allocate(Builtin::BuiltinException, "Cannot call the method '__new__'")
-                        );
+                        this->cur_context->set_exception("Cannot call the method '__new__'");
                         goto error;
                     }
 
                     return_value = new_method->call(args, arg_num, exception_thrown);
                 }
-                else if (is_function(callee_object))
+                else if (is_callablel(callee_object))
                 {
                     BaseFunction* callee_function = static_cast<BaseFunction*>(callee_object);
                     arg_num = instruction->parameter;
@@ -494,6 +494,11 @@ namespace XyA
                     }
 
                     return_value = callee_function->call(args, arg_num, exception_thrown);
+                }
+                else
+                {
+                    this->cur_context->set_exception("The callee object is not callable");
+                    goto error;
                 }
                 XyA_Deallocate_Array(args, arg_num);
 
@@ -571,6 +576,9 @@ namespace XyA
                 );
                 this->__throw_exception();
                 return;
+
+            default:
+                break;
             }
 
             if (visibility == AttrVisibility::Private && this->cur_context->cls() != obj_1->type())
@@ -630,6 +638,9 @@ namespace XyA
                 );
                 this->__throw_exception();
                 return;
+
+            default:
+                break;
             }
 
             Object** args = XyA_Allocate_Array(Object*, 2, obj_1, obj_2);

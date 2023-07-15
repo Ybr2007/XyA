@@ -1,4 +1,3 @@
-#pragma once
 #include <Runtime/CustomFunction.h>
 #include <Runtime/Builtin/BuiltinException.h>
 #include <Runtime/VirtualMachine.h>

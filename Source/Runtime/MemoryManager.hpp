@@ -5,6 +5,7 @@
 #include <Config.h>
 
 #ifdef Debug_Display_Memory_Leaks
+#include <Utils/CodeLocation.h>
 #include <cstdio>
 #include <string>
 #include <vector>
@@ -26,9 +27,6 @@ namespace XyA
         #endif
 
         #ifdef Debug_Display_Memory_Leaks
-        #define STRINGIFY(x) #x
-        #define TOSTRING(x) STRINGIFY(x)
-        #define FILE_LINE std::string(__FILE__) + "(" + std::string(TOSTRING(__LINE__)) + ")"
         #define XyA_Allocate_(T) Runtime::MemoryPool::get_instance()->allocate<T>(FILE_LINE)
         #define XyA_Allocate(T, args) Runtime::MemoryPool::get_instance()->allocate<T>(FILE_LINE, args)
         #define XyA_Deallocate(object) Runtime::MemoryPool::get_instance()->deallocate(FILE_LINE, object)

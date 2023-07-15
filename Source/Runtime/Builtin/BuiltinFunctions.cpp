@@ -1,4 +1,3 @@
-#pragma once
 #include <format>
 #include <time.h>
 #include <Runtime/Builtin/BuiltinFunctions.h>

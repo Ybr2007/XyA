@@ -1,4 +1,3 @@
-#pragma once
 #include <Runtime/Builtin/String.h>
 #include <Runtime/Builtin/Int.h>
 #include <Runtime/MemoryManager.hpp>

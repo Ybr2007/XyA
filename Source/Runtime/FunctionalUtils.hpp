@@ -22,5 +22,10 @@ namespace XyA
         {
             return is_builtin_function(object) || is_custom_function(object);
         }
+
+        inline bool is_callablel(Object* object)
+        {
+            return is_function(object);
+        }
     }
 }

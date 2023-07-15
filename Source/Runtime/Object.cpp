@@ -1,4 +1,3 @@
-#pragma once
 #include <Runtime/Object.h>
 #include <Runtime/Builtin/BuiltinFunction.h>
 #include <Runtime/CustomFunction.h>

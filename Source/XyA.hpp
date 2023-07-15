@@ -2,8 +2,8 @@
 #include <iostream>
 #include <string>
 #include <format>
-#include <LexicalAnalysis/TokenAnalyzer.hpp>
-#include <SyntaxAnalysis/SyntaxParser.hpp>
+#include <LexicalAnalysis/TokenAnalyzer.h>
+#include <SyntaxAnalysis/SyntaxParser.h>
 #include <Compiler/Compiler.hpp>
 #include <Runtime/VirtualMachine.h>
 #include <Config.h>
@@ -57,7 +57,7 @@ namespace XyA
 
         this->virtual_machine->exception_callbacks.push_back(
             [&](std::string_view msg){
-                printf("%sRuntime Error%s: %s\n", error_color, reset_color, std::string(msg).c_str());
+                printf("%sRuntime Error%s: %s\n", error_color.c_str(), reset_color.c_str(), std::string(msg).c_str());
             }
         );
     }

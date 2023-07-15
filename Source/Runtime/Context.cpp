@@ -1,6 +1,6 @@
-#pragma once
 #include <Runtime/Context.h>
 #include <Runtime/MemoryManager.hpp>
+#include <Exception/CoreException.h>
 
 
 namespace XyA
@@ -95,6 +95,7 @@ namespace XyA
                     return item.first;
                 }
             }
+            XyA_Throw_Core_Exception("Index not found");
         }
 
         void Context::push_operand(Object* obj)
