@@ -25,6 +25,7 @@ namespace XyA
             S_Comma,                        // ,
             S_Colon,                        // :
             S_VerticalBar,                  // |
+            S_RArrow,                       // ->
 
             /* Operators */
             Op_Assignment,                  // =
@@ -115,6 +116,8 @@ namespace XyA
                 return "<Token: Separator ':'>";
             case TokenType::S_VerticalBar:
                 return "<Token: Separator '|'>";
+            case TokenType::S_RArrow:
+                return "<Token: Separator '->'>";
 
             case TokenType::Op_Assignment:
                 return "<Token: Operator '='>";

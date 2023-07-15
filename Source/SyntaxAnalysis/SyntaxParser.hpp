@@ -349,7 +349,7 @@ namespace XyA
             return if_node;
         }
 
-        /* 当前情况： 已经确认上一个token是分号，目前位于分号的后一个token */
+        /* 当前情况： 已经确认上一个token是";" (或"->")，目前位于";" (或"->")的后一个token */
         SyntaxTreeNode* SyntaxParser::__parse_type_hint()
         {
             // union_type_hint -> type ( "|" type)*
@@ -850,18 +850,12 @@ namespace XyA
 
         SyntaxTreeNode* SyntaxParser::__parse_function_definition()
         {
-            // function_definition -> "fn" Identifier "(" argument_list_definition? ")" block
+            // function_definition -> "fn" Identifier "(" argument_list_definition? ")" ("->" type_hint)? block
             this->__inside_function = true;
-
-            if (this->__cur_token()->type != LexicalAnalysis::TokenType::Kw_Fn)
-            {
-                this->__throw_exception("Expected method definition", this->__cur_token()->start_pos);
-                return nullptr;
-            }
 
             if (!this->__try_move_ptr())
             {
-                this->__throw_exception("Expected function name", this->__cur_token()->start_pos);
+                this->__throw_exception("Expected function name", this->__cur_token()->end_pos);
                 return nullptr;
             }
             if (this->__cur_token()->type != LexicalAnalysis::TokenType::Identifier)
@@ -889,7 +883,6 @@ namespace XyA
             {
                 this->__try_move_ptr();
                 argument_list = this->__parse_argument_list_definition();
-
                 if (argument_list == nullptr)
                 {
                     return nullptr;
@@ -902,23 +895,56 @@ namespace XyA
 
             if (!this->__try_move_ptr())  // 移动到')'
             {
-                this->__throw_exception("'(' was not closed", this->__cur_token()->start_pos);
+                this->__throw_exception("'(' was not closed", this->__cur_token()->end_pos);
                 return nullptr;
             }
-            if (!this->__try_move_ptr() || this->__cur_token()->type != LexicalAnalysis::TokenType::S_LBrace)
+            if (!this->__try_move_ptr())
             {
-                this->__throw_exception("Expected indented block ", this->__cur_token()->start_pos);
+                this->__throw_exception("Expected indented block ", this->__cur_token()->end_pos);
                 return nullptr;
             }
+
+            SyntaxTreeNode* return_value_type_hint = nullptr;
+            if (this->__cur_token()->type == LexicalAnalysis::TokenType::S_RArrow)
+            {
+                if (!this->__try_move_ptr())
+                {
+                    this->__throw_exception("Expected type hint ", this->__cur_token()->end_pos);
+                    return nullptr;
+                }
+
+                return_value_type_hint = this->__parse_type_hint();
+                if (return_value_type_hint == nullptr)
+                {
+                    return nullptr;
+                }
+
+                if (!this->__try_move_ptr())
+                {
+                    this->__throw_exception("Expected indented block ", this->__cur_token()->end_pos);
+                    return nullptr;
+                }
+            }
+
+            if (this->__cur_token()->type != LexicalAnalysis::TokenType::S_LBrace)
+            {
+                this->__throw_exception("Expected indented block ", this->__cur_token()->end_pos);
+                return nullptr;
+            }
+
             SyntaxTreeNode* function_body = this->__parse_block();
             if (function_body == nullptr)
             {
                 return nullptr;
             }
 
-            function_defintion->children.reserve(2);
+            function_defintion->children.reserve(return_value_type_hint == nullptr ? 2 : 3);
             function_defintion->children.push_back(argument_list);
             function_defintion->children.push_back(function_body);
+            if (return_value_type_hint != nullptr)
+            {
+                function_defintion->children.push_back(return_value_type_hint);
+            }
 
             this->__inside_function = false;
 
@@ -927,7 +953,7 @@ namespace XyA
 
         SyntaxTreeNode* SyntaxParser::__parse_argument_list_definition()
         {
-            // argument_list_definition -> Identifier ("," Identifier)*
+            // argument_list_definition -> (Identifier (":" type_hint)? ) ("," (Identifier (":" type_hint)? ))*
             SyntaxTreeNode* argument_list = new SyntaxTreeNode(SyntaxTreeNodeType::Argument_List);
 
             if (this->__cur_token()->type != LexicalAnalysis::TokenType::Identifier)
@@ -936,19 +962,37 @@ namespace XyA
                 return nullptr;
             }
 
-            LexicalAnalysis::Token* first_argument_token = this->__cur_token();
             SyntaxTreeNode* first_argument_node = new SyntaxTreeNode(SyntaxTreeNodeType::Argument);
-            first_argument_node->token = first_argument_token;
+            first_argument_node->token = this->__cur_token();
             argument_list->children.push_back(first_argument_node);
 
-            if (!this->__try_move_ptr())
+            if (this->__at_end())
             {
                 return argument_list;
             }
 
-            while (this->__cur_token()->type == LexicalAnalysis::TokenType::S_Comma)
+            SyntaxTreeNode* first_argument_type_hint = nullptr;
+            if (this->__next_token()->type == LexicalAnalysis::TokenType::S_Colon)
             {
-                if (!this->__try_move_ptr() || this->__cur_token()->type != LexicalAnalysis::TokenType::Identifier)
+                if (!this->__try_move_ptr(2))
+                {
+                    this->__throw_exception("Expected type hints", this->__cur_token()->start_pos);
+                    return nullptr;
+                }
+
+                first_argument_type_hint = this->__parse_type_hint();
+                if (first_argument_type_hint == nullptr)
+                {
+                    return nullptr;
+                }
+
+                first_argument_node->children.reserve(1);
+                first_argument_node->children.push_back(first_argument_type_hint);
+            }
+
+            while (this->__next_token()->type == LexicalAnalysis::TokenType::S_Comma)
+            {
+                if (!this->__try_move_ptr(2) || this->__cur_token()->type != LexicalAnalysis::TokenType::Identifier)
                 {
                     this->__throw_exception("Expected argument", this->__cur_token()->start_pos);
                     return nullptr;
@@ -959,12 +1003,36 @@ namespace XyA
                 following_argument_node->token = following_argument_token;
                 argument_list->children.push_back(following_argument_node);
 
-                if (!this->__try_move_ptr())
+                if (this->__at_end())
                 {
-                    return argument_list;
+                    break;
+                }
+
+                SyntaxTreeNode* following_argument_type_hint = nullptr;
+                if (this->__next_token()->type == LexicalAnalysis::TokenType::S_Colon)
+                {
+                    if (!this->__try_move_ptr(2))
+                    {
+                        this->__throw_exception("Expected type hints", this->__cur_token()->start_pos);
+                        return nullptr;
+                    }
+
+                    following_argument_type_hint = this->__parse_type_hint();
+                    if (following_argument_type_hint == nullptr)
+                    {
+                        return nullptr;
+                    }
+
+                    following_argument_node->children.reserve(1);
+                    following_argument_node->children.push_back(following_argument_type_hint);
+                }
+
+                if (this->__at_end())
+                {
+                    break;
                 }
             }
-            this->__cur_pos --;
+
             return argument_list;
         }
 
@@ -1005,6 +1073,12 @@ namespace XyA
             // method_definition -> VisibilityModifier? function_definition
             if (!this->__cur_token()->is_method_modifier())
             {
+                if (this->__cur_token()->type != LexicalAnalysis::TokenType::Kw_Fn)
+                {
+                    this->__throw_exception("Expected method definition", this->__cur_token()->end_pos);
+                    return nullptr;
+                }
+
                 SyntaxTreeNode* function_definition_node = this->__parse_function_definition();
                 if (function_definition_node == nullptr)
                 {
@@ -1021,6 +1095,12 @@ namespace XyA
             if (!this->__try_move_ptr())
             {
                 this->__throw_exception("Expected method definition", this->__cur_token()->start_pos);
+                return nullptr;
+            }
+
+            if (this->__cur_token()->type != LexicalAnalysis::TokenType::Kw_Fn)
+            {
+                this->__throw_exception("Expected method definition", this->__cur_token()->end_pos);
                 return nullptr;
             }
 

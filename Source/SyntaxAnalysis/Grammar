@@ -27,8 +27,8 @@ call_argument_list -> expression ("," expression)*
 
 attr           -> expression "." Identifier
 
-function_definition -> "fn" Identifier "(" argument_list_definition? ")" block
-argument_list_definition -> Identifier ("," Identifier)*
+function_definition -> "fn" Identifier "(" argument_list_definition? ")" ("->" type_hint)? block
+argument_list_definition -> (Identifier (":" type_hint)? ) ("," (Identifier (":" type_hint)? ))*
 
 return         -> "return" expression? ";"
 function_unit  -> block | if | while | line | function_definiton | return  // 在__parse_unit实现

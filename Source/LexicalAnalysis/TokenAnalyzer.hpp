@@ -117,6 +117,7 @@ namespace XyA
             if (this->__try_match_char_token(token, ',', TokenType::S_Comma)) return token;
             if (this->__try_match_char_token(token, ':', TokenType::S_Colon)) return token;
             if (this->__try_match_char_token(token, '|', TokenType::S_VerticalBar)) return token;
+            if (this->__try_match_string_token(token, "->", TokenType::S_RArrow)) return token;
 
             // Operators
             if (this->__try_match_string_token(token, "==", TokenType::Op_Equal)) return token;

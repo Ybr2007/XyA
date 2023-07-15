@@ -38,11 +38,12 @@ namespace XyA
             // token: 标识符或字面量
             Primary,
             // token: 函数名称标识符
-            // children: 数量为2, children[0] 形参列表(Argument_List), children[1] 函数体(Block)
+            // children: 数量为2或3, children[0] 形参列表(Argument_List), children[1] 函数体(Block)，children[2] 返回值类型标注
             Function_Definition,
             // children: 数量不限, 每一个child是一个参数（对于Definition_Argument_List, 是形参标识符；对于Call_Argument_List, 是实参表达式）
             Argument_List,
             // token: 形参名称标识符
+            // children: 数量为0或1，children[0] 为形参的类型标注(可选)
             Argument,
             // chilren: 数量为2, children[0] 为callee表达式, children[1] 为实参列表(Argument_List)
             Call,
