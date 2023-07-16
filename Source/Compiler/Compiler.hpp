@@ -295,8 +295,7 @@ namespace XyA
                 {
                 case LexicalAnalysis::TokenType::IntLiteral:
                 {
-                    Runtime::Builtin::IntObject* int_obj = XyA_Allocate_(Runtime::Builtin::IntObject);
-                    int_obj->value = std::stoll(expression_root->token->value);
+                    Runtime::Builtin::IntObject* int_obj = XyA_Allocate(Runtime::Builtin::IntObject, std::stoll(expression_root->token->value));
                     if (!code_object->try_get_literal_index(int_obj, load_literal_instruction->parameter))
                     {
                         load_literal_instruction->parameter = code_object->add_literal_object(int_obj);

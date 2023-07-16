@@ -34,15 +34,14 @@ namespace XyA
                 return &instance;
             }
 
-            IntObject::IntObject()
+            IntObject::IntObject() : value(0)
             {
                 this->__type = IntType::get_instance();
             }
 
-            IntObject::IntObject(long long value)
+            IntObject::IntObject(long long value_) : value(value_)
             {
                 this->__type = IntType::get_instance();
-                this->value = value;
             }
 
             IntType* IntObject::static_type()
@@ -74,8 +73,7 @@ namespace XyA
 
                 if (int_other != nullptr)
                 {
-                    IntObject* result_obj = XyA_Allocate_(IntObject);
-                    result_obj->value = self->value + int_other->value;
+                    IntObject* result_obj = XyA_Allocate(IntObject, self->value + int_other->value);
 
                     return result_obj;
                 }
@@ -110,8 +108,7 @@ namespace XyA
 
                 if (int_other != nullptr)
                 {
-                    IntObject* result_obj = XyA_Allocate_(IntObject);
-                    result_obj->value = self->value - int_other->value;
+                    IntObject* result_obj = XyA_Allocate(IntObject, self->value - int_other->value);
                     return result_obj;
                 }
                 else  // float_other != nullptr
@@ -145,8 +142,7 @@ namespace XyA
 
                 if (int_other != nullptr)
                 {
-                    IntObject* result_obj = XyA_Allocate_(IntObject);
-                    result_obj->value = self->value * int_other->value;
+                    IntObject* result_obj = XyA_Allocate(IntObject, self->value * int_other->value);
                     return result_obj;
                 }
                 else  // float_other != nullptr
@@ -188,8 +184,7 @@ namespace XyA
                 {
                     if (self->value % int_other->value == 0)
                     {
-                        IntObject* result_obj = XyA_Allocate_(IntObject);
-                        result_obj->value = self->value / int_other->value;
+                        IntObject* result_obj = XyA_Allocate(IntObject, self->value / int_other->value);
                         return result_obj;
                     }
                     else 

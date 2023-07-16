@@ -38,7 +38,7 @@ namespace XyA
             class IntObject : public Object
             {
             public:
-                long long value;
+                const long long value;
 
                 IntObject();
                 IntObject(long long value);

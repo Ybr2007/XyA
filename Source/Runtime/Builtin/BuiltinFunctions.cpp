@@ -69,42 +69,29 @@ namespace XyA
             Object* _get_ref_count(Object** args, size_t arg_num, bool& exception_thrown)
             {
                 XyA_Function_Check_Arg_Num(1)
-
-                IntObject* result = XyA_Allocate_(IntObject);
-                result->value = args[0]->ref_count;
-
                 
-                return result;
+                return XyA_Allocate(IntObject, args[0]->ref_count);
             }
 
             Object* _get_id(Object** args, size_t arg_num, bool& exception_thrown)
             {
                 XyA_Function_Check_Arg_Num(1)
 
-                IntObject* result = XyA_Allocate_(IntObject);
-                result->value = (long long)args[0];
-                
-                return result;
+                return XyA_Allocate(IntObject, (long long)args[0]);
             }
 
             Object* clock_(Object** args, size_t arg_num, bool& exception_thrown)
             {
                 XyA_Function_Check_Arg_Num(0)
 
-                IntObject* result = XyA_Allocate_(IntObject);
-                result->value = clock();
-                
-                return result;
+                return XyA_Allocate(IntObject, clock());
             }
 
             Object* sizeof_(Object** args, size_t arg_num, bool& exception_thrown)
             {
                 XyA_Function_Check_Arg_Num(1)
-
-                IntObject* result = XyA_Allocate_(IntObject);
-                result->value = sizeof(*args[0]);
                 
-                return result;
+                return XyA_Allocate(IntObject, sizeof(*args[0]));
             }
         }
     }
