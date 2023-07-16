@@ -895,7 +895,7 @@ namespace XyA
                 return nullptr;
             }
 
-            SyntaxTreeNode* first_argument_node = new SyntaxTreeNode(SyntaxTreeNodeType::Argument);
+            SyntaxTreeNode* first_argument_node = new SyntaxTreeNode(SyntaxTreeNodeType::Argument_Definition);
             first_argument_node->token = this->__cur_token();
             argument_list->children.push_back(first_argument_node);
 
@@ -932,7 +932,7 @@ namespace XyA
                 }
 
                 LexicalAnalysis::Token* following_argument_token = this->__cur_token();
-                SyntaxTreeNode* following_argument_node = new SyntaxTreeNode(SyntaxTreeNodeType::Argument);
+                SyntaxTreeNode* following_argument_node = new SyntaxTreeNode(SyntaxTreeNodeType::Argument_Definition);
                 following_argument_node->token = following_argument_token;
                 argument_list->children.push_back(following_argument_node);
 
@@ -1078,10 +1078,30 @@ namespace XyA
             }
             while (this->__cur_token()->type != LexicalAnalysis::TokenType::S_RBrace)
             {
-                SyntaxTreeNode* method_definition_node = this->__parse_method_definition();
-                if (method_definition_node != nullptr)
+                if (this->__cur_token()->type == LexicalAnalysis::TokenType::S_Hash)
                 {
-                    class_definition_node->children.push_back(method_definition_node);
+                    SyntaxTreeNode* configuration_command = this->__parse_configuration_command();
+                    if (configuration_command != nullptr)
+                    {
+                        class_definition_node->children.push_back(configuration_command);
+                    }
+                }
+                else if (
+                    this->__cur_token()->type == LexicalAnalysis::TokenType::Kw_Fn || 
+                    (this->__cur_token()->is_method_modifier() && !this->__at_end() && 
+                    this->__next_token()->type == LexicalAnalysis::TokenType::Kw_Fn)
+                )
+                {
+                    SyntaxTreeNode* method_definition_node = this->__parse_method_definition();
+                    if (method_definition_node != nullptr)
+                    {
+                        class_definition_node->children.push_back(method_definition_node);
+                    }
+                }
+                else
+                {
+                    this->__throw_exception("Expected method definitions or configuration commands", left_brace_pos);
+                    return nullptr;
                 }
 
                 if (!this->__try_move_ptr())
@@ -1115,6 +1135,40 @@ namespace XyA
             type_conversion_node->children.push_back(target_type_node);
 
             return type_conversion_node;
+        }
+
+        SyntaxTreeNode* SyntaxParser::__parse_configuration_command()
+        {
+            // configuration_command -> "#" Identifier ":" Literal
+            if (!this->__try_move_ptr() || this->__cur_token()->type != LexicalAnalysis::TokenType::Identifier)
+            {
+                this->__throw_exception("Expected a identifier", this->__cur_token()->end_pos);
+                return nullptr;
+            }
+
+            SyntaxTreeNode* configuration_command = new SyntaxTreeNode(SyntaxTreeNodeType::Configuration_Command);
+            configuration_command->token = this->__cur_token();
+
+            if (!this->__try_move_ptr() || this->__cur_token()->type != LexicalAnalysis::TokenType::S_Colon)
+            {
+                this->__throw_exception("Expected ':'", this->__cur_token()->end_pos);
+                delete configuration_command;
+                return nullptr;
+            }
+            if (!this->__try_move_ptr() || !this->__cur_token()->is_literal())
+            {
+                this->__throw_exception("Expected a literal", this->__cur_token()->end_pos);
+                delete configuration_command;
+                return nullptr;
+            }
+
+            SyntaxTreeNode* configuration_value = new SyntaxTreeNode(SyntaxTreeNodeType::Configuration_Value);
+            configuration_value->token = this->__cur_token();
+
+            configuration_command->children.reserve(1);
+            configuration_command->children.push_back(configuration_value);
+
+            return configuration_command;
         }
 
         void SyntaxParser::__throw_exception(std::string_view message, LexicalAnalysis::TokenPos pos) const

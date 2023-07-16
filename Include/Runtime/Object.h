@@ -83,7 +83,7 @@ namespace XyA
         {
         public:
             std::string name = "type";
-            bool instance_allow_external_attr = false;
+            bool allow_ext_attr_add = false;
 
             static Type* get_instance();
         };

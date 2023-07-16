@@ -1,5 +1,7 @@
 #pragma once
 #include <format>
+#include <vector>
+#include <functional>
 #include <SyntaxAnalysis/SyntaxTree.h>
 #include <Runtime/Instruction.h>
 #include <Runtime/CodeObject.h>
@@ -18,10 +20,13 @@ namespace XyA
 {
     namespace Compiler
     {
+        using CompilerErrorCallback = std::function<void(std::string_view, LexicalAnalysis::TokenPos)>;
+
         class Compiler
         {
         public:
             Runtime::CodeObject* compile(SyntaxAnalysis::SyntaxTreeNode* syntax_tree_root);
+            void register_error_callback(CompilerErrorCallback callback);
 
         private:
             /*
@@ -29,6 +34,7 @@ namespace XyA
             在以下__compile_xxx中new的Literals会被GC机制释放
              */
             Runtime::CodeObject* __global_code_object;
+            std::vector<CompilerErrorCallback> __error_callbacks;
 
             void __compile_unit(Runtime::CodeObject* code_object, SyntaxAnalysis::SyntaxTreeNode* unit_root);
             void __compile_line(Runtime::CodeObject* code_object, SyntaxAnalysis::SyntaxTreeNode* line_root);
@@ -44,6 +50,8 @@ namespace XyA
             Runtime::Attr __build_method(SyntaxAnalysis::SyntaxTreeNode* method_definition_root, Runtime::Type* cls);
             Runtime::Type* __build_class(
                 Runtime::CodeObject* code_object, SyntaxAnalysis::SyntaxTreeNode* class_definition_root, size_t& class_variable_index);
+
+            void __throw_error(std::string_view message, LexicalAnalysis::TokenPos pos) const;
         };
 
         Runtime::CodeObject* Compiler::compile(SyntaxAnalysis::SyntaxTreeNode* syntax_tree_root)
@@ -67,6 +75,11 @@ namespace XyA
             }
 
             return this->__global_code_object;
+        }
+
+        void Compiler::register_error_callback(CompilerErrorCallback callback)
+        {
+            this->__error_callbacks.push_back(callback);
         }
 
         void Compiler::__compile_unit(Runtime::CodeObject* code_object, SyntaxAnalysis::SyntaxTreeNode* unit_root)
@@ -564,7 +577,7 @@ namespace XyA
         {
             Runtime::Type* cls = XyA_Allocate_(Runtime::Type);
             cls->name = class_definition_root->token->value;
-            cls->instance_allow_external_attr = true;
+            cls->allow_ext_attr_add = true;
             cls->ref_count = 1;
 
             if (code_object != nullptr &&
@@ -573,14 +586,50 @@ namespace XyA
                 class_variable_index = code_object->add_variable_name(class_definition_root->token->value);
             }
 
-            for (auto method_definithon_root : class_definition_root->children)
+            for (auto class_definition_unit : class_definition_root->children)
             {
-                cls->set_attr(method_definithon_root->token->value, this->__build_method(method_definithon_root, cls));
+                if (class_definition_unit->type == SyntaxAnalysis::SyntaxTreeNodeType::Method_Definition)
+                {
+                    cls->set_attr(class_definition_unit->token->value, this->__build_method(class_definition_unit, cls));
+                }
+                else
+                {
+                    auto configuration_item_token = class_definition_unit->token;
+                    auto configuration_value_token = class_definition_unit->children[0]->token;
+                    if (configuration_item_token->value == "allow_ext_attr_add")
+                    {
+                        if (configuration_value_token->type != LexicalAnalysis::TokenType::BoolLiteral)
+                        {
+                            this->__throw_error(
+                                "Expected a bool literal as the configuration value of configuration item 'allow_ext_attr_add'", 
+                                configuration_value_token->start_pos
+                            );
+                            continue;
+                        }
+                        cls->allow_ext_attr_add = class_definition_unit->children[0]->token->value == "true" ? true : false;
+                    }
+                    else
+                    {
+                        this->__throw_error(
+                            std::format("Unknown configuration item '{}'", configuration_item_token->value), 
+                            configuration_item_token->start_pos
+                        );
+                        continue;
+                    }
+                }
             }
             Runtime::Object* new_method = XyA_Allocate(Runtime::Builtin::BuiltinFunction, cls_new_method);
             cls->set_attr(Runtime::MagicMethodNames::new_method_name, new_method);
 
             return cls;
+        }
+
+        void Compiler::__throw_error(std::string_view message, LexicalAnalysis::TokenPos pos) const
+        {
+            for (auto callback : this->__error_callbacks)
+            {
+                callback(message, pos);
+            }
         }
 
     }  // namespace Compiler

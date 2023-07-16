@@ -1,7 +1,5 @@
-#pragma once
-#include <fstream>
-#include <YJson/Object.hpp>
-#include <YJson/Parser.hpp>
+#include <YJson/YJson.h>
+#include <YJson/Parser.h>
 
 
 namespace YJson
@@ -39,22 +37,19 @@ namespace YJson
         return loads(jsonString);
     }
 
-    std::string dumps(const Object* obj, std::size_t indent=0,
-                        bool removeFollowingZerosForNumber=true)
+    std::string dumps(const Object* obj, std::size_t indent, bool removeFollowingZerosForNumber)
     {
         return obj->toString(indent, removeFollowingZerosForNumber);
     }
 
-    void dump(std::string filePath, const Object* obj, std::size_t indent=0, 
-                        bool removeFollowingZerosForNumber=true)
+    void dump(std::string filePath, const Object* obj, std::size_t indent, bool removeFollowingZerosForNumber)
     {
         std::ofstream f(filePath, std::ios::out);
         f << dumps(obj, indent, removeFollowingZerosForNumber);
         f.close();
     }
     
-    void dump(std::ofstream f, const Object* obj, std::size_t indent=0,
-                        bool removeFollowingZerosForNumber=true)
+    void dump(std::ofstream f, const Object* obj, std::size_t indent, bool removeFollowingZerosForNumber)
     {
         f << dumps(obj, indent, removeFollowingZerosForNumber);
     }

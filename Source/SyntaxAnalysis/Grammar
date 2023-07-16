@@ -35,4 +35,6 @@ function_unit  -> block | if | while | line | function_definiton | return  // �
 function_block -> "{" function_unit* "}"                                   // 在__parse_block实现
 
 method_definition -> VisibilityModifier? function_definition
-class_definition -> "class" Identifier "{" method_definition* "}"
+class_definition -> "class" Identifier "{" (method_definition | configuration_command)* "}"
+
+configuration_command -> "#" Identifier ":" Literal

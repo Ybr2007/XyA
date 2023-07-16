@@ -198,11 +198,11 @@ namespace XyA
                 }
                 else
                 {
-                    if (!attr_owner->type()->instance_allow_external_attr)
+                    if (!attr_owner->type()->allow_ext_attr_add && this->cur_context->code_obj->cls != attr_owner->type())
                     {
                         this->cur_context->set_exception(
                             XyA_Allocate(Builtin::BuiltinException,
-                                std::format("Variables of type '{}' do not allow external attribute addition", attr_owner->type()->name))
+                                std::format("Objects of type '{}' do not allow external attribute addition", attr_owner->type()->name))
                         );
                         goto error;
                     }

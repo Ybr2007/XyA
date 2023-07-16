@@ -26,6 +26,7 @@ namespace XyA
             S_Colon,                        // :
             S_VerticalBar,                  // |
             S_RArrow,                       // ->
+            S_Hash,                         // #
 
             /* Operators */
             Op_Assignment,                  // =

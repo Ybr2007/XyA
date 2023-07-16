@@ -4,7 +4,7 @@
 #include <LexicalAnalysis/Token.h>
 #include <Config.h>
 #ifdef Debug_Write_AST_To_Json_File
-#include <YJson/YJson.hpp>
+#include <YJson/YJson.h>
 #endif
 
 namespace XyA
@@ -44,7 +44,7 @@ namespace XyA
             Argument_List,
             // token: 形参名称标识符
             // children: 数量为0或1，children[0] 为形参的类型标注(可选)
-            Argument,
+            Argument_Definition,
             // chilren: 数量为2, children[0] 为callee表达式, children[1] 为实参列表(Argument_List)
             Call,
             // token: 属性标识符
@@ -68,6 +68,11 @@ namespace XyA
             Optional_Type_Hint,
             // children: 数量为2, children[0] 为对象表达式, children[1] 为目标类型标识符(Identifier Primary)
             Type_Conversion,
+            // token: 配置值字面量(Literal)
+            Configuration_Value,
+            // token: 被配置项名称(Identifier)
+            // children: 数量为1, children[0] 为配置值(Configuration_Value)
+            Configuration_Command,
         };
 
         #ifdef Debug_Write_AST_To_Json_File

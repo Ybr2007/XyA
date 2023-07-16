@@ -38,6 +38,8 @@ namespace XyA
                 return "<Token: Separator '|'>";
             case TokenType::S_RArrow:
                 return "<Token: Separator '->'>";
+            case TokenType::S_Hash:
+                return "<Token: Separator '#'>";
 
             case TokenType::Op_Assignment:
                 return "<Token: Operator '='>";

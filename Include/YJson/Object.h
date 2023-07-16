@@ -296,11 +296,7 @@ namespace YJson
         ObjectValue __value;
     };
 
-    std::ostream& operator<<(std::ostream& os, const Object& self)
-    {
-        os << self.toString();
-        return os;
-    }
+    std::ostream& operator<<(std::ostream& os, const Object& self);
 
     const ObjectValue nullValue = ObjectValue();
     const Object nullObject = Object();

@@ -55,6 +55,16 @@ namespace XyA
             }
         );
 
+        this->compiler.register_error_callback(
+            [&](std::string_view msg, LexicalAnalysis::TokenPos pos){
+                this->error_messages.push_back(
+                    std::make_pair(std::format("{}Compiling Error: {} {}  Pos: row {}, column {}\n",
+                        error_color, reset_color, std::string(msg).c_str(), pos.row, pos.column), pos)
+                );
+                this->exception_thrown = true;
+            }
+        );
+
         this->virtual_machine->exception_callbacks.push_back(
             [&](std::string_view msg){
                 printf("%sRuntime Error%s: %s\n", error_color.c_str(), reset_color.c_str(), std::string(msg).c_str());
@@ -107,6 +117,12 @@ namespace XyA
 
         // 编译, 生成CodeObject
         Runtime::CodeObject* code_object = this->compiler.compile(syntax_tree);
+
+        if (this->exception_thrown)
+        {
+            this->print_messages();
+            return;
+        }
 
         #ifdef Debug_Write_AST_To_Json_File
         YJson::Object* optimized_syntax_tree_json = syntax_tree->to_json();

@@ -33,8 +33,8 @@ namespace XyA
                 return "<SyntaxTreeNodeType: Function_Definition>";
             case SyntaxTreeNodeType::Argument_List:
                 return "<SyntaxTreeNodeType: Argument_List>";
-            case SyntaxTreeNodeType::Argument:
-                return "<SyntaxTreeNodeType: Argument>";
+            case SyntaxTreeNodeType::Argument_Definition:
+                return "<SyntaxTreeNodeType: Argument_Definition>";
             case SyntaxTreeNodeType::Call:
                 return "<SyntaxTreeNodeType: Call>";
             case SyntaxTreeNodeType::Attr:
@@ -55,6 +55,10 @@ namespace XyA
                 return "<SyntaxTreeNodeType: Optional_Type_Hint>";
             case SyntaxTreeNodeType::Type_Conversion:
                 return "<SyntaxTreeNodeType: Type_Conversion>";
+            case SyntaxTreeNodeType::Configuration_Value:
+                return "<SyntaxTreeNodeType: Configuration_Value>";
+            case SyntaxTreeNodeType::Configuration_Command:
+                return "<SyntaxTreeNodeType: Configuration_Command>";
             default:
                 return "<Unknown>";
             }

@@ -59,6 +59,7 @@ namespace XyA
             if (this->__try_match_char_token(token, ':', TokenType::S_Colon)) return token;
             if (this->__try_match_char_token(token, '|', TokenType::S_VerticalBar)) return token;
             if (this->__try_match_string_token(token, "->", TokenType::S_RArrow)) return token;
+            if (this->__try_match_char_token(token, '#', TokenType::S_Hash)) return token;
 
             // Operators
             if (this->__try_match_string_token(token, "==", TokenType::Op_Equal)) return token;
@@ -88,8 +89,16 @@ namespace XyA
             if (this->__try_match_string_token(token, "public", TokenType::Kw_Public, true)) return token;
             if (this->__try_match_string_token(token, "private", TokenType::Kw_Private, true)) return token;
             if (this->__try_match_string_token(token, "as", TokenType::Kw_As, true)) return token;
-            if (this->__try_match_string_token(token, "true", TokenType::BoolLiteral, true)) return token;
-            if (this->__try_match_string_token(token, "false", TokenType::BoolLiteral, true)) return token;
+            if (this->__try_match_string_token(token, "true", TokenType::BoolLiteral, true))
+            {
+                token->value = "true";
+                return token;
+            }
+            if (this->__try_match_string_token(token, "false", TokenType::BoolLiteral, true))
+            {
+                token->value = "false";
+                return token;
+            }
             if (this->__try_match_string_token(token, "null", TokenType::NullLiteral, true)) return token;
 
             if (Utils::is_digit(this->__cur_char()))  // Number Literal, 由于负号已经被事先识别, 所以只考虑首字符为数字
