@@ -21,8 +21,8 @@ namespace XyA
                     if (!is_string)
                     {
                         Runtime::BaseFunction* str_method; 
-                        AttrVisibility visibility;
-                        auto result = args[i]->try_get_method(MagicMethodNames::str_method_name, str_method, visibility);
+                        AttrAccessibility accessibility;
+                        auto result = args[i]->try_get_method(MagicMethodNames::str_method_name, str_method, accessibility);
                         if (result == TryGetMethodResult::NotFound || result == TryGetMethodResult::NotCallable)
                         {
                             string_object = XyA_Allocate_(StringObject);

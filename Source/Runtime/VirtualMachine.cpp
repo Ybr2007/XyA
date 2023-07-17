@@ -129,7 +129,7 @@ namespace XyA
                     goto error;
                 }
 
-                if (attr.visibility == AttrVisibility::Private && this->cur_context->cls() != attr_owner->type())
+                if (attr.accessibility == AttrAccessibility::Private && this->cur_context->cls() != attr_owner->type())
                 {
                     this->cur_context->set_exception(
                         XyA_Allocate(Builtin::BuiltinException, std::format("Can not access the private attr '{}'", attr_name))
@@ -158,7 +158,7 @@ namespace XyA
                     goto error;
                 }
 
-                if (attr.visibility == AttrVisibility::Private && this->cur_context->cls() != attr_owner->type())
+                if (attr.accessibility == AttrAccessibility::Private && this->cur_context->cls() != attr_owner->type())
                 {
                     this->cur_context->set_exception(
                         XyA_Allocate(Builtin::BuiltinException, std::format("Can not access the private attr '{}'", attr_name))
@@ -189,7 +189,7 @@ namespace XyA
 
                 if (operation_result == TryGetAttrResult::OK)
                 {
-                    if (old_attr.visibility == AttrVisibility::Private && this->cur_context->code_obj->cls != attr_owner->type())
+                    if (old_attr.accessibility == AttrAccessibility::Private && this->cur_context->code_obj->cls != attr_owner->type())
                     {
                         this->cur_context->set_exception(
                             XyA_Allocate(Builtin::BuiltinException, std::format("Can not access the private attr '{}'", attr_name))
@@ -209,11 +209,11 @@ namespace XyA
                     }
                     else
                     {
-                        old_attr.visibility = instruction->type == InstructionType::StorePublicAttr ? AttrVisibility::Public : AttrVisibility::Private;
+                        old_attr.accessibility = instruction->type == InstructionType::StorePublicAttr ? AttrAccessibility::Public : AttrAccessibility::Private;
                     }
                 }
 
-                attr_owner->set_attr(attr_name, new_attr, old_attr.visibility);
+                attr_owner->set_attr(attr_name, new_attr, old_attr.accessibility);
 
                 break;
             }
@@ -292,10 +292,10 @@ namespace XyA
                 else
                 {
                     BaseFunction* bool_method;
-                    AttrVisibility visibility;
-                    TryGetMethodResult operation_result =  top_object->try_get_method(MagicMethodNames::bool_method_name, bool_method, visibility);
+                    AttrAccessibility accessibility;
+                    TryGetMethodResult operation_result =  top_object->try_get_method(MagicMethodNames::bool_method_name, bool_method, accessibility);
 
-                    if (visibility == AttrVisibility::Private && this->cur_context->cls() != top_object->type())
+                    if (accessibility == AttrAccessibility::Private && this->cur_context->cls() != top_object->type())
                     {
                         this->cur_context->set_exception(
                             XyA_Allocate(Builtin::BuiltinException, std::format("Can not access the private attr '__bool__'"))
@@ -400,8 +400,8 @@ namespace XyA
                 }
 
                 BaseFunction* method;
-                AttrVisibility visibility;
-                TryGetMethodResult result = original_object->try_get_method(method_name, method, visibility);
+                AttrAccessibility accessibility;
+                TryGetMethodResult result = original_object->try_get_method(method_name, method, accessibility);
 
                 switch (result)
                 {
@@ -419,7 +419,7 @@ namespace XyA
                     break;
                 }
 
-                if (visibility == AttrVisibility::Private && this->cur_context->cls() != original_object->type())
+                if (accessibility == AttrAccessibility::Private && this->cur_context->cls() != original_object->type())
                 {
                     this->cur_context->set_exception(std::format("Can not access the private attr '{}'", method_name));
                     this->__throw_exception();
@@ -472,8 +472,8 @@ namespace XyA
                     }
 
                     BaseFunction* new_method;
-                    AttrVisibility visibility;
-                    auto result = callee_object->try_get_method(MagicMethodNames::new_method_name, new_method, visibility);
+                    AttrAccessibility accessibility;
+                    auto result = callee_object->try_get_method(MagicMethodNames::new_method_name, new_method, accessibility);
 
                     if (result != TryGetMethodResult::OK)
                     {
@@ -559,8 +559,8 @@ namespace XyA
             Object* obj_1 = this->cur_context->top_operand();
 
             BaseFunction* method;
-            AttrVisibility visibility;
-            TryGetMethodResult result = obj_1->try_get_method(magic_method_name, method, visibility);
+            AttrAccessibility accessibility;
+            TryGetMethodResult result = obj_1->try_get_method(magic_method_name, method, accessibility);
 
             switch (result)
             {
@@ -582,7 +582,7 @@ namespace XyA
                 break;
             }
 
-            if (visibility == AttrVisibility::Private && this->cur_context->cls() != obj_1->type())
+            if (accessibility == AttrAccessibility::Private && this->cur_context->cls() != obj_1->type())
             {
                 this->cur_context->set_exception(
                     XyA_Allocate(Builtin::BuiltinException, std::format("Can not access the private attr '{}'", magic_method_name))
@@ -612,10 +612,10 @@ namespace XyA
             Object* obj_1 = this->cur_context->top_operand();
 
             BaseFunction* method;
-            AttrVisibility visibility;
-            TryGetMethodResult result = obj_1->try_get_method(magic_method_name, method, visibility);
+            AttrAccessibility accessibility;
+            TryGetMethodResult result = obj_1->try_get_method(magic_method_name, method, accessibility);
 
-            if (visibility == AttrVisibility::Private && this->cur_context->cls() != obj_1->type())
+            if (accessibility == AttrAccessibility::Private && this->cur_context->cls() != obj_1->type())
             {
                 this->cur_context->set_exception(
                     XyA_Allocate(Builtin::BuiltinException, std::format("Can not access the private attr '{}'", magic_method_name))

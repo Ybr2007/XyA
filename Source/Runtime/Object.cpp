@@ -115,7 +115,7 @@ namespace XyA
             this->attrs[attr_name] = attr;
         }
 
-        void Object::set_attr(const std::string& attr_name, Object* attr_object, AttrVisibility visibility)
+        void Object::set_attr(const std::string& attr_name, Object* attr_object, AttrAccessibility accessibility)
         {
             Attr old_attr;
             if (this->attrs.try_get(attr_name, old_attr))
@@ -126,7 +126,7 @@ namespace XyA
             Attr attr;
             attr.object = attr_object;
             attr_object->reference();
-            attr.visibility = visibility;
+            attr.accessibility = accessibility;
             this->attrs[attr_name] = attr;
         }
 
@@ -140,7 +140,7 @@ namespace XyA
         }
 
         TryGetMethodResult Object::try_get_method(
-            const std::string& method_name, BaseFunction*& method_result, AttrVisibility& visibility_result) const
+            const std::string& method_name, BaseFunction*& method_result, AttrAccessibility& accessibility_result) const
         {
             Attr attr;
             auto operation_result = this->try_get_attr(method_name, attr);
@@ -151,7 +151,7 @@ namespace XyA
             if (is_function(attr.object))
             {
                 method_result = static_cast<BaseFunction*>(attr.object);
-                visibility_result = attr.visibility;
+                accessibility_result = attr.accessibility;
                 return TryGetMethodResult::OK;
             }
             return TryGetMethodResult::NotCallable;

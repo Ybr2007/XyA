@@ -115,7 +115,7 @@ namespace XyA
                 this->type == TokenType::NullLiteral;
         }
 
-        bool Token::is_visibility_modifier() const
+        bool Token::is_accessibility_modifier() const
         {
             return this->type == TokenType::Kw_Public || this->type == TokenType::Kw_Private;
         }

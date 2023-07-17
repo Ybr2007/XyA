@@ -4,7 +4,7 @@
 #include <format>
 #include <LexicalAnalysis/TokenAnalyzer.h>
 #include <SyntaxAnalysis/SyntaxParser.h>
-#include <Compiler/Compiler.hpp>
+#include <Compiler/Compiler.h>
 #include <Runtime/VirtualMachine.h>
 #include <Config.h>
 #include <Runtime/MemoryManager.hpp>

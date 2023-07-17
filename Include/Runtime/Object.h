@@ -34,7 +34,7 @@ namespace XyA
             Object* object;
         };
 
-        enum AttrVisibility
+        enum AttrAccessibility
         {
             Public,
             Private,
@@ -42,7 +42,7 @@ namespace XyA
 
         struct Attr : public ObjectRef
         {
-            AttrVisibility visibility;
+            AttrAccessibility accessibility;
         };
 
         class Object
@@ -65,10 +65,10 @@ namespace XyA
             bool is_instance(Type* type) const;
 
             void set_attr(const std::string& attr_name, Attr attr);
-            void set_attr(const std::string& attr_name, Object* attr_object, AttrVisibility visibility = AttrVisibility::Public);
+            void set_attr(const std::string& attr_name, Object* attr_object, AttrAccessibility accessibility = AttrAccessibility::Public);
             TryGetAttrResult try_get_attr(const std::string& attr_name, Attr& result) const;
             TryGetMethodResult try_get_method(
-                const std::string& method_name, BaseFunction*& method_result, AttrVisibility& visibility_result) const;
+                const std::string& method_name, BaseFunction*& method_result, AttrAccessibility& accessibility_result) const;
             virtual ~Object();
 
             #ifdef Debug_Display_Object

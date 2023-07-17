@@ -1,4 +1,5 @@
 #include <SyntaxAnalysis/SyntaxParser.h>
+#include <Exception/CoreException.h>
 
 namespace XyA
 {
@@ -56,6 +57,10 @@ namespace XyA
 
         void SyntaxParser::__backtrack(size_t step)
         {
+            if (this->__cur_pos < step)
+            {
+                XyA_Throw_Core_Exception("Cannot backtrack");
+            }
             this->__cur_pos -= step;
         }
 
@@ -106,15 +111,15 @@ namespace XyA
         {
             // line -> (assignment | expression) ";"
             // method_line -> (attr_assignment | expression) ";"
-            // attr_assignment -> VisibilityModifier? assignment
+            // attr_assignment -> AccessibilityModifier? assignment
 
-            SyntaxTreeNode* visibility_modifier = nullptr;
-            if (this->__cur_token()->is_visibility_modifier())
+            SyntaxTreeNode* accessibility_modifier = nullptr;
+            if (this->__cur_token()->is_accessibility_modifier())
             {
                 if (this->__inside_method)
                 {
-                    visibility_modifier = new SyntaxTreeNode(SyntaxTreeNodeType::Modifier);
-                    visibility_modifier->token = this->__cur_token();
+                    accessibility_modifier = new SyntaxTreeNode(SyntaxTreeNodeType::Modifier);
+                    accessibility_modifier->token = this->__cur_token();
                     if (!this->__try_move_ptr())
                     {
                         this->__throw_exception("Expected expressions", this->__cur_token()->end_pos);
@@ -123,7 +128,7 @@ namespace XyA
                 }
                 else
                 {
-                    this->__throw_exception("Found visibility modifiers out of methods", this->__cur_token()->start_pos);
+                    this->__throw_exception("Found accessibility modifiers out of methods", this->__cur_token()->start_pos);
                     return nullptr;
                 }
             }
@@ -164,11 +169,11 @@ namespace XyA
                 }
             }
 
-            if (expression_is_attr && visibility_modifier != nullptr)
+            if (expression_is_attr && accessibility_modifier != nullptr)
             {
                 SyntaxTreeNode* attr = node->children[0];
                 attr->children.reserve(2);
-                attr->children.push_back(visibility_modifier);
+                attr->children.push_back(accessibility_modifier);
             }
             
 
@@ -1052,10 +1057,10 @@ namespace XyA
 
         SyntaxTreeNode* SyntaxParser::__parse_method_definition()
         {
-            // method_definition -> VisibilityModifier? function_definition
+            // method_definition -> AccessibilityModifier? function_definition
             this->__inside_method = true;
 
-            if (!this->__cur_token()->is_visibility_modifier())
+            if (!this->__cur_token()->is_accessibility_modifier())
             {
                 if (this->__cur_token()->type != LexicalAnalysis::TokenType::Kw_Fn)
                 {
@@ -1146,7 +1151,7 @@ namespace XyA
                 }
                 else if (
                     this->__cur_token()->type == LexicalAnalysis::TokenType::Kw_Fn || 
-                    (this->__cur_token()->is_visibility_modifier() && !this->__at_end() && 
+                    (this->__cur_token()->is_accessibility_modifier() && !this->__at_end() && 
                     this->__next_token()->type == LexicalAnalysis::TokenType::Kw_Fn)
                 )
                 {

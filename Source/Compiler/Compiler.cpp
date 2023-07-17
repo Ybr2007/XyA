@@ -1,19 +1,7 @@
-#pragma once
-#include <format>
-#include <vector>
-#include <functional>
-#include <SyntaxAnalysis/SyntaxTree.h>
-#include <Runtime/Instruction.h>
-#include <Runtime/CodeObject.h>
-#include <Runtime/Builtin/Int.h>
-#include <Runtime/Builtin/Float.h>
-#include <Runtime/Builtin/String.h>
-#include <Runtime/Builtin/Bool.h>
-#include <Runtime/Builtin/Null.h>
+#include <Compiler/Compiler.h>
 #include <Runtime/CustomFunction.h>
-#include <Runtime/MemoryManager.hpp>
+#include <Runtime/Builtin/Null.h>
 #include <Runtime/VirtualMachine.h>
-#include <Utils/StringUtils.hpp>
 
 
 namespace XyA
@@ -22,43 +10,13 @@ namespace XyA
     {
         using CompilerErrorCallback = std::function<void(std::string_view, LexicalAnalysis::TokenPos)>;
 
-        class Compiler
-        {
-        public:
-            Runtime::CodeObject* compile(SyntaxAnalysis::SyntaxTreeNode* syntax_tree_root);
-            void register_error_callback(CompilerErrorCallback callback);
-
-        private:
-            /*
-            在以下__compile_xxx中new的Instructions都会在Runtime::CodeObject::~CodeObject释放
-            在以下__compile_xxx中new的Literals会被GC机制释放
-             */
-            Runtime::CodeObject* __global_code_object;
-            std::vector<CompilerErrorCallback> __error_callbacks;
-
-            void __compile_unit(Runtime::CodeObject* code_object, SyntaxAnalysis::SyntaxTreeNode* unit_root);
-            void __compile_line(Runtime::CodeObject* code_object, SyntaxAnalysis::SyntaxTreeNode* line_root);
-            void __compile_block(Runtime::CodeObject* code_object, SyntaxAnalysis::SyntaxTreeNode* block_root);
-            void __compile_if(Runtime::CodeObject* code_object, SyntaxAnalysis::SyntaxTreeNode* while_root);
-            void __compile_while(Runtime::CodeObject* code_object, SyntaxAnalysis::SyntaxTreeNode* if_root);
-            void __compile_assignment(Runtime::CodeObject* code_object, SyntaxAnalysis::SyntaxTreeNode* assignment_root);
-            void __compile_expression(Runtime::CodeObject* code_object, SyntaxAnalysis::SyntaxTreeNode* expression_root, bool pop=false);
-            void __compile_return(Runtime::CodeObject* code_object, SyntaxAnalysis::SyntaxTreeNode* return_root);
-
-            Runtime::CustomFunction* __build_function(
-                Runtime::CodeObject* code_object, SyntaxAnalysis::SyntaxTreeNode* function_definition_root, size_t& function_variable_index);
-            Runtime::Attr __build_method(SyntaxAnalysis::SyntaxTreeNode* method_definition_root, Runtime::Type* cls);
-            Runtime::Type* __build_class(
-                Runtime::CodeObject* code_object, SyntaxAnalysis::SyntaxTreeNode* class_definition_root, size_t& class_variable_index);
-
-            void __throw_error(std::string_view message, LexicalAnalysis::TokenPos pos) const;
-        };
-
         Runtime::CodeObject* Compiler::compile(SyntaxAnalysis::SyntaxTreeNode* syntax_tree_root)
         {
             // delete于Runtime::Context::~Context
             this->__global_code_object = XyA_Allocate_(Runtime::CodeObject);
 
+            // 为global_code_object预留builtin objects的位置
+            // 实际的builtin objects将会在VirtualMachine启动时被加入到为global_code_object预留builtin.variable
             this->__global_code_object->add_variable_name("int");
             this->__global_code_object->add_variable_name("float");
             this->__global_code_object->add_variable_name("str");
@@ -201,9 +159,9 @@ namespace XyA
                 code_object->instructions.pop_back();
                 this->__compile_expression(code_object, assignment_root->children[1]);
 
-                bool has_visibility_modifier = assignment_root->children[0]->children.size() == 2;
+                bool has_accessibility_modifier = assignment_root->children[0]->children.size() == 2;
                 Runtime::Instruction* store_attr_instruction = new Runtime::Instruction(
-                    !has_visibility_modifier || assignment_root->children[0]->children[1]->token->type == LexicalAnalysis::TokenType::Kw_Public ?
+                    !has_accessibility_modifier || assignment_root->children[0]->children[1]->token->type == LexicalAnalysis::TokenType::Kw_Public ?
                     Runtime::InstructionType::StorePublicAttr : Runtime::InstructionType::StroePrivateAttr
                 );
                 
@@ -516,11 +474,11 @@ namespace XyA
                 switch (method_definition_root->children[2]->token->type)
                 {
                 case LexicalAnalysis::TokenType::Kw_Public:
-                    attr.visibility = Runtime::AttrVisibility::Public;
+                    attr.accessibility = Runtime::AttrAccessibility::Public;
                     break;
 
                 case LexicalAnalysis::TokenType::Kw_Private:
-                    attr.visibility = Runtime::AttrVisibility::Private;
+                    attr.accessibility = Runtime::AttrAccessibility::Private;
                     break;
                 }
             }
@@ -536,10 +494,10 @@ namespace XyA
             instance->set_type(cls);
 
             Runtime::BaseFunction* init_method;
-            Runtime::AttrVisibility visibility;
-            auto result = instance->try_get_method(Runtime::MagicMethodNames::init_method_name, init_method, visibility);
+            Runtime::AttrAccessibility accessibility;
+            auto result = instance->try_get_method(Runtime::MagicMethodNames::init_method_name, init_method, accessibility);
 
-            if (visibility == Runtime::AttrVisibility::Private && Runtime::VirtualMachine::get_instance()->cur_context->cls() != cls)
+            if (accessibility == Runtime::AttrAccessibility::Private && Runtime::VirtualMachine::get_instance()->cur_context->cls() != cls)
             {
                 exception_thrown = true;
                 return XyA_Allocate(Runtime::Builtin::BuiltinException, std::format("Can not access the private constructor of class {}", cls->name));
@@ -577,7 +535,6 @@ namespace XyA
         {
             Runtime::Type* cls = XyA_Allocate_(Runtime::Type);
             cls->name = class_definition_root->token->value;
-            cls->allow_ext_attr_add = true;
             cls->ref_count = 1;
 
             if (code_object != nullptr &&
