@@ -176,7 +176,8 @@ namespace XyA
                 break;
             }
 
-            case InstructionType::StoreAttr:
+            case InstructionType::StorePublicAttr:
+            case InstructionType::StroePrivateAttr:
             {
                 const std::string& attr_name = this->cur_context->code_obj->attr_names[instruction->parameter];
 
@@ -208,7 +209,7 @@ namespace XyA
                     }
                     else
                     {
-                        old_attr.visibility = AttrVisibility::Public;
+                        old_attr.visibility = instruction->type == InstructionType::StorePublicAttr ? AttrVisibility::Public : AttrVisibility::Private;
                     }
                 }
 

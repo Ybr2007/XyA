@@ -35,7 +35,8 @@ namespace XyA
             LoadGlobal,
 
             StroeVariable,
-            StoreAttr,
+            StorePublicAttr,
+            StroePrivateAttr,
 
             PopJumpIfFalse,
             JumpTo,

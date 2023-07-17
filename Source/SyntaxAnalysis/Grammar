@@ -27,14 +27,19 @@ call_argument_list -> expression ("," expression)*
 
 attr           -> expression "." Identifier
 
-function_definition -> "fn" Identifier "(" argument_list_definition? ")" ("->" type_hint)? block
-argument_list_definition -> (Identifier (":" type_hint)? ) ("," (Identifier (":" type_hint)? ))*
-
 return         -> "return" expression? ";"
 function_unit  -> block | if | while | line | function_definiton | return  // 在__parse_unit实现
 function_block -> "{" function_unit* "}"                                   // 在__parse_block实现
 
-method_definition -> VisibilityModifier? function_definition
+function_definition -> "fn" Identifier "(" argument_list_definition? ")" ("->" type_hint)? function_block
+argument_list_definition -> (Identifier (":" type_hint)? ) ("," (Identifier (":" type_hint)? ))*
+
+attr_assignment -> VisibilityModifier? assignment  // 在__parse_line实现
+method_line    -> (attr_assignment | expression) ";"  // 在__parse_line实现
+method_unit    -> block | if | while | method_line | function_definiton | return  // 在__parse_unit实现
+method_block   -> "{" method_unit* "}"
+
+method_definition -> "fn" Identifier "(" argument_list_definition? ")" ("->" type_hint)? method_block
 class_definition -> "class" Identifier "{" (method_definition | configuration_command)* "}"
 
 configuration_command -> "#" Identifier ":" Literal

@@ -86,7 +86,7 @@ namespace XyA
 
             std::string to_string() const;
             bool is_literal() const;
-            bool is_method_modifier() const;
+            bool is_visibility_modifier() const;
         };
 
     }  // namespace LexicalAnalysis

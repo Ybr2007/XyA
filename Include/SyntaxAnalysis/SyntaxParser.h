@@ -21,6 +21,7 @@ namespace XyA
             std::vector<LexicalAnalysis::Token*>* __parsing_tokens;
             SyntaxTreeNode* __parsing_root;
             bool __inside_function;
+            bool __inside_method;
 
             LexicalAnalysis::Token* __cur_token() const;
 

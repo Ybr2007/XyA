@@ -100,8 +100,13 @@ namespace XyA
                 str += " " + std::to_string(this->parameter);
                 break;
 
-            case InstructionType::StoreAttr:
-                str += "Stroe Attr";
+            case InstructionType::StorePublicAttr:
+                str += "Stroe Public Attr";
+                str += " " + std::to_string(this->parameter);
+                break;
+
+            case InstructionType::StroePrivateAttr:
+                str += "Stroe Private Attr";
                 str += " " + std::to_string(this->parameter);
                 break;
 

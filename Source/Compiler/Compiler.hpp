@@ -200,8 +200,13 @@ namespace XyA
                 this->__compile_expression(code_object, assignment_root->children[0]);
                 code_object->instructions.pop_back();
                 this->__compile_expression(code_object, assignment_root->children[1]);
-                Runtime::Instruction* store_attr_instruction = new Runtime::Instruction(Runtime::InstructionType::StoreAttr);;
 
+                bool has_visibility_modifier = assignment_root->children[0]->children.size() == 2;
+                Runtime::Instruction* store_attr_instruction = new Runtime::Instruction(
+                    !has_visibility_modifier || assignment_root->children[0]->children[1]->token->type == LexicalAnalysis::TokenType::Kw_Public ?
+                    Runtime::InstructionType::StorePublicAttr : Runtime::InstructionType::StroePrivateAttr
+                );
+                
                 if (!code_object->try_get_attr_name_index(assignment_root->children[0]->token->value, store_attr_instruction->parameter))
                 {
                     store_attr_instruction->parameter = code_object->add_attr_name(assignment_root->children[0]->token->value);
@@ -559,10 +564,6 @@ namespace XyA
                 {
                     exception_thrown = true;
                     return XyA_Allocate(Runtime::Builtin::BuiltinException, "The return object of the method __init__ is not null");
-                }
-                else
-                {
-                    XyA_Deallocate(return_object);
                 }
 
                 XyA_Deallocate_Array(init_Method_args, arg_num);

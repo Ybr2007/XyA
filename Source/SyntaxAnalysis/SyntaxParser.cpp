@@ -11,6 +11,7 @@ namespace XyA
             this->__parsing_tokens = tokens;
             this->__parsing_root = new SyntaxTreeNode(SyntaxTreeNodeType::Root);
             this->__inside_function = false;
+            this->__inside_method = false;
 
             do
             {
@@ -65,7 +66,9 @@ namespace XyA
 
         SyntaxTreeNode* SyntaxParser::__parse_unit()
         {
-            // unit -> block | if | line | function_definiton | class_definition
+            // unit -> block | if | line | function_definiton | class_definition]
+            // function_unit -> block | if | while | line | function_definiton | return
+            // method_unit -> block | if | while | method_line | function_definiton | return
             switch (this->__cur_token()->type)
             {
             case LexicalAnalysis::TokenType::S_LBrace:
@@ -102,14 +105,38 @@ namespace XyA
         SyntaxTreeNode* SyntaxParser::__parse_line()
         {
             // line -> (assignment | expression) ";"
+            // method_line -> (attr_assignment | expression) ";"
+            // attr_assignment -> VisibilityModifier? assignment
+
+            SyntaxTreeNode* visibility_modifier = nullptr;
+            if (this->__cur_token()->is_visibility_modifier())
+            {
+                if (this->__inside_method)
+                {
+                    visibility_modifier = new SyntaxTreeNode(SyntaxTreeNodeType::Modifier);
+                    visibility_modifier->token = this->__cur_token();
+                    if (!this->__try_move_ptr())
+                    {
+                        this->__throw_exception("Expected expressions", this->__cur_token()->end_pos);
+                        return nullptr;
+                    }
+                }
+                else
+                {
+                    this->__throw_exception("Found visibility modifiers out of methods", this->__cur_token()->start_pos);
+                    return nullptr;
+                }
+            }
+
             SyntaxTreeNode* node = this->__parse_expression();
             if (node == nullptr)
             {
                 return nullptr;
             }
 
+            bool expression_is_attr = node->type == SyntaxTreeNodeType::Attr;
             bool expression_assignable = (node->type == SyntaxTreeNodeType::Primary && !node->token->is_literal()) || 
-                node->type == SyntaxTreeNodeType::Attr;
+                expression_is_attr;
 
             SyntaxTreeNode* assignment_type_hint = nullptr;
             if (expression_assignable && !this->__at_end() && 
@@ -121,7 +148,7 @@ namespace XyA
                     return nullptr;
                 }
                 assignment_type_hint = this->__parse_type_hint();
-                if (node == nullptr)
+                if (assignment_type_hint == nullptr)
                 {
                     return nullptr;
                 }
@@ -136,6 +163,14 @@ namespace XyA
                     return nullptr;
                 }
             }
+
+            if (expression_is_attr && visibility_modifier != nullptr)
+            {
+                SyntaxTreeNode* attr = node->children[0];
+                attr->children.reserve(2);
+                attr->children.push_back(visibility_modifier);
+            }
+            
 
             if (!this->__try_move_ptr() || this->__cur_token()->type != LexicalAnalysis::TokenType::S_Semicolon)
             {
@@ -153,6 +188,8 @@ namespace XyA
         SyntaxTreeNode* SyntaxParser::__parse_block()
         {
             // block -> "{" unit* "}"
+            // function_block -> "{" function_unit* "}"
+            // method_block   -> "{" method_unit* "}"
 
             LexicalAnalysis::TokenPos left_brace_pos = this->__cur_token()->start_pos;
             if (!this->__try_move_ptr())
@@ -783,17 +820,19 @@ namespace XyA
 
         SyntaxTreeNode* SyntaxParser::__parse_function_definition()
         {
-            // function_definition -> "fn" Identifier "(" argument_list_definition? ")" ("->" type_hint)? block
+            // function_definition -> "fn" Identifier "(" argument_list_definition? ")" ("->" type_hint)? function_block
             this->__inside_function = true;
 
             if (!this->__try_move_ptr())
             {
                 this->__throw_exception("Expected function name", this->__cur_token()->end_pos);
+                this->__inside_function = false;
                 return nullptr;
             }
             if (this->__cur_token()->type != LexicalAnalysis::TokenType::Identifier)
             {
                 this->__throw_exception("Expected function name", this->__cur_token()->start_pos);
+                this->__inside_function = false;
                 return nullptr;
             }
 
@@ -803,11 +842,13 @@ namespace XyA
             if (!this->__try_move_ptr() || this->__cur_token()->type != LexicalAnalysis::TokenType::S_LParenthesis)
             {
                 this->__throw_exception("Expected '('", this->__cur_token()->start_pos);
+                this->__inside_function = false;
                 return nullptr;
             }
             if (this->__at_end())
             {
                 this->__throw_exception("'(' was not closed", this->__cur_token()->start_pos);
+                this->__inside_function = false;
                 return nullptr;
             }
 
@@ -818,6 +859,7 @@ namespace XyA
                 argument_list = this->__parse_argument_list_definition();
                 if (argument_list == nullptr)
                 {
+                    this->__inside_function = false;
                     return nullptr;
                 }
             }
@@ -829,11 +871,13 @@ namespace XyA
             if (!this->__try_move_ptr())  // 移动到')'
             {
                 this->__throw_exception("'(' was not closed", this->__cur_token()->end_pos);
+                this->__inside_function = false;
                 return nullptr;
             }
             if (!this->__try_move_ptr())
             {
-                this->__throw_exception("Expected indented block ", this->__cur_token()->end_pos);
+                this->__throw_exception("Expected indented block ", this->__cur_token()->end_pos);\
+                this->__inside_function = false;
                 return nullptr;
             }
 
@@ -843,18 +887,21 @@ namespace XyA
                 if (!this->__try_move_ptr())
                 {
                     this->__throw_exception("Expected type hint ", this->__cur_token()->end_pos);
+                    this->__inside_function = false;
                     return nullptr;
                 }
 
                 return_value_type_hint = this->__parse_type_hint();
                 if (return_value_type_hint == nullptr)
                 {
+                    this->__inside_function = false;
                     return nullptr;
                 }
 
                 if (!this->__try_move_ptr())
                 {
                     this->__throw_exception("Expected indented block ", this->__cur_token()->end_pos);
+                    this->__inside_function = false;
                     return nullptr;
                 }
             }
@@ -862,12 +909,14 @@ namespace XyA
             if (this->__cur_token()->type != LexicalAnalysis::TokenType::S_LBrace)
             {
                 this->__throw_exception("Expected indented block ", this->__cur_token()->end_pos);
+                this->__inside_function = false;
                 return nullptr;
             }
 
-            SyntaxTreeNode* function_body = this->__parse_block();
+            SyntaxTreeNode* function_body = this->__parse_block();  // this->__inside_function == true => parse_function_block
             if (function_body == nullptr)
             {
+                this->__inside_function = false;
                 return nullptr;
             }
 
@@ -1004,21 +1053,26 @@ namespace XyA
         SyntaxTreeNode* SyntaxParser::__parse_method_definition()
         {
             // method_definition -> VisibilityModifier? function_definition
-            if (!this->__cur_token()->is_method_modifier())
+            this->__inside_method = true;
+
+            if (!this->__cur_token()->is_visibility_modifier())
             {
                 if (this->__cur_token()->type != LexicalAnalysis::TokenType::Kw_Fn)
                 {
                     this->__throw_exception("Expected method definition", this->__cur_token()->end_pos);
+                    this->__inside_method = false;
                     return nullptr;
                 }
 
                 SyntaxTreeNode* function_definition_node = this->__parse_function_definition();
                 if (function_definition_node == nullptr)
                 {
+                    this->__inside_method = false;
                     return nullptr;
                 }
 
                 function_definition_node->type = SyntaxTreeNodeType::Method_Definition;
+                this->__inside_method = false;
                 return function_definition_node;
             }
 
@@ -1028,18 +1082,21 @@ namespace XyA
             if (!this->__try_move_ptr())
             {
                 this->__throw_exception("Expected method definition", this->__cur_token()->start_pos);
+                this->__inside_method = false;
                 return nullptr;
             }
 
             if (this->__cur_token()->type != LexicalAnalysis::TokenType::Kw_Fn)
             {
                 this->__throw_exception("Expected method definition", this->__cur_token()->end_pos);
+                this->__inside_method = false;
                 return nullptr;
             }
 
             SyntaxTreeNode* function_definition_node = this->__parse_function_definition();
             if (function_definition_node == nullptr)
             {
+                this->__inside_method = false;
                 return nullptr;
             }
             function_definition_node->type = SyntaxTreeNodeType::Method_Definition;
@@ -1047,6 +1104,7 @@ namespace XyA
             function_definition_node->children.reserve(3);
             function_definition_node->children.push_back(modifier_node);
 
+            this->__inside_method = false;
             return function_definition_node;
         }
 
@@ -1088,7 +1146,7 @@ namespace XyA
                 }
                 else if (
                     this->__cur_token()->type == LexicalAnalysis::TokenType::Kw_Fn || 
-                    (this->__cur_token()->is_method_modifier() && !this->__at_end() && 
+                    (this->__cur_token()->is_visibility_modifier() && !this->__at_end() && 
                     this->__next_token()->type == LexicalAnalysis::TokenType::Kw_Fn)
                 )
                 {

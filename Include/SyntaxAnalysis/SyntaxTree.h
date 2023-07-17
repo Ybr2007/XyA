@@ -48,7 +48,7 @@ namespace XyA
             // chilren: 数量为2, children[0] 为callee表达式, children[1] 为实参列表(Argument_List)
             Call,
             // token: 属性标识符
-            // children: 数量为1, chilren[0] 为对象
+            // children: 数量为1或2, chilren[0] 为属性的所有者, children[1] 为修饰符(Modifier, 仅当node作为类内attr赋值对象时可选)
             Attr,
             // children: 数量为1, chilren[0] 为返回值表达式
             Return,
