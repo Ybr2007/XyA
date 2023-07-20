@@ -1,5 +1,5 @@
 #pragma once
-#include <Runtime/Object.h>
+#include <Runtime/BasicObjectDefs.h>
 #include <Runtime/Builtin/Bool.h>
 #include <Runtime/Builtin/String.h>
 #include <Runtime/Builtin/BuiltinFunction.h>

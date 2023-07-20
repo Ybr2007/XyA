@@ -1,4 +1,5 @@
 #include <Compiler/Compiler.h>
+#include <Runtime/Type.h>
 #include <Runtime/CustomFunction.h>
 #include <Runtime/Builtin/Null.h>
 #include <Runtime/VirtualMachine.h>
@@ -15,17 +16,7 @@ namespace XyA
             // delete于Runtime::Context::~Context
             this->__global_code_object = XyA_Allocate_(Runtime::CodeObject);
 
-            // 为global_code_object预留builtin objects的位置
-            // 实际的builtin objects将会在VirtualMachine启动时被加入到为global_code_object预留builtin.variable
-            this->__global_code_object->add_variable_name("int");
-            this->__global_code_object->add_variable_name("float");
-            this->__global_code_object->add_variable_name("str");
-            this->__global_code_object->add_variable_name("bool");
-            this->__global_code_object->add_variable_name("print");
-            this->__global_code_object->add_variable_name("_get_ref_count");
-            this->__global_code_object->add_variable_name("_get_id");
-            this->__global_code_object->add_variable_name("clock");
-            this->__global_code_object->add_variable_name("sizeof");
+            this->__init_builtins();
 
             for (auto unit : syntax_tree_root->children)
             {
@@ -38,6 +29,21 @@ namespace XyA
         void Compiler::register_error_callback(CompilerErrorCallback callback)
         {
             this->__error_callbacks.push_back(callback);
+        }
+
+        void Compiler::__init_builtins()
+        {
+            // 为global_code_object预留builtin objects的位置
+            // 实际的builtin objects将会在VirtualMachine启动时被加入到为global_code_object预留builtin.variable
+            this->__global_code_object->add_variable_name("int");
+            this->__global_code_object->add_variable_name("float");
+            this->__global_code_object->add_variable_name("str");
+            this->__global_code_object->add_variable_name("bool");
+            this->__global_code_object->add_variable_name("print");
+            this->__global_code_object->add_variable_name("_get_ref_count");
+            this->__global_code_object->add_variable_name("_get_id");
+            this->__global_code_object->add_variable_name("clock");
+            this->__global_code_object->add_variable_name("sizeof");
         }
 
         void Compiler::__compile_unit(Runtime::CodeObject* code_object, SyntaxAnalysis::SyntaxTreeNode* unit_root)

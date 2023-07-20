@@ -1,5 +1,6 @@
-#include <format>
 #include <Runtime/Builtin/Int.h>
+
+#include <format>
 #include <Runtime/Builtin/BuiltinFunction.h>
 #include <Runtime/MemoryManager.hpp>
 
@@ -12,7 +13,7 @@ namespace XyA
         {
             IntType::IntType()
             {
-                this->name = "int";
+                Type::Type("int");
                 this->ref_count_enabled = false;
                 this->set_attr(MagicMethodNames::add_method_name, XyA_Allocate(BuiltinFunction, int_object_add_method));
                 this->set_attr(MagicMethodNames::subtract_method_name, XyA_Allocate(BuiltinFunction, int_object_sub_method));

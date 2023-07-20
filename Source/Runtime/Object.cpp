@@ -1,4 +1,5 @@
 #include <Runtime/Object.h>
+#include <Runtime/Type.h>
 #include <Runtime/Builtin/BuiltinFunction.h>
 #include <Runtime/CustomFunction.h>
 #include <Runtime/MemoryManager.hpp>
@@ -165,11 +166,6 @@ namespace XyA
                 "<" + this->__type->name + " Object at " + std::to_string((size_t)this) + ">" ;
         }
         #endif
-
-        Type* Type::get_instance()
-        {
-            static Type instance;
-            return &instance;
-        }
+        
     }
 }

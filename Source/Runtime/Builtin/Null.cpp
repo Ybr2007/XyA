@@ -1,4 +1,5 @@
 #include <Runtime/Builtin/Null.h>
+
 #include <Runtime/MemoryManager.hpp>
 
 
@@ -10,7 +11,7 @@ namespace XyA
         {
             NullType::NullType()
             {
-                this->name = "null";
+                Type::Type("null_t");
                 this->set_attr(MagicMethodNames::equal_method_name, XyA_Allocate(BuiltinFunction, null_object_equal));
                 this->set_attr(MagicMethodNames::str_method_name, XyA_Allocate(BuiltinFunction, null_object_str));
             }

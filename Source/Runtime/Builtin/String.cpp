@@ -11,7 +11,7 @@ namespace XyA
         {
             StringType::StringType()
             {
-                this->name = "string";
+                Type::Type("string");
                 this->ref_count_enabled = false;
                 this->set_attr(MagicMethodNames::add_method_name, XyA_Allocate(BuiltinFunction, string_object_add));
                 this->set_attr(MagicMethodNames::multiply_method_name, XyA_Allocate(BuiltinFunction, string_object_multiply));

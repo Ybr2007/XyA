@@ -28,7 +28,7 @@ namespace XyA
 
         #ifdef Debug_Display_Memory_Leaks
         #define XyA_Allocate_(T) Runtime::MemoryPool::get_instance()->allocate<T>(FILE_LINE)
-        #define XyA_Allocate(T, args) Runtime::MemoryPool::get_instance()->allocate<T>(FILE_LINE, args)
+        #define XyA_Allocate(T, ...) Runtime::MemoryPool::get_instance()->allocate<T>(FILE_LINE, __VA_ARGS__)
         #define XyA_Deallocate(object) Runtime::MemoryPool::get_instance()->deallocate(FILE_LINE, object)
         #define XyA_Allocate_Array_(T, len) Runtime::MemoryPool::get_instance()->allocate_array<T>(FILE_LINE, len)
         #define XyA_Allocate_Array(T, len, ...) Runtime::MemoryPool::get_instance()->allocate_array<T>(FILE_LINE, len, __VA_ARGS__)

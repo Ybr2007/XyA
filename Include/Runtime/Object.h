@@ -79,15 +79,6 @@ namespace XyA
             Type* __type = nullptr;
         };
 
-        class Type : public Object
-        {
-        public:
-            std::string name = "type";
-            bool allow_ext_attr_add = false;
-
-            static Type* get_instance();
-        };
-
         #define XyA_Function_Check_Arg_Num(expected_arg_num_) \
                 if (arg_num != expected_arg_num_) \
                 { \

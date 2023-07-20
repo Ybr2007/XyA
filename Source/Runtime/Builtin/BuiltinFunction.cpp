@@ -13,7 +13,7 @@ namespace XyA
 
             BuiltinFunctionType::BuiltinFunctionType()
             {
-                this->name = "builtin function";
+                Type::Type("builtin_function");
                 this->set_attr(MagicMethodNames::str_method_name, XyA_Allocate(BuiltinFunction, builtin_function_str));
             }
 

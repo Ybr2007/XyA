@@ -12,7 +12,7 @@ namespace XyA
         {
             FloatType::FloatType()
             {
-                this->name = "float";
+                Type::Type("float");
                 this->ref_count_enabled = false;
                 this->set_attr(MagicMethodNames::add_method_name, XyA_Allocate(BuiltinFunction, float_object_add_method));
                 this->set_attr(MagicMethodNames::subtract_method_name, XyA_Allocate(BuiltinFunction, float_object_sub_method));

@@ -25,6 +25,8 @@ namespace XyA
             Runtime::CodeObject* __global_code_object;
             std::vector<CompilerErrorCallback> __error_callbacks;
 
+            void __init_builtins();
+
             void __compile_unit(Runtime::CodeObject* code_object, SyntaxAnalysis::SyntaxTreeNode* unit_root);
             void __compile_line(Runtime::CodeObject* code_object, SyntaxAnalysis::SyntaxTreeNode* line_root);
             void __compile_block(Runtime::CodeObject* code_object, SyntaxAnalysis::SyntaxTreeNode* block_root);

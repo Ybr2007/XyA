@@ -1,6 +1,5 @@
 #pragma once
-#include <functional>
-#include <Runtime/Object.h>
+#include <Runtime/BasicObjectDefs.h>
 #include <Runtime/MagicMethodNames.hpp>
 
 
@@ -19,7 +18,6 @@ namespace XyA
                 T* self = static_cast<T*>(args[0]);
                 
             Object* builtin_function_str(Object** args, size_t arg_num, bool& exception_thrown);  
-
 
             class BuiltinFunctionType : public Type
             {
