@@ -8,6 +8,7 @@
 #include <Runtime/VirtualMachine.h>
 #include <Config.h>
 #include <Runtime/MemoryManager.hpp>
+#include <Runtime/CustomFunction.h>
 
 
 namespace XyA

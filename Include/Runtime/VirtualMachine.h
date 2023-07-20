@@ -1,8 +1,8 @@
 #pragma once
 #include <functional>
+#include <Runtime/BasicObjectDefs.h>
 #include <Runtime/Context.h>
 #include <Runtime/Instruction.h>
-#include <Runtime/Object.h>
 #include <Runtime/MagicMethodNames.hpp>
 #include <Runtime/Builtin/BuiltinFunctions.h>
 

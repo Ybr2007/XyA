@@ -1,5 +1,5 @@
 #include <format>
-#include <time.h>
+#include <chrono>
 #include <Runtime/Builtin/BuiltinFunctions.h>
 #include <Runtime/MemoryManager.hpp>
 
@@ -80,11 +80,17 @@ namespace XyA
                 return XyA_Allocate(IntObject, (long long)args[0]);
             }
 
+
+            auto start_time = std::chrono::high_resolution_clock::now();
+
             Object* clock_(Object** args, size_t arg_num, bool& exception_thrown)
             {
                 XyA_Function_Check_Arg_Num(0)
 
-                return XyA_Allocate(IntObject, clock());
+                auto cur_time = std::chrono::high_resolution_clock::now();
+                auto t = std::chrono::duration_cast<std::chrono::nanoseconds>(cur_time - start_time);
+
+                return XyA_Allocate(IntObject, t.count());
             }
 
             Object* sizeof_(Object** args, size_t arg_num, bool& exception_thrown)
