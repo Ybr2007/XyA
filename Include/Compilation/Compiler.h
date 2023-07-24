@@ -7,7 +7,7 @@
 
 namespace XyA
 {
-    namespace Compiler
+    namespace Compilation
     {
         using CompilerErrorCallback = std::function<void(std::string_view, LexicalAnalysis::TokenPos)>;
 
@@ -45,5 +45,5 @@ namespace XyA
             void __throw_error(std::string_view message, LexicalAnalysis::TokenPos pos) const;
         };
 
-    }  // namespace Compiler
+    }  // namespace Compilation
 }  // namespace XyA

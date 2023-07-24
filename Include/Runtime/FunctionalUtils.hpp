@@ -15,7 +15,7 @@ namespace XyA
 
         inline bool is_custom_function(Object* object)
         {
-            return object->type() == FunctionType::get_instance();
+            return object->type() == CustomFunctionType::get_instance();
         }
         
         inline bool is_function(Object* object)
@@ -23,7 +23,7 @@ namespace XyA
             return is_builtin_function(object) || is_custom_function(object);
         }
 
-        inline bool is_callablel(Object* object)
+        inline bool is_callable(Object* object)
         {
             return is_function(object);
         }

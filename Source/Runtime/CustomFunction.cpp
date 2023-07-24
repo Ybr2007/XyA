@@ -9,20 +9,20 @@ namespace XyA
 {
     namespace Runtime
     {
-        FunctionType::FunctionType()
+        CustomFunctionType::CustomFunctionType()
         {
             this->name = "function";
         }
 
-        FunctionType* FunctionType::get_instance()
+        CustomFunctionType* CustomFunctionType::get_instance()
         {
-            static FunctionType instance;
+            static CustomFunctionType instance;
             return &instance;
         }
 
         CustomFunction::CustomFunction()
         {
-            this->__type = FunctionType::get_instance();
+            this->__type = CustomFunctionType::get_instance();
             this->code_object = XyA_Allocate_(CodeObject);
         }
 

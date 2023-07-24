@@ -31,9 +31,7 @@ namespace XyA
             while (this->cur_context->instruction_ptr < this->cur_context->code_obj->instructions.size())
             {
                 Instruction* cur_instruction = this->cur_context->cur_instruction();
-                // printf("Instruction %zd, %s\n", (size_t)VirtualMachine::get_instance()->cur_context, cur_instruction->to_string().c_str());
                 this->__excute_instruction(cur_instruction);
-                // printf("FINISH\n");
 
                 if (this->cur_context == nullptr)
                 {
@@ -492,7 +490,7 @@ namespace XyA
 
                     return_value = new_method->call(args, arg_num, exception_thrown);
                 }
-                else if (is_callablel(callee_object))
+                else if (is_callable(callee_object))
                 {
                     BaseFunction* callee_function = static_cast<BaseFunction*>(callee_object);
                     arg_num = instruction->parameter;

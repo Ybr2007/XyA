@@ -7,12 +7,12 @@ namespace XyA
 {
     namespace Runtime
     {
-        class FunctionType : public Type
+        class CustomFunctionType : public Type
         {
         public:
-            FunctionType();
+            CustomFunctionType();
 
-            static FunctionType* get_instance();
+            static CustomFunctionType* get_instance();
         };
 
         class CustomFunction : public BaseFunction

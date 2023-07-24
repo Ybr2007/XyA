@@ -1,4 +1,4 @@
-#include <Compiler/Compiler.h>
+#include <Compilation/Compiler.h>
 #include <Runtime/Type.h>
 #include <Runtime/CustomFunction.h>
 #include <Runtime/Builtin/Null.h>
@@ -8,7 +8,7 @@
 
 namespace XyA
 {
-    namespace Compiler
+    namespace Compilation
     {
         using namespace Runtime;
         using CompilerErrorCallback = std::function<void(std::string_view, LexicalAnalysis::TokenPos)>;

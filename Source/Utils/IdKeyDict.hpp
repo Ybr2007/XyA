@@ -1,6 +1,7 @@
 #pragma once
 #include <stddef.h>
 #include <functional>
+#include <TypeDefs.h>
 #include <Runtime/MemoryManager.hpp>
 
 
@@ -8,13 +9,13 @@ namespace XyA
 {
     namespace Runtime
     {
-        template <typename T, size_t N = 15>
+        template <typename T, Id N = 15>
         class IdKeyDict
         {
         private:
             struct Node
             {
-                size_t key;
+                Id key;
                 T value;
                 Node* next = nullptr;
             };
@@ -22,7 +23,7 @@ namespace XyA
             class Iterator
             {
             public:
-                Iterator(Node** node_list_heads ,Node* node, size_t index)
+                Iterator(Node** node_list_heads ,Node* node, Id index)
                 {
                     this->__node_list_heads = node_list_heads;
                     this->__node = node;
@@ -34,7 +35,7 @@ namespace XyA
                     this->__node = this->__node->next;
                     if (this->__node == nullptr)
                     {
-                        for (size_t i = this->__index + 1; i < N; i ++)
+                        for (Index i = this->__index + 1; i < N; i ++)
                         {
                             if (this->__node_list_heads[i] != nullptr)
                             {
@@ -65,7 +66,7 @@ namespace XyA
             private:
                 Node** __node_list_heads;
                 Node* __node;
-                size_t __index;
+                Id __index;
             };
 
         public:
@@ -77,7 +78,7 @@ namespace XyA
 
             ~IdKeyDict()
             {
-                for (size_t i = 0; i < N; i ++)
+                for (Index i = 0; i < N; i ++)
                 {
                     while (this->__node_list_heads[i] != nullptr)
                     {
@@ -89,9 +90,9 @@ namespace XyA
                 XyA_Deallocate_Array(this->__node_list_heads, N);
             }
 
-            T& operator[](size_t key)
+            T& operator[](Id key)
             {
-                size_t index = this->__hash(key);
+                Index index = this->__hash(key);
                 
                 Node* node = this->__node_list_heads[index];
                 while (node != nullptr)
@@ -110,9 +111,9 @@ namespace XyA
                 return node->value;
             }
 
-            bool try_get(size_t key, T& result_value) const
+            bool try_get(Id key, T& result_value) const
             {
-                size_t index = this->__hash(key);
+                Index index = this->__hash(key);
                 
                 Node* node = this->__node_list_heads[index];
                 while (node != nullptr)
@@ -127,9 +128,9 @@ namespace XyA
                 return false;
             }
 
-            void remove(size_t key)
+            void remove(Id key)
             {
-                size_t index = this->__hash(key);
+                Index index = this->__hash(key);
                 
                 Node* prev = nullptr;
                 Node* node = this->__node_list_heads[index];
@@ -155,7 +156,7 @@ namespace XyA
 
             Iterator begin() const
             {
-                for (size_t i = 0; i < N; i ++)
+                for (Index i = 0; i < N; i ++)
                 {
                     if (this->__node_list_heads[i] != nullptr)
                     {
@@ -171,7 +172,7 @@ namespace XyA
             }
 
         private:
-            size_t __hash(size_t key) const
+            Index __hash(Id key) const
             {
                 return key % N;
             }

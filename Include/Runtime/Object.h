@@ -3,6 +3,7 @@
 #include <array>
 #include <unordered_map>
 #include <format>
+#include <TypeDefs.h>
 #include <Runtime/MagicMethodNames.h>
 #include <Utils/IdKeyDict.hpp>
 #include <Config.h>
@@ -60,11 +61,10 @@ namespace XyA
 
             bool is_instance(Type* type) const;
 
-            void set_attr(size_t attr_name_id, Attr attr);
-            void set_attr(size_t attr_name_id, Object* attr_object, AttrAccessibility accessibility = AttrAccessibility::Public);
-            TryGetAttrResult try_get_attr(size_t attr_name_id, Attr& result) const;
-            TryGetMethodResult try_get_method(
-                size_t method_name_id, BaseFunction*& method_result, AttrAccessibility& accessibility_result) const;
+            void set_attr(Id attr_name_id, Attr attr);
+            void set_attr(Id attr_name_id, Object* attr_object, AttrAccessibility accessibility = AttrAccessibility::Public);
+            TryGetAttrResult try_get_attr(Id attr_name_id, Attr& result) const;
+            TryGetMethodResult try_get_method(Id method_name_id, BaseFunction*& method_result, AttrAccessibility& accessibility_result) const;
             virtual ~Object();
 
             #ifdef Debug_Display_Object
@@ -92,7 +92,7 @@ namespace XyA
         class BaseException : public Object
         {
         public:
-            virtual std::string_view message() const = 0;
+            virtual StringView message() const = 0;
         };
     }
 }

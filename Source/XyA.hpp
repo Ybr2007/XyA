@@ -4,7 +4,7 @@
 #include <format>
 #include <LexicalAnalysis/TokenAnalyzer.h>
 #include <SyntaxAnalysis/SyntaxParser.h>
-#include <Compiler/Compiler.h>
+#include <Compilation/Compiler.h>
 #include <Runtime/VirtualMachine.h>
 #include <Config.h>
 #include <Runtime/MemoryManager.hpp>
@@ -25,7 +25,7 @@ namespace XyA
         std::string_view excuting_source;
         LexicalAnalysis::TokenAnalyzer token_analyzer;
         SyntaxAnalysis::SyntaxParser syntax_parser;
-        Compiler::Compiler compiler;
+        Compilation::Compiler compiler;
         Runtime::VirtualMachine* virtual_machine = Runtime::VirtualMachine::get_instance();
 
         std::vector<std::pair<std::string, LexicalAnalysis::TokenPos>> error_messages;
