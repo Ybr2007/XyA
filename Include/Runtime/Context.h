@@ -1,5 +1,6 @@
 #pragma once
 #include <stack>
+#include <TypeDefs.h>
 #include <Utils/Stack.hpp>
 #include <Runtime/Object.h>
 #include <Runtime/CodeObject.h>
@@ -39,7 +40,7 @@ namespace XyA
             Object* get_variable_at(size_t index) const;
             void set_variable_at(size_t index, Object* new_object);
 
-            const std::string& get_variable_name_at(size_t index) const;
+            StringView get_variable_name_at(size_t index) const;
 
             void push_operand(Object* obj);
             Object* pop_operand();

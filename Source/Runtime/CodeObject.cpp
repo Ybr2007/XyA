@@ -110,31 +110,12 @@ namespace XyA
             }
         }
 
-        bool CodeObject::try_get_variable_index(const std::string& variable_name, size_t& result) const
+        bool CodeObject::try_get_variable_index(StringView variable_name, size_t& result) const
         {
             auto iter = this->variable_name_2_index.find(variable_name);
             if (iter != variable_name_2_index.end()) 
             {
                 result = iter->second;
-                return true;
-            } 
-            else 
-            {
-                return false;
-            }
-        }
-        
-        bool CodeObject::try_get_attr_name_index(const std::string& attr_name, size_t& result) const
-        {
-            auto iter = std::find_if(this->attr_names.begin(), this->attr_names.end(),
-                [&](const std::string& defined_name) -> bool
-                {
-                    return defined_name == attr_name;
-                }
-            );
-            if (iter != this->attr_names.end()) 
-            {
-                result = std::distance(this->attr_names.begin(), iter);
                 return true;
             } 
             else 
@@ -150,17 +131,11 @@ namespace XyA
             return this->literals.size() - 1;
         }
 
-        size_t CodeObject::add_variable_name(const std::string& variable_name)
+        size_t CodeObject::add_variable_name(StringView variable_name)
         {
             size_t index = this->variable_name_2_index.size();
             this->variable_name_2_index[variable_name] = index;
             return index;
-        }
-
-        size_t CodeObject::add_attr_name(const std::string& attr_name)
-        {
-            this->attr_names.push_back(attr_name);
-            return this->attr_names.size() - 1;
         }
 
         #ifdef Debug_Display_Object

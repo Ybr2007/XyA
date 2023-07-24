@@ -2,6 +2,7 @@
 #include <Runtime/MemoryManager.hpp>
 #include <Runtime/VirtualMachine.h>
 #include <Runtime/FunctionalUtils.hpp>
+#include <Runtime/NameMapping.h>
 
 
 namespace XyA
@@ -115,14 +116,14 @@ namespace XyA
 
             case InstructionType::GetAttr:
             {
-                const std::string& attr_name = this->cur_context->code_obj->attr_names[instruction->parameter];
                 Object* attr_owner = this->cur_context->top_operand();
 
                 Attr attr;
-                TryGetAttrResult operation_result = attr_owner->try_get_attr(attr_name, attr);
+                TryGetAttrResult operation_result = attr_owner->try_get_attr(instruction->parameter, attr);
 
                 if (operation_result == TryGetAttrResult::NotFound)
                 {
+                    StringView attr_name = NameMapper::get_instance().get_name(instruction->parameter);
                     this->cur_context->set_exception(
                         XyA_Allocate(Builtin::BuiltinException, std::format("The attr '{}' is not defined or already deleted.", attr_name))
                     );
@@ -131,6 +132,7 @@ namespace XyA
 
                 if (attr.accessibility == AttrAccessibility::Private && this->cur_context->cls() != attr_owner->type())
                 {
+                    StringView attr_name = NameMapper::get_instance().get_name(instruction->parameter);
                     this->cur_context->set_exception(
                         XyA_Allocate(Builtin::BuiltinException, std::format("Can not access the private attr '{}'", attr_name))
                     );
@@ -143,15 +145,14 @@ namespace XyA
 
             case InstructionType::GetMethod:
             {
-                const std::string& attr_name = this->cur_context->code_obj->attr_names[instruction->parameter];
-
                 Object* attr_owner = this->cur_context->top_operand();
 
                 Attr attr;
-                TryGetAttrResult operation_result = attr_owner->try_get_attr(attr_name, attr);
+                TryGetAttrResult operation_result = attr_owner->try_get_attr(instruction->parameter, attr);
 
                 if (operation_result == TryGetAttrResult::NotFound)
                 {
+                    StringView attr_name = NameMapper::get_instance().get_name(instruction->parameter);
                     this->cur_context->set_exception(
                         XyA_Allocate(Builtin::BuiltinException, std::format("The attr '{}' is not defined or already deleted.", attr_name))
                     );
@@ -160,6 +161,7 @@ namespace XyA
 
                 if (attr.accessibility == AttrAccessibility::Private && this->cur_context->cls() != attr_owner->type())
                 {
+                    StringView attr_name = NameMapper::get_instance().get_name(instruction->parameter);
                     this->cur_context->set_exception(
                         XyA_Allocate(Builtin::BuiltinException, std::format("Can not access the private attr '{}'", attr_name))
                     );
@@ -179,18 +181,17 @@ namespace XyA
             case InstructionType::StorePublicAttr:
             case InstructionType::StroePrivateAttr:
             {
-                const std::string& attr_name = this->cur_context->code_obj->attr_names[instruction->parameter];
-
                 Object* new_attr = this->cur_context->pop_operand();
                 Object* attr_owner = this->cur_context->pop_operand();
 
                 Attr old_attr;
-                TryGetAttrResult operation_result = attr_owner->try_get_attr(attr_name, old_attr);
+                TryGetAttrResult operation_result = attr_owner->try_get_attr(instruction->parameter, old_attr);
 
                 if (operation_result == TryGetAttrResult::OK)
                 {
                     if (old_attr.accessibility == AttrAccessibility::Private && this->cur_context->code_obj->cls != attr_owner->type())
                     {
+                    StringView attr_name = NameMapper::get_instance().get_name(instruction->parameter);
                         this->cur_context->set_exception(
                             XyA_Allocate(Builtin::BuiltinException, std::format("Can not access the private attr '{}'", attr_name))
                         );
@@ -201,6 +202,7 @@ namespace XyA
                 {
                     if (!attr_owner->type()->allow_ext_attr_add && this->cur_context->code_obj->cls != attr_owner->type())
                     {
+                    StringView attr_name = NameMapper::get_instance().get_name(instruction->parameter);
                         this->cur_context->set_exception(
                             XyA_Allocate(Builtin::BuiltinException,
                                 std::format("Objects of type '{}' do not allow external attribute addition", attr_owner->type()->name))
@@ -213,68 +215,68 @@ namespace XyA
                     }
                 }
 
-                attr_owner->set_attr(attr_name, new_attr, old_attr.accessibility);
+                attr_owner->set_attr(instruction->parameter, new_attr, old_attr.accessibility);
 
                 break;
             }
 
             case InstructionType::BinaryAdd:
             {
-                this->__call_binary_operation_magic_method(MagicMethodNames::add_method_name);
+                this->__call_binary_operation_magic_method(MagicMethodNames::add_method_name_id);
                 break;
             }
 
             case InstructionType::BinarySubtract:
             {
-                this->__call_binary_operation_magic_method(MagicMethodNames::subtract_method_name);
+                this->__call_binary_operation_magic_method(MagicMethodNames::subtract_method_name_id);
                 break;
             }
 
             case InstructionType::BinaryMultiply:
             {
-                this->__call_binary_operation_magic_method(MagicMethodNames::multiply_method_name);
+                this->__call_binary_operation_magic_method(MagicMethodNames::multiply_method_name_id);
                 break;
             }
 
             case InstructionType::BinaryDevide:
             {
-                this->__call_binary_operation_magic_method(MagicMethodNames::divide_method_name);
+                this->__call_binary_operation_magic_method(MagicMethodNames::divide_method_name_id);
                 break;
             }
 
             case InstructionType::CompareIfEqual:
             {
-                this->__call_compare_magic_method(MagicMethodNames::equal_method_name);
+                this->__call_compare_magic_method(MagicMethodNames::equal_method_name_id);
                 break;
             }
 
             case InstructionType::CompareIfGreaterThan:
             {
-                this->__call_compare_magic_method(MagicMethodNames::greater_method_name);
+                this->__call_compare_magic_method(MagicMethodNames::greater_method_name_id);
                 break;
             }
 
             case InstructionType::CompareIfGreaterEqual:
             {
-                this->__call_compare_magic_method(MagicMethodNames::greater_equal_method_name);
+                this->__call_compare_magic_method(MagicMethodNames::greater_equal_method_name_id);
                 break;
             }
 
             case InstructionType::CompareIfLessThan:
             {
-                this->__call_compare_magic_method(MagicMethodNames::less_method_name);
+                this->__call_compare_magic_method(MagicMethodNames::less_method_name_id);
                 break;
             }
 
             case InstructionType::CompareIfLessEqual:
             {
-                this->__call_compare_magic_method(MagicMethodNames::less_equal_method_name);
+                this->__call_compare_magic_method(MagicMethodNames::less_equal_method_name_id);
                 break;
             }
 
             case InstructionType::CompareIfNotEqual:
             {
-                this->__call_compare_magic_method(MagicMethodNames::not_equal_method_name);
+                this->__call_compare_magic_method(MagicMethodNames::not_equal_method_name_id);
                 break;
             }
 
@@ -293,7 +295,7 @@ namespace XyA
                 {
                     BaseFunction* bool_method;
                     AttrAccessibility accessibility;
-                    TryGetMethodResult operation_result =  top_object->try_get_method(MagicMethodNames::bool_method_name, bool_method, accessibility);
+                    TryGetMethodResult operation_result =  top_object->try_get_method(MagicMethodNames::bool_method_name_id, bool_method, accessibility);
 
                     if (accessibility == AttrAccessibility::Private && this->cur_context->cls() != top_object->type())
                     {
@@ -385,35 +387,41 @@ namespace XyA
 
                 Object* original_object = this->cur_context->top_operand();
 
-                std::string method_name;
+                size_t method_name_id;
                 if (convert_to_string)
                 {
-                    method_name = MagicMethodNames::str_method_name;
+                    method_name_id = MagicMethodNames::str_method_name_id;
                 }
                 else if (convert_to_bool)
                 {
-                    method_name = MagicMethodNames::bool_method_name;
+                    method_name_id = MagicMethodNames::bool_method_name_id;
                 }
                 else
                 {
-                    method_name = MagicMethodNames::as_method_name;
+                    method_name_id = MagicMethodNames::as_method_name_id;
                 }
 
                 BaseFunction* method;
                 AttrAccessibility accessibility;
-                TryGetMethodResult result = original_object->try_get_method(method_name, method, accessibility);
+                TryGetMethodResult result = original_object->try_get_method(method_name_id, method, accessibility);
 
                 switch (result)
                 {
                 case TryGetMethodResult::NotFound:
+                {
+                    StringView method_name = NameMapper::get_instance().get_name(method_name_id);
                     this->cur_context->set_exception(std::format("The method '{}' was not found", method_name));
                     this->__throw_exception();
                     return;
+                }
 
                 case TryGetMethodResult::NotCallable:
+                {
+                    StringView method_name = NameMapper::get_instance().get_name(method_name_id);
                     this->cur_context->set_exception(std::format("The method '{}' was not callable", method_name));
                     this->__throw_exception();
                     return;
+                }
 
                 default:
                     break;
@@ -421,6 +429,7 @@ namespace XyA
 
                 if (accessibility == AttrAccessibility::Private && this->cur_context->cls() != original_object->type())
                 {
+                    StringView method_name = NameMapper::get_instance().get_name(method_name_id);
                     this->cur_context->set_exception(std::format("Can not access the private attr '{}'", method_name));
                     this->__throw_exception();
                     return;
@@ -473,7 +482,7 @@ namespace XyA
 
                     BaseFunction* new_method;
                     AttrAccessibility accessibility;
-                    auto result = callee_object->try_get_method(MagicMethodNames::new_method_name, new_method, accessibility);
+                    auto result = callee_object->try_get_method(MagicMethodNames::new_method_name_id, new_method, accessibility);
 
                     if (result != TryGetMethodResult::OK)
                     {
@@ -553,14 +562,14 @@ namespace XyA
             this->cur_context = back;
         }
 
-        void VirtualMachine::__call_binary_operation_magic_method(const std::string& magic_method_name)
+        void VirtualMachine::__call_binary_operation_magic_method(size_t magic_method_name_id)
         {
             Object* obj_2 = this->cur_context->pop_operand();
             Object* obj_1 = this->cur_context->top_operand();
 
             BaseFunction* method;
             AttrAccessibility accessibility;
-            TryGetMethodResult result = obj_1->try_get_method(magic_method_name, method, accessibility);
+            TryGetMethodResult result = obj_1->try_get_method(magic_method_name_id, method, accessibility);
 
             switch (result)
             {
@@ -584,6 +593,7 @@ namespace XyA
 
             if (accessibility == AttrAccessibility::Private && this->cur_context->cls() != obj_1->type())
             {
+                StringView magic_method_name = NameMapper::get_instance().get_name(magic_method_name_id);
                 this->cur_context->set_exception(
                     XyA_Allocate(Builtin::BuiltinException, std::format("Can not access the private attr '{}'", magic_method_name))
                 );
@@ -606,17 +616,18 @@ namespace XyA
             this->cur_context->set_top_operand(return_value);
         }
 
-        void VirtualMachine::__call_compare_magic_method(const std::string& magic_method_name)
+        void VirtualMachine::__call_compare_magic_method(size_t magic_method_name_id)
         {
             Object* obj_2 = this->cur_context->pop_operand();
             Object* obj_1 = this->cur_context->top_operand();
 
             BaseFunction* method;
             AttrAccessibility accessibility;
-            TryGetMethodResult result = obj_1->try_get_method(magic_method_name, method, accessibility);
+            TryGetMethodResult result = obj_1->try_get_method(magic_method_name_id, method, accessibility);
 
             if (accessibility == AttrAccessibility::Private && this->cur_context->cls() != obj_1->type())
             {
+                StringView magic_method_name = NameMapper::get_instance().get_name(magic_method_name_id);
                 this->cur_context->set_exception(
                     XyA_Allocate(Builtin::BuiltinException, std::format("Can not access the private attr '{}'", magic_method_name))
                 );
@@ -657,6 +668,7 @@ namespace XyA
             }
             if (!return_value->is_instance(Builtin::BoolType::get_instance()))
             {
+                StringView magic_method_name = NameMapper::get_instance().get_name(magic_method_name_id);
                 this->cur_context->set_exception(
                     XyA_Allocate(Builtin::BuiltinException, std::format("The return value of the method '{}' is not of bool type", magic_method_name))
                 );

@@ -3,7 +3,7 @@
 #include <Runtime/Builtin/Int.h>
 #include <Runtime/Builtin/Null.h>
 #include <Runtime/Builtin/String.h>
-#include <Runtime/MagicMethodNames.hpp>
+#include <Runtime/MagicMethodNames.h>
 
 
 namespace XyA

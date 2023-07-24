@@ -9,6 +9,9 @@
 #include <Config.h>
 #include <Runtime/MemoryManager.hpp>
 #include <Runtime/CustomFunction.h>
+#ifdef Debug_Display_Instructions
+#include <Runtime/NameMapping.h>
+#endif
 
 
 namespace XyA
@@ -155,7 +158,7 @@ namespace XyA
             {
                 for (const auto& iter : dynamic_cast<Runtime::Type*>(iter.second)->attrs)
                 {
-                    printf("Method: %s\n", iter->key.c_str());
+                    printf("Method: %s\n", Runtime::NameMapper::get_instance().get_name(iter->key).data());
 
                     Runtime::CustomFunction* method = dynamic_cast<Runtime::CustomFunction*>(iter->value.object);
 
@@ -171,41 +174,17 @@ namespace XyA
         printf("\n");
         #endif
 
-        // 编译结束, Tokens、SyntaxTree不再使用, 释放
-        for (LexicalAnalysis::Token* token : *tokens)
-        {
-            delete token;
-        }
-        delete tokens;
+        // 编译结束, SyntaxTree不再使用, 释放
         delete syntax_tree;
 
         // 启动虚拟机
         this->virtual_machine->execute(code_object);
 
-        #ifdef DebugMode
-        printf("\nVariables:\n");
-        for (auto item : global_context->code_obj->variable_name_indices)
+        for (LexicalAnalysis::Token* token : *tokens)
         {
-            if (global_context->local_variables[item.second] == nullptr)
-            {
-                printf("<NULL>\n");
-                continue;
-            }
-            Runtime::Builtin::StringObject* str_obj = dynamic_cast<Runtime::Builtin::StringObject*>(global_context->local_variables[item.second]);
-            if (str_obj == nullptr)
-            {
-                Runtime::BaseFunction* str_method = dynamic_cast<Runtime::BaseFunction*>(
-                    global_context->local_variables[item.second]->type->attrs[Runtime::MagicMethodNames::str_method_name]);
-                Runtime::Object** args = new Runtime::Object*[1]{global_context->local_variables[item.second]};
-                bool exception_thrown = false;
-                str_obj = dynamic_cast<Runtime::Builtin::StringObject*>(str_method->call(args, 1, exception_thrown));
-            }
-
-            printf("index: %d  name: %s  value: %s  ref_count: %d\n",
-                item.second, item.first.c_str(), str_obj->value.c_str(), global_context->local_variables[item.second]->ref_count);
+            delete token;
         }
-        printf("\n");
-        #endif
+        delete tokens;
     }
 
     void Core::print_messages()

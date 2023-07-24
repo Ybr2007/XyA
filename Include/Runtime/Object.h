@@ -3,8 +3,8 @@
 #include <array>
 #include <unordered_map>
 #include <format>
-#include <Runtime/MagicMethodNames.hpp>
-#include <Utils/StrKeyDict.hpp>
+#include <Runtime/MagicMethodNames.h>
+#include <Utils/IdKeyDict.hpp>
 #include <Config.h>
 
 
@@ -29,26 +29,22 @@ namespace XyA
             NotCallable,
         };
 
-        struct ObjectRef
-        {
-            Object* object;
-        };
-
         enum AttrAccessibility
         {
             Public,
             Private,
         };
 
-        struct Attr : public ObjectRef
+        struct Attr
         {
+            Object* object;
             AttrAccessibility accessibility;
         };
 
         class Object
         {
         public:
-            StrKeyDict<Attr> attrs;
+            IdKeyDict<Attr> attrs;
             long long ref_count = 0;
             bool ref_count_enabled = true;
 
@@ -64,11 +60,11 @@ namespace XyA
 
             bool is_instance(Type* type) const;
 
-            void set_attr(const std::string& attr_name, Attr attr);
-            void set_attr(const std::string& attr_name, Object* attr_object, AttrAccessibility accessibility = AttrAccessibility::Public);
-            TryGetAttrResult try_get_attr(const std::string& attr_name, Attr& result) const;
+            void set_attr(size_t attr_name_id, Attr attr);
+            void set_attr(size_t attr_name_id, Object* attr_object, AttrAccessibility accessibility = AttrAccessibility::Public);
+            TryGetAttrResult try_get_attr(size_t attr_name_id, Attr& result) const;
             TryGetMethodResult try_get_method(
-                const std::string& method_name, BaseFunction*& method_result, AttrAccessibility& accessibility_result) const;
+                size_t method_name_id, BaseFunction*& method_result, AttrAccessibility& accessibility_result) const;
             virtual ~Object();
 
             #ifdef Debug_Display_Object

@@ -4,7 +4,7 @@
 #include <Runtime/Builtin/String.h>
 #include <Runtime/Builtin/BuiltinFunction.h>
 #include <Runtime/Builtin/BuiltinException.h>
-#include <Runtime/MagicMethodNames.hpp>
+#include <Runtime/MagicMethodNames.h>
 
 
 namespace XyA

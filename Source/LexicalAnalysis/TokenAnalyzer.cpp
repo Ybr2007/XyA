@@ -14,7 +14,7 @@ namespace XyA
             this->__cur_column = 1;
             this->__finished = false;
 
-            // 在XyA.hpp的Core::execute中, 当编译完成, tokens和其中的Token*会被释放
+            // 在XyA.hpp的Core::execute中, 当程序运行完成, tokens和其中的Token*会被释放
             std::vector<Token*>* tokens = new std::vector<Token*>;
 
             while (!this->__finished)

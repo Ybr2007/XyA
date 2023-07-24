@@ -1,6 +1,6 @@
 #pragma once
 #include <Runtime/BasicObjectDefs.h>
-#include <Runtime/MagicMethodNames.hpp>
+#include <Runtime/MagicMethodNames.h>
 #include <Runtime/Builtin/Bool.h>
 #include <Runtime/Builtin/BuiltinFunction.h>
 #include <Runtime/Builtin/BuiltinException.h>

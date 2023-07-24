@@ -22,7 +22,7 @@ namespace XyA
                     {
                         Runtime::BaseFunction* str_method; 
                         AttrAccessibility accessibility;
-                        auto result = args[i]->try_get_method(MagicMethodNames::str_method_name, str_method, accessibility);
+                        auto result = args[i]->try_get_method(MagicMethodNames::str_method_name_id, str_method, accessibility);
                         if (result == TryGetMethodResult::NotFound || result == TryGetMethodResult::NotCallable)
                         {
                             string_object = XyA_Allocate_(StringObject);

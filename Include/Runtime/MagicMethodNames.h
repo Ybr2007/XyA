@@ -24,6 +24,22 @@ namespace XyA
             const std::string new_method_name = "__new__";
             const std::string init_method_name = "__init__";
             const std::string as_method_name = "__as__";
+
+            const size_t add_method_name_id = 0;
+            const size_t subtract_method_name_id = 1;
+            const size_t multiply_method_name_id = 2;
+            const size_t divide_method_name_id = 3;
+            const size_t equal_method_name_id = 4;
+            const size_t not_equal_method_name_id = 5;
+            const size_t greater_method_name_id = 6;
+            const size_t greater_equal_method_name_id = 7;
+            const size_t less_method_name_id = 8;
+            const size_t less_equal_method_name_id = 9;
+            const size_t bool_method_name_id = 10;
+            const size_t str_method_name_id = 11;
+            const size_t new_method_name_id = 12;
+            const size_t init_method_name_id = 13;
+            const size_t as_method_name_id = 14;
         }
     }
 }

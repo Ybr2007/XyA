@@ -86,7 +86,7 @@ namespace XyA
             new_object->reference();
         }
 
-        const std::string& Context::get_variable_name_at(size_t index) const
+        StringView Context::get_variable_name_at(size_t index) const
         {
             for (auto& item : this->code_obj->variable_name_2_index)
             {

@@ -15,18 +15,18 @@ namespace XyA
             {
                 Type::Type("int");
                 this->ref_count_enabled = false;
-                this->set_attr(MagicMethodNames::add_method_name, XyA_Allocate(BuiltinFunction, int_object_add_method));
-                this->set_attr(MagicMethodNames::subtract_method_name, XyA_Allocate(BuiltinFunction, int_object_sub_method));
-                this->set_attr(MagicMethodNames::multiply_method_name, XyA_Allocate(BuiltinFunction, int_object_mul_method));
-                this->set_attr(MagicMethodNames::divide_method_name, XyA_Allocate(BuiltinFunction, int_object_divide));
-                this->set_attr(MagicMethodNames::equal_method_name, XyA_Allocate(BuiltinFunction, int_object_equal));
-                this->set_attr(MagicMethodNames::str_method_name, XyA_Allocate(BuiltinFunction, int_object_str_method));
-                this->set_attr(MagicMethodNames::bool_method_name, XyA_Allocate(BuiltinFunction, int_object_bool_method));
-                this->set_attr(MagicMethodNames::greater_method_name, XyA_Allocate(BuiltinFunction, int_object_greater_than_method));
-                this->set_attr(MagicMethodNames::greater_equal_method_name, XyA_Allocate(BuiltinFunction, int_object_greater_equal_method));
-                this->set_attr(MagicMethodNames::less_method_name, XyA_Allocate(BuiltinFunction, int_object_less_than_method));
-                this->set_attr(MagicMethodNames::less_equal_method_name, XyA_Allocate(BuiltinFunction, int_object_less_equal_method));
-                this->set_attr(MagicMethodNames::as_method_name, XyA_Allocate(BuiltinFunction, int_object_as_method));
+                this->set_attr(MagicMethodNames::add_method_name_id, XyA_Allocate(BuiltinFunction, int_object_add_method));
+                this->set_attr(MagicMethodNames::subtract_method_name_id, XyA_Allocate(BuiltinFunction, int_object_sub_method));
+                this->set_attr(MagicMethodNames::multiply_method_name_id, XyA_Allocate(BuiltinFunction, int_object_mul_method));
+                this->set_attr(MagicMethodNames::divide_method_name_id, XyA_Allocate(BuiltinFunction, int_object_divide));
+                this->set_attr(MagicMethodNames::equal_method_name_id, XyA_Allocate(BuiltinFunction, int_object_equal));
+                this->set_attr(MagicMethodNames::str_method_name_id, XyA_Allocate(BuiltinFunction, int_object_str_method));
+                this->set_attr(MagicMethodNames::bool_method_name_id, XyA_Allocate(BuiltinFunction, int_object_bool_method));
+                this->set_attr(MagicMethodNames::greater_method_name_id, XyA_Allocate(BuiltinFunction, int_object_greater_than_method));
+                this->set_attr(MagicMethodNames::greater_equal_method_name_id, XyA_Allocate(BuiltinFunction, int_object_greater_equal_method));
+                this->set_attr(MagicMethodNames::less_method_name_id, XyA_Allocate(BuiltinFunction, int_object_less_than_method));
+                this->set_attr(MagicMethodNames::less_equal_method_name_id, XyA_Allocate(BuiltinFunction, int_object_less_equal_method));
+                this->set_attr(MagicMethodNames::as_method_name_id, XyA_Allocate(BuiltinFunction, int_object_as_method));
             }
 
             IntType* IntType::get_instance()

@@ -3,12 +3,14 @@
 #include <Runtime/CustomFunction.h>
 #include <Runtime/Builtin/Null.h>
 #include <Runtime/VirtualMachine.h>
+#include <Runtime/NameMapping.h>
 
 
 namespace XyA
 {
     namespace Compiler
     {
+        using namespace Runtime;
         using CompilerErrorCallback = std::function<void(std::string_view, LexicalAnalysis::TokenPos)>;
 
         Runtime::CodeObject* Compiler::compile(SyntaxAnalysis::SyntaxTreeNode* syntax_tree_root)
@@ -34,7 +36,7 @@ namespace XyA
         void Compiler::__init_builtins()
         {
             // 为global_code_object预留builtin objects的位置
-            // 实际的builtin objects将会在VirtualMachine启动时被加入到为global_code_object预留builtin.variable
+            // 实际的builtin objects将会在VirtualMachine启动时被加入到为global_context的local_variables
             this->__global_code_object->add_variable_name("int");
             this->__global_code_object->add_variable_name("float");
             this->__global_code_object->add_variable_name("str");
@@ -170,11 +172,10 @@ namespace XyA
                     !has_accessibility_modifier || assignment_root->children[0]->children[1]->token->type == LexicalAnalysis::TokenType::Kw_Public ?
                     Runtime::InstructionType::StorePublicAttr : Runtime::InstructionType::StroePrivateAttr
                 );
+
+                StringView attr_name = assignment_root->children[0]->token->value;
+                store_attr_instruction->parameter = NameMapper::get_instance().get_name_id(attr_name);
                 
-                if (!code_object->try_get_attr_name_index(assignment_root->children[0]->token->value, store_attr_instruction->parameter))
-                {
-                    store_attr_instruction->parameter = code_object->add_attr_name(assignment_root->children[0]->token->value);
-                }
                 code_object->instructions.push_back(store_attr_instruction);
             }
             else  // assignment target is an Identifier
@@ -214,10 +215,10 @@ namespace XyA
             {
                 this->__compile_expression(code_object, expression_root->children[0]);  // 计算attr所属object的值
                 Runtime::Instruction* get_attr_instruction = new Runtime::Instruction(Runtime::InstructionType::GetAttr);
-                if (!code_object->try_get_attr_name_index(expression_root->token->value, get_attr_instruction->parameter))
-                {
-                    get_attr_instruction->parameter = code_object->add_attr_name(expression_root->token->value);
-                }
+
+                size_t attr_name_id = NameMapper::get_instance().get_name_id(expression_root->token->value);
+                get_attr_instruction->parameter = attr_name_id;
+
                 code_object->instructions.push_back(get_attr_instruction);
 
                 if (pop)
@@ -488,6 +489,10 @@ namespace XyA
                     break;
                 }
             }
+            else
+            {
+                    attr.accessibility = Runtime::AttrAccessibility::Public;
+            }
 
             return attr;
         }
@@ -501,7 +506,7 @@ namespace XyA
 
             Runtime::BaseFunction* init_method;
             Runtime::AttrAccessibility accessibility;
-            auto result = instance->try_get_method(Runtime::MagicMethodNames::init_method_name, init_method, accessibility);
+            auto result = instance->try_get_method(Runtime::MagicMethodNames::init_method_name_id, init_method, accessibility);
 
             if (accessibility == Runtime::AttrAccessibility::Private && Runtime::VirtualMachine::get_instance()->cur_context->cls() != cls)
             {
@@ -553,7 +558,8 @@ namespace XyA
             {
                 if (class_definition_unit->type == SyntaxAnalysis::SyntaxTreeNodeType::Method_Definition)
                 {
-                    cls->set_attr(class_definition_unit->token->value, this->__build_method(class_definition_unit, cls));
+                    size_t method_name_id = NameMapper::get_instance().get_name_id(class_definition_unit->token->value);
+                    cls->set_attr(method_name_id, this->__build_method(class_definition_unit, cls));
                 }
                 else
                 {
@@ -582,7 +588,7 @@ namespace XyA
                 }
             }
             Runtime::Object* new_method = XyA_Allocate(Runtime::Builtin::BuiltinFunction, cls_new_method);
-            cls->set_attr(Runtime::MagicMethodNames::new_method_name, new_method);
+            cls->set_attr(Runtime::MagicMethodNames::new_method_name_id, new_method);
 
             return cls;
         }

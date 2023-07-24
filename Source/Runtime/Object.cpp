@@ -95,7 +95,6 @@ namespace XyA
         {
             for (auto attr : this->attrs)
             {
-                // printf("DRF ATTR %s: %s %zd\n", attr->key.c_str(), attr->value.object->type()->name.c_str(), attr->value.object->ref_count);
                 attr->value.object->dereference();
             }
         }
@@ -105,21 +104,21 @@ namespace XyA
             return this->type() == type;
         }
 
-        void Object::set_attr(const std::string& attr_name, Attr attr)
+        void Object::set_attr(size_t attr_name_id, Attr attr)
         {
             Attr old_attr;
-            if (this->attrs.try_get(attr_name, old_attr))
+            if (this->attrs.try_get(attr_name_id, old_attr))
             {
                 old_attr.object->dereference();
             }
             attr.object->reference();
-            this->attrs[attr_name] = attr;
+            this->attrs[attr_name_id] = attr;
         }
 
-        void Object::set_attr(const std::string& attr_name, Object* attr_object, AttrAccessibility accessibility)
+        void Object::set_attr(size_t attr_name_id, Object* attr_object, AttrAccessibility accessibility)
         {
             Attr old_attr;
-            if (this->attrs.try_get(attr_name, old_attr))
+            if (this->attrs.try_get(attr_name_id, old_attr))
             {
                 old_attr.object->dereference();
             }
@@ -128,23 +127,23 @@ namespace XyA
             attr.object = attr_object;
             attr_object->reference();
             attr.accessibility = accessibility;
-            this->attrs[attr_name] = attr;
+            this->attrs[attr_name_id] = attr;
         }
 
-        TryGetAttrResult Object::try_get_attr(const std::string& attr_name, Attr& result) const
+        TryGetAttrResult Object::try_get_attr(size_t attr_name_id, Attr& result) const
         {
-            if (this->attrs.try_get(attr_name, result))
-            {
+            if (this->attrs.try_get(attr_name_id, result))
+            { 
                 return TryGetAttrResult::OK;
             }
-            return this->__type == nullptr ? TryGetAttrResult::NotFound : this->__type->try_get_attr(attr_name, result);
+            return this->__type == nullptr ? TryGetAttrResult::NotFound : this->__type->try_get_attr(attr_name_id, result);
         }
 
         TryGetMethodResult Object::try_get_method(
-            const std::string& method_name, BaseFunction*& method_result, AttrAccessibility& accessibility_result) const
+            size_t method_name_id, BaseFunction*& method_result, AttrAccessibility& accessibility_result) const
         {
             Attr attr;
-            auto operation_result = this->try_get_attr(method_name, attr);
+            auto operation_result = this->try_get_attr(method_name_id, attr);
             if (operation_result == TryGetAttrResult::NotFound)
             {
                 return TryGetMethodResult::NotFound;

@@ -13,8 +13,8 @@ namespace XyA
             {
                 Type::Type("bool");
                 this->ref_count_enabled = false;
-                this->set_attr(MagicMethodNames::equal_method_name, XyA_Allocate(BuiltinFunction, bool_object_equal));
-                this->set_attr(MagicMethodNames::str_method_name, XyA_Allocate(BuiltinFunction, bool_object_str));
+                this->set_attr(MagicMethodNames::equal_method_name_id, XyA_Allocate(BuiltinFunction, bool_object_equal));
+                this->set_attr(MagicMethodNames::str_method_name_id, XyA_Allocate(BuiltinFunction, bool_object_str));
             }
 
             BoolType* BoolType::get_instance()

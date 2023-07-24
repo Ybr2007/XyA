@@ -1,6 +1,5 @@
 #pragma once
 #include <stddef.h>
-#include <string>
 #include <functional>
 #include <Runtime/MemoryManager.hpp>
 
@@ -10,12 +9,12 @@ namespace XyA
     namespace Runtime
     {
         template <typename T, size_t N = 15>
-        class StrKeyDict
+        class IdKeyDict
         {
         private:
             struct Node
             {
-                std::string key;
+                size_t key;
                 T value;
                 Node* next = nullptr;
             };
@@ -70,13 +69,13 @@ namespace XyA
             };
 
         public:
-            StrKeyDict()
+            IdKeyDict()
             {
                 using node_ptr_t = Node*;
                 this->__node_list_heads = XyA_Allocate_Array(node_ptr_t, N, nullptr);
             }
 
-            ~StrKeyDict()
+            ~IdKeyDict()
             {
                 for (size_t i = 0; i < N; i ++)
                 {
@@ -90,7 +89,7 @@ namespace XyA
                 XyA_Deallocate_Array(this->__node_list_heads, N);
             }
 
-            T& operator[](const std::string& key)
+            T& operator[](size_t key)
             {
                 size_t index = this->__hash(key);
                 
@@ -111,7 +110,7 @@ namespace XyA
                 return node->value;
             }
 
-            bool try_get(const std::string& key, T& result_value) const
+            bool try_get(size_t key, T& result_value) const
             {
                 size_t index = this->__hash(key);
                 
@@ -128,7 +127,7 @@ namespace XyA
                 return false;
             }
 
-            void remove(const std::string& key)
+            void remove(size_t key)
             {
                 size_t index = this->__hash(key);
                 
@@ -172,9 +171,9 @@ namespace XyA
             }
 
         private:
-            size_t __hash(const std::string& key) const
+            size_t __hash(size_t key) const
             {
-                return std::hash<std::string>()(key) % N;
+                return key % N;
             }
 
             Node** __node_list_heads;

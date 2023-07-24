@@ -3,7 +3,7 @@
 #include <Runtime/BasicObjectDefs.h>
 #include <Runtime/Context.h>
 #include <Runtime/Instruction.h>
-#include <Runtime/MagicMethodNames.hpp>
+#include <Runtime/MagicMethodNames.h>
 #include <Runtime/Builtin/BuiltinFunctions.h>
 
 #include <Config.h>
@@ -33,8 +33,8 @@ namespace XyA
             void __excute_instruction(Instruction* instruction);
             void __back_context();
 
-            void __call_binary_operation_magic_method(const std::string& magic_method_name);
-            void __call_compare_magic_method(const std::string& magic_method_name);
+            void __call_binary_operation_magic_method(size_t magic_method_name_id);
+            void __call_compare_magic_method(size_t magic_method_name_id);
 
             void __throw_exception();
         };
