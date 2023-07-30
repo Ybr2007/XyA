@@ -59,6 +59,7 @@ namespace XyA
 
         NameMapper::NameMapper()  // private
         {
+            // 在NameMapper被构造时，先将Magic Methods的名称注册
             this->register_name(MagicMethodNames::add_method_name);
             this->register_name(MagicMethodNames::subtract_method_name);
             this->register_name(MagicMethodNames::multiply_method_name);

@@ -4,12 +4,14 @@
 #include <Runtime/Builtin/Null.h>
 #include <Runtime/VirtualMachine.h>
 #include <Runtime/NameMapping.h>
+#include <Utils/TemporarySetter.hpp>
 
 
 namespace XyA
 {
     namespace Compilation
     {
+        using namespace SyntaxAnalysis;
         using namespace Runtime;
         using CompilerErrorCallback = std::function<void(std::string_view, LexicalAnalysis::TokenPos)>;
 
@@ -28,9 +30,9 @@ namespace XyA
             return this->__global_code_object;
         }
 
-        void Compiler::register_error_callback(CompilerErrorCallback callback)
+        void Compiler::register_message_callback(MessageCallback callback)
         {
-            this->__error_callbacks.push_back(callback);
+            this->__message_callbacks.push_back(callback);
         }
 
         void Compiler::__init_builtins()
@@ -106,6 +108,8 @@ namespace XyA
             Runtime::Instruction* jump_if_false_instruction = new Runtime::Instruction(Runtime::InstructionType::PopJumpIfFalse);
             code_object->instructions.push_back(jump_if_false_instruction);
 
+            auto _ = TemporarySetter(this->__inside_judgment_block, true);
+                
             this->__compile_block(code_object, if_root->children[1]);
             jump_if_false_instruction->parameter = code_object->instructions.size();
 
@@ -137,6 +141,8 @@ namespace XyA
             Runtime::Instruction* jump_if_false_instruction = new Runtime::Instruction(Runtime::InstructionType::PopJumpIfFalse);
             code_object->instructions.push_back(jump_if_false_instruction);
 
+            auto _ = TemporarySetter(this->__inside_loop_block, true);
+
             this->__compile_block(code_object, while_root->children[1]);
             jump_if_false_instruction->parameter = code_object->instructions.size() + 1;  // +1是因为由Jump backward
 
@@ -163,18 +169,64 @@ namespace XyA
         {
             if (assignment_root->children[0]->type == SyntaxAnalysis::SyntaxTreeNodeType::Attr)
             {
-                this->__compile_expression(code_object, assignment_root->children[0]);
-                code_object->instructions.pop_back();
+                SyntaxTreeNode* attr_onwer_node = assignment_root->children[0]->children[0];
+
+                this->__compile_expression(code_object, attr_onwer_node);
                 this->__compile_expression(code_object, assignment_root->children[1]);
 
                 bool has_accessibility_modifier = assignment_root->children[0]->children.size() == 2;
+
+                if (has_accessibility_modifier)
+                {
+                    if (!this->__inside_constructor)
+                    {
+                        this->__throw_error(
+                            "Can not use accessibility modifiers outside constructors", 
+                            assignment_root->children[0]->children[1]->token->start_pos);
+                        return;
+                    }
+                    if (this->__inside_judgment_block)
+                    {
+                        this->__throw_error(
+                            "Can not use accessibility modifiers inside judgment blocks", 
+                            assignment_root->children[0]->children[1]->token->start_pos);
+                        return;
+                    }
+                    if (this->__inside_loop_block)
+                    {
+                        this->__throw_error(
+                            "Can not use accessibility modifiers inside loop blocks", 
+                            assignment_root->children[0]->children[1]->token->start_pos);
+                        return;
+                    }
+                    if (attr_onwer_node->token->value != this->__first_argument_name_of_method)
+                    {
+                        this->__throw_error(
+                            "Cannot specify the accessibility of attributes for objects of other classes", 
+                            assignment_root->children[0]->children[1]->token->start_pos);
+                        return;
+                    }
+                }
+
                 Runtime::Instruction* store_attr_instruction = new Runtime::Instruction(
                     !has_accessibility_modifier || assignment_root->children[0]->children[1]->token->type == LexicalAnalysis::TokenType::Kw_Public ?
                     Runtime::InstructionType::StorePublicAttr : Runtime::InstructionType::StroePrivateAttr
                 );
 
+
                 StringView attr_name = assignment_root->children[0]->token->value;
-                store_attr_instruction->parameter = NameMapper::get_instance().get_name_id(attr_name);
+                Id attr_name_id = NameMapper::get_instance().get_name_id(attr_name);
+                store_attr_instruction->parameter = attr_name_id;
+
+                if (has_accessibility_modifier && 
+                    this->__assignments_inside_constructor.find(attr_name_id) != this->__assignments_inside_constructor.end())
+                {
+                    this->__throw_error(
+                        "Assignments with modifiers are not the first possible assignment", 
+                        assignment_root->children[0]->children[1]->token->start_pos);
+                    return;
+                }
+                this->__assignments_inside_constructor.insert(attr_name_id);
                 
                 code_object->instructions.push_back(store_attr_instruction);
             }
@@ -450,10 +502,21 @@ namespace XyA
                 function_variable_index = code_object->add_variable_name(function_definition_root->token->value);
             }
 
+            std::unordered_set<StringView> defined_argument_names;
             function->expected_arg_num = function_definition_root->children[0]->children.size();
-            for (auto arg : function_definition_root->children[0]->children)
+            for (auto argument_definition_node : function_definition_root->children[0]->children)
             {
-                function->code_object->add_variable_name(arg->token->value);
+                StringView argument_name = argument_definition_node->token->value;
+                if (defined_argument_names.find(argument_name) != defined_argument_names.end())
+                {
+                    this->__throw_error(
+                        std::format("Duplicate argument '{}' found", argument_name), 
+                        argument_definition_node->token->start_pos);
+                    continue;
+                }
+
+                defined_argument_names.insert(argument_name);
+                function->code_object->add_variable_name(argument_name);
             }
 
             this->__compile_block(function->code_object, function_definition_root->children[1]);
@@ -461,16 +524,47 @@ namespace XyA
             return function;
         }
 
-        Runtime::Attr Compiler::__build_method(SyntaxAnalysis::SyntaxTreeNode* method_definition_root, Runtime::Type* cls)
+        std::optional<Runtime::Attr> Compiler::__build_method(SyntaxAnalysis::SyntaxTreeNode* method_definition_root, Runtime::Type* cls)
         {
+            auto inside_constructor_tem_setter = TemporarySetter(this->__inside_constructor, method_definition_root->token->value == MagicMethodNames::init_method_name);
+            auto inside_method_tem_setter = TemporarySetter(this->__inside_method, true);
+            
+            SyntaxTreeNode* argument_definition_node = method_definition_root->children[0];
+            if (argument_definition_node->children.empty())
+            {
+                this->__throw_error(
+                    "Methods must have a argument at position one as 'self'", 
+                    argument_definition_node->token->start_pos);
+                return std::nullopt;
+            }
+            this->__first_argument_name_of_method = argument_definition_node->children[0]->token->value;
+            if (this->__first_argument_name_of_method != "self")
+            {
+                this->__send_message(
+                    Message("'self' is a better name for the first argument of methods", MessageLevel::Warning),
+                    argument_definition_node->children[0]->token->start_pos
+                );
+            }
+
             Runtime::Attr attr;
             Runtime::CustomFunction* method = XyA_Allocate_(Runtime::CustomFunction);
             method->code_object->cls = cls;
 
+            std::unordered_set<StringView> defined_argument_names;
             method->expected_arg_num = method_definition_root->children[0]->children.size();
-            for (auto arg : method_definition_root->children[0]->children)
+            for (auto argument_definition_node : method_definition_root->children[0]->children)
             {
-                method->code_object->add_variable_name(arg->token->value);
+                StringView argument_name = argument_definition_node->token->value;
+                if (defined_argument_names.find(argument_name) != defined_argument_names.end())
+                {
+                    this->__throw_error(
+                        std::format("Duplicate argument '{}' found", argument_name), 
+                        argument_definition_node->token->start_pos);
+                    continue;
+                }
+
+                defined_argument_names.insert(argument_name);
+                method->code_object->add_variable_name(argument_name);
             }
 
             this->__compile_block(method->code_object, method_definition_root->children[1]);
@@ -558,8 +652,16 @@ namespace XyA
             {
                 if (class_definition_unit->type == SyntaxAnalysis::SyntaxTreeNodeType::Method_Definition)
                 {
-                    size_t method_name_id = NameMapper::get_instance().get_name_id(class_definition_unit->token->value);
-                    cls->set_attr(method_name_id, this->__build_method(class_definition_unit, cls));
+                    StringView method_name = class_definition_unit->token->value;
+                    size_t method_name_id = NameMapper::get_instance().get_name_id(method_name);
+    
+                    auto method_building_result = this->__build_method(class_definition_unit, cls);
+                    if (!method_building_result.has_value())
+                    {
+                        continue;
+                    }
+                    cls->set_attr(method_name_id, method_building_result.value());
+                    this->__assignments_inside_constructor.clear();
                 }
                 else
                 {
@@ -593,9 +695,14 @@ namespace XyA
             return cls;
         }
 
-        void Compiler::__throw_error(std::string_view message, LexicalAnalysis::TokenPos pos) const
+        void Compiler::__throw_error(StringView message, LexicalAnalysis::TokenPos pos) const
         {
-            for (auto callback : this->__error_callbacks)
+            this->__send_message(Message(message, MessageLevel::Error), pos);
+        }
+
+        void Compiler::__send_message(Message message, LexicalAnalysis::TokenPos pos) const
+        {
+            for (const auto& callback : this->__message_callbacks)
             {
                 callback(message, pos);
             }

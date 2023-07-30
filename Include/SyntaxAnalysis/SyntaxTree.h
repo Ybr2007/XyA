@@ -73,6 +73,11 @@ namespace XyA
             // token: 被配置项名称(Identifier)
             // children: 数量为1, children[0] 为配置值(Configuration_Value)
             Configuration_Command,
+            // token: 包名标识符(Identifier)
+            Package,
+            // token: 模块名(Identifier)
+            // children: 数量不限, 每个child为模块路径上的包名标识符(Identifier), index越小越靠近根目录
+            Module,
         };
 
         #ifdef Debug_Write_AST_To_Json_File

@@ -200,7 +200,7 @@ namespace XyA
                 {
                     if (!attr_owner->type()->allow_ext_attr_add && this->cur_context->code_obj->cls != attr_owner->type())
                     {
-                    StringView attr_name = NameMapper::get_instance().get_name(instruction->parameter);
+                        StringView attr_name = NameMapper::get_instance().get_name(instruction->parameter);
                         this->cur_context->set_exception(
                             XyA_Allocate(Builtin::BuiltinException,
                                 std::format("Objects of type '{}' do not allow external attribute addition", attr_owner->type()->name))

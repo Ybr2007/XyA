@@ -20,7 +20,7 @@ namespace XyA
         public:
             std::vector<Instruction*> instructions;  
             std::vector<Object*> literals;
-            std::vector<std::pair<size_t, Object*>> prebuilt_objects;
+            std::vector<std::pair<Index, Object*>> prebuilt_objects;
             std::unordered_map<StringView, size_t> variable_name_2_index;
             Type* cls = nullptr;
 

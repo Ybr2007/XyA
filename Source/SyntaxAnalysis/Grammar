@@ -1,4 +1,4 @@
-unit           -> block | if | while | line | function_definiton | class_definition
+unit           -> block | if | while | line | function_definiton | class_definition | import
 
 block          -> "{" unit* "}"
 line           -> (assignment | expression) ";"
@@ -43,3 +43,6 @@ method_definition -> "fn" Identifier "(" argument_list_definition? ")" ("->" typ
 class_definition -> "class" Identifier "{" (method_definition | configuration_command)* "}"
 
 configuration_command -> "#" Identifier ":" Literal
+
+imported_module -> Identifier ("." Identifier)
+import         -> "import" imported_module

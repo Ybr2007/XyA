@@ -23,14 +23,14 @@ namespace XyA
 
             void register_name(StringView name);
 
-            size_t get_name_id(StringView name);
+            Id get_name_id(StringView name);
 
-            std::optional<size_t> try_get_name_id(StringView name) const;
+            std::optional<Id> try_get_name_id(StringView name) const;
 
-            StringView get_name(size_t id) const;
+            StringView get_name(Id id) const;
 
         private:
-            std::unordered_map<StringView, size_t> __map;
+            std::unordered_map<StringView, Id> __map;
 
             NameMapper();
             NameMapper(const NameMapper& other) = delete;

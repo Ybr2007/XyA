@@ -17,6 +17,7 @@
 namespace XyA
 {
     const std::string error_color = "\033[1;31m";
+    const std::string warning_color = "\033[1;33m";
     const std::string reset_color = "\033[0m";
 
     class Core
@@ -28,12 +29,13 @@ namespace XyA
         Compilation::Compiler compiler;
         Runtime::VirtualMachine* virtual_machine = Runtime::VirtualMachine::get_instance();
 
-        std::vector<std::pair<std::string, LexicalAnalysis::TokenPos>> error_messages;
-        bool exception_thrown;
+        std::vector<std::pair<StringSource, LexicalAnalysis::TokenPos>> error_messages;
+        std::vector<std::pair<StringSource, LexicalAnalysis::TokenPos>> warning_messages;
 
         Core();
         void execute(std::string_view source);
-        void print_messages();
+        void print_error_messages();
+        void print_warning_messages();
         std::string mark_pos(LexicalAnalysis::TokenPos pos);
     };
 
@@ -45,7 +47,6 @@ namespace XyA
                     std::make_pair(std::format("{}Lexical Error: {} {}  Pos: row {}, column {}\n",
                         error_color, reset_color, std::string(msg).c_str(), pos.row, pos.column), pos)
                 );
-                this->exception_thrown = true;
             }
         );
 
@@ -55,17 +56,28 @@ namespace XyA
                     std::make_pair(std::format("{}Syntax Error: {} {}  Pos: row {}, column {}\n",
                         error_color, reset_color, std::string(msg).c_str(), pos.row, pos.column), pos)
                 );
-                this->exception_thrown = true;
             }
         );
 
-        this->compiler.register_error_callback(
-            [&](std::string_view msg, LexicalAnalysis::TokenPos pos){
-                this->error_messages.push_back(
-                    std::make_pair(std::format("{}Compiling Error: {} {}  Pos: row {}, column {}\n",
-                        error_color, reset_color, std::string(msg).c_str(), pos.row, pos.column), pos)
-                );
-                this->exception_thrown = true;
+        this->compiler.register_message_callback(
+            [&](Message message, LexicalAnalysis::TokenPos pos)
+            {
+                switch (message.level)
+                {
+                case MessageLevel::Error:
+                    this->error_messages.push_back(
+                        std::make_pair(std::format("{}Compilation Error: {} {}  Pos: row {}, column {}\n",
+                            error_color, reset_color, message.content, pos.row, pos.column), pos)
+                    );
+                    break;
+                
+                case MessageLevel::Warning:
+                    this->warning_messages.push_back(
+                        std::make_pair(std::format("{}Compilation Warning: {} {}  Pos: row {}, column {}\n",
+                            warning_color, reset_color, message.content, pos.row, pos.column), pos)
+                    );
+                    break;
+                }
             }
         );
 
@@ -83,16 +95,19 @@ namespace XyA
             return;
         }
 
-        this->exception_thrown = false;
         this->excuting_source = source;
 
         // 词法分析, 生成Tokens
         std::vector<LexicalAnalysis::Token*>* tokens = this->token_analyzer.analyze_source(source);
 
-        if (this->exception_thrown)
+        if (!this->error_messages.empty())
         {
-            this->print_messages();
+            this->print_error_messages();
             return;
+        }
+        if (!this->warning_messages.empty())
+        {
+            this->print_warning_messages();
         }
 
         #ifdef Debug_Display_Tokens
@@ -107,10 +122,14 @@ namespace XyA
         // 语法分析, 生成语法树
         SyntaxAnalysis::SyntaxTreeNode* syntax_tree = this->syntax_parser.parse_tokens(tokens);
 
-        if (this->exception_thrown)
+        if (!this->error_messages.empty())
         {
-            this->print_messages();
+            this->print_error_messages();
             return;
+        }
+        if (!this->warning_messages.empty())
+        {
+            this->print_warning_messages();
         }
 
         #ifdef Debug_Write_AST_To_Json_File
@@ -122,10 +141,14 @@ namespace XyA
         // 编译, 生成CodeObject
         Runtime::CodeObject* code_object = this->compiler.compile(syntax_tree);
 
-        if (this->exception_thrown)
+        if (!this->error_messages.empty())
         {
-            this->print_messages();
+            this->print_error_messages();
             return;
+        }
+        if (!this->warning_messages.empty())
+        {
+            this->print_warning_messages();
         }
 
         #ifdef Debug_Write_AST_To_Json_File
@@ -187,7 +210,7 @@ namespace XyA
         delete tokens;
     }
 
-    void Core::print_messages()
+    void Core::print_error_messages()
     {
         std::cout << std::format("{}{} Errors!{}\n", error_color, this->error_messages.size(), reset_color);
         for (const auto& message : this->error_messages)
@@ -195,6 +218,23 @@ namespace XyA
             std::cout << message.first;
             std::cout << this->mark_pos(message.second) << std::endl;
         }
+        this->error_messages.clear();
+
+        if (!this->warning_messages.empty())
+        {
+            this->print_warning_messages();
+        }
+    }
+
+    void Core::print_warning_messages()
+    {
+        std::cout << std::format("{}{} Warnings!{}\n", warning_color, this->warning_messages.size(), reset_color);
+        for (const auto& message : this->warning_messages)
+        {
+            std::cout << message.first;
+            std::cout << this->mark_pos(message.second) << std::endl;
+        }
+        this->warning_messages.clear();
     }
 
     std::string Core::mark_pos(LexicalAnalysis::TokenPos pos)

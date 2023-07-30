@@ -59,6 +59,10 @@ namespace XyA
                 return "<SyntaxTreeNodeType: Configuration_Value>";
             case SyntaxTreeNodeType::Configuration_Command:
                 return "<SyntaxTreeNodeType: Configuration_Command>";
+            case SyntaxTreeNodeType::Package:
+                return "<SyntaxTreeNodeType: Package>";
+            case SyntaxTreeNodeType::Module:
+                return "<SyntaxTreeNodeType: Module>";
             default:
                 return "<Unknown>";
             }

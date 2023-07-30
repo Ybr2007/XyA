@@ -1,4 +1,6 @@
 #include <Runtime/Type.h>
+#include <iostream>
+
 
 namespace XyA
 {
@@ -10,9 +12,9 @@ namespace XyA
 
         }
 
-        Type::Type(std::string_view name_) : name(name_)  // public
+        Type::Type(StringView name_) : name(name_)  // public
         {
-
+            
         }
 
         Type* Type::get_instance()

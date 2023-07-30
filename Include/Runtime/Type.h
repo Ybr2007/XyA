@@ -1,5 +1,7 @@
 #pragma once
+#include <TypeDefs.h>
 #include <Runtime/Object.h>
+
 
 namespace XyA
 {
@@ -9,11 +11,11 @@ namespace XyA
         class Type : public Object
         {
         public:
-            std::string_view name;
+            StringView name;
             bool allow_ext_attr_add = false;
 
             Type();
-            Type(std::string_view name);
+            Type(StringView name);
 
             static Type* get_instance();
         };

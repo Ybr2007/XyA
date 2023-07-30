@@ -240,7 +240,7 @@ namespace XyA
 
             if (!this->__try_move_ptr())
             {
-                this->__throw_exception("Expected indented block", this->__cur_token()->start_pos);
+                this->__throw_exception("Expected block", this->__cur_token()->start_pos);
                 return nullptr;
             }
             SyntaxTreeNode* indented_block = this->__parse_block();
@@ -255,7 +255,7 @@ namespace XyA
                 this->__try_move_ptr();  // 跳过"else"
                 if(!this->__try_move_ptr())
                 {
-                    this->__throw_exception("Expected indented block", this->__cur_token()->start_pos);
+                    this->__throw_exception("Expected block", this->__cur_token()->start_pos);
                     return nullptr;
                 }
 
@@ -269,7 +269,7 @@ namespace XyA
                 }
                 else
                 {
-                    this->__throw_exception("Expected indented block", this->__cur_token()->start_pos);
+                    this->__throw_exception("Expected block", this->__cur_token()->start_pos);
                     return nullptr;
                 }
 
@@ -307,7 +307,7 @@ namespace XyA
 
             if (!this->__try_move_ptr())
             {
-                this->__throw_exception("Expected indented block", this->__cur_token()->start_pos);
+                this->__throw_exception("Expected block", this->__cur_token()->start_pos);
                 return nullptr;
             }
             SyntaxTreeNode* indented_block = this->__parse_block();
@@ -881,7 +881,7 @@ namespace XyA
             }
             if (!this->__try_move_ptr())
             {
-                this->__throw_exception("Expected indented block ", this->__cur_token()->end_pos);\
+                this->__throw_exception("Expected block ", this->__cur_token()->end_pos);\
                 this->__inside_function = false;
                 return nullptr;
             }
@@ -905,7 +905,7 @@ namespace XyA
 
                 if (!this->__try_move_ptr())
                 {
-                    this->__throw_exception("Expected indented block ", this->__cur_token()->end_pos);
+                    this->__throw_exception("Expected block ", this->__cur_token()->end_pos);
                     this->__inside_function = false;
                     return nullptr;
                 }
@@ -913,7 +913,7 @@ namespace XyA
 
             if (this->__cur_token()->type != LexicalAnalysis::TokenType::S_LBrace)
             {
-                this->__throw_exception("Expected indented block ", this->__cur_token()->end_pos);
+                this->__throw_exception("Expected block ", this->__cur_token()->end_pos);
                 this->__inside_function = false;
                 return nullptr;
             }
@@ -1129,7 +1129,7 @@ namespace XyA
 
             if (!this->__try_move_ptr() || this->__cur_token()->type != LexicalAnalysis::TokenType::S_LBrace)
             {
-                this->__throw_exception("Expected indented block", this->__cur_token()->start_pos);
+                this->__throw_exception("Expected block", this->__cur_token()->start_pos);
                 return nullptr;
             }
             LexicalAnalysis::TokenPos left_brace_pos = this->__cur_token()->start_pos;
