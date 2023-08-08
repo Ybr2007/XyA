@@ -12,7 +12,7 @@ namespace XyA
         {
             FloatType::FloatType()
             {
-                Type::Type("float");
+                Type("float");
                 this->ref_count_enabled = false;
                 this->set_attr(MagicMethodNames::add_method_name_id, XyA_Allocate(BuiltinFunction, float_object_add_method));
                 this->set_attr(MagicMethodNames::subtract_method_name_id, XyA_Allocate(BuiltinFunction, float_object_sub_method));
@@ -34,7 +34,12 @@ namespace XyA
                 return &instance;
             }
 
-            FloatObject::FloatObject()
+            FloatObject::FloatObject() : value(0)
+            {
+                this->__type = FloatType::get_instance();
+            }
+
+            FloatObject::FloatObject(double value_) : value(value_)
             {
                 this->__type = FloatType::get_instance();
             }
@@ -67,8 +72,8 @@ namespace XyA
                         std::format("Unsupport operand type(s) for +: 'float' and '{}'", args[1]->type()->name));
                 }
 
-                FloatObject* result_obj = XyA_Allocate_(FloatObject);
-                result_obj->value = self->value + ((int_other != nullptr) ? int_other->value : float_other->value);
+                FloatObject* result_obj = XyA_Allocate(
+                    FloatObject, self->value + ((int_other != nullptr) ? int_other->value : float_other->value));
                 return result_obj; 
             }
 
@@ -94,8 +99,8 @@ namespace XyA
                         std::format("Unsupport operand type(s) for -: 'float' and '{}'", args[1]->type()->name));
                 }
 
-                FloatObject* result_obj = XyA_Allocate_(FloatObject);
-                result_obj->value = self->value - ((int_other != nullptr) ? int_other->value : float_other->value);
+                FloatObject* result_obj = XyA_Allocate(
+                    FloatObject, self->value - ((int_other != nullptr) ? int_other->value : float_other->value));
                 return result_obj;             
             }
 
@@ -121,8 +126,8 @@ namespace XyA
                         std::format("Unsupport operand type(s) for *: 'float' and '{}'", args[1]->type()->name));
                 }
 
-                FloatObject* result_obj = XyA_Allocate_(FloatObject);
-                result_obj->value = self->value * ((int_other != nullptr) ? int_other->value : float_other->value);
+                FloatObject* result_obj = XyA_Allocate(
+                    FloatObject, self->value * ((int_other != nullptr) ? int_other->value : float_other->value));
                 return result_obj;
             }
 
@@ -135,7 +140,7 @@ namespace XyA
                 FloatObject* float_other = nullptr;
                 if (args[1]->is_instance(IntType::get_instance()))
                 {
-                    int_other = static_cast<IntObject*>(args[1]);
+                    int_other = static_cast<IntObject*>(args[1]);  // FIXME: Div by 0
                 }
                 else if (args[1]->is_instance(FloatType::get_instance()))
                 {
@@ -148,8 +153,8 @@ namespace XyA
                         std::format("Unsupport operand type(s) for *: 'float' and '{}'", args[1]->type()->name));
                 }
 
-                FloatObject* result_obj = XyA_Allocate_(FloatObject);
-                result_obj->value = self->value / ((int_other != nullptr) ? int_other->value : float_other->value);
+                FloatObject* result_obj = XyA_Allocate(
+                    FloatObject, self->value / ((int_other != nullptr) ? int_other->value : float_other->value));
                 return result_obj;
             }
 
@@ -181,8 +186,7 @@ namespace XyA
                 XyA_Function_Check_Arg_Num(1)
                 XyA_Builtin_Method_Get_Self(FloatObject)
 
-                StringObject* str = XyA_Allocate_(StringObject);                
-                str->value = std::to_string(self->value);
+                StringObject* str = XyA_Allocate(StringObject, std::to_string(self->value));
 
                 return str;
             }

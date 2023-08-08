@@ -139,6 +139,11 @@ namespace XyA
                 str += "Get Method";
                 str += " " + std::to_string(this->parameter);
                 break;
+
+            case InstructionType::ImportModule:
+                str += "Import Module";
+                str += " " + std::to_string(this->parameter);
+                break;
             
             default:
                 break;

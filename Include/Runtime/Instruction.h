@@ -46,13 +46,19 @@ namespace XyA
 
             GetAttr,
             GetMethod,
+
+            /* 
+                参数：所导入的模块(Module)在当前CodeObject的
+                CodeObject::module_datas中的index
+            */
+            ImportModule,
         };
 
         class Instruction
         {
         public:
+            size_t parameter;
             InstructionType type;
-            size_t parameter = 0;
 
             Instruction();
             Instruction(InstructionType type);

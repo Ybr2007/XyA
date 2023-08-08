@@ -3,6 +3,7 @@
 #include <Runtime/VirtualMachine.h>
 #include <Runtime/FunctionalUtils.hpp>
 #include <Runtime/NameMapping.h>
+#include <Runtime/Module.h>
 
 
 namespace XyA
@@ -200,7 +201,6 @@ namespace XyA
                 {
                     if (!attr_owner->type()->allow_ext_attr_add && this->cur_context->code_obj->cls != attr_owner->type())
                     {
-                        StringView attr_name = NameMapper::get_instance().get_name(instruction->parameter);
                         this->cur_context->set_exception(
                             XyA_Allocate(Builtin::BuiltinException,
                                 std::format("Objects of type '{}' do not allow external attribute addition", attr_owner->type()->name))
@@ -541,6 +541,15 @@ namespace XyA
 
                 this->cur_context->push_operand(return_value);
                 break;
+            }
+
+            case InstructionType::ImportModule:
+            {
+                auto [module_code_object, module_variable_index] = 
+                    this->cur_context->code_obj->module_datas[instruction->parameter];
+                Module* module_object = XyA_Allocate(Module, module_code_object);
+
+                this->cur_context->set_variable_at(module_variable_index, module_object);
             }
 
             default:

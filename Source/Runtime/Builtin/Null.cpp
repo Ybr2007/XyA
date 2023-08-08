@@ -11,7 +11,7 @@ namespace XyA
         {
             NullType::NullType()
             {
-                Type::Type("null_t");
+                Type("null_t");
                 this->set_attr(MagicMethodNames::equal_method_name_id, XyA_Allocate(BuiltinFunction, null_object_equal));
                 this->set_attr(MagicMethodNames::str_method_name_id, XyA_Allocate(BuiltinFunction, null_object_str));
             }
@@ -52,8 +52,7 @@ namespace XyA
                 XyA_Function_Check_Arg_Num(1)
                 XyA_Builtin_Method_Get_Self(NullObject);
 
-                StringObject* str = XyA_Allocate_(StringObject);
-                str->value = "null";
+                StringObject* str = XyA_Allocate(StringObject, "null");
 
                 return str;
             }

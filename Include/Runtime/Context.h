@@ -33,12 +33,12 @@ namespace XyA
             */
             const Type* cls() const;
 
-            void set_exception(const std::string& exception_message);
+            void set_exception(StringView exception_message);
             void set_exception(BaseException* exception);
 
             Object* get_literal_obj_at(size_t index) const;
             Object* get_variable_at(size_t index) const;
-            void set_variable_at(size_t index, Object* new_object);
+            void set_variable_at(Id variable_id, Object* new_object);
 
             StringView get_variable_name_at(size_t index) const;
 

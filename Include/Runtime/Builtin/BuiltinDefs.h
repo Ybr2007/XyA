@@ -1,4 +1,3 @@
-#pragma once
 #include <Runtime/Builtin/Int.h>
 #include <Runtime/Builtin/Float.h>
 #include <Runtime/Builtin/String.h>

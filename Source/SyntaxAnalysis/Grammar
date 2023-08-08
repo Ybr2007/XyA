@@ -1,7 +1,7 @@
-unit           -> block | if | while | line | function_definiton | class_definition | import
+unit           -> block | if | while | line | function_definiton | class_definition
 
 block          -> "{" unit* "}"
-line           -> (assignment | expression) ";"
+line           -> (assignment | expression | import) ";"
 
 if             -> "if" expression block ("else" (if | block))?
 while          -> "while" expression block

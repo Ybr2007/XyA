@@ -35,6 +35,8 @@ namespace XyA
                 static IntType* get_instance();
             };
 
+            using IntValue = long long;
+
             class IntObject : public Object
             {
             public:

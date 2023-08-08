@@ -11,7 +11,7 @@ namespace XyA
         {
             StringType::StringType()
             {
-                Type::Type("string");
+                Type("string");
                 this->ref_count_enabled = false;
                 this->set_attr(MagicMethodNames::add_method_name_id, XyA_Allocate(BuiltinFunction, string_object_add));
                 this->set_attr(MagicMethodNames::multiply_method_name_id, XyA_Allocate(BuiltinFunction, string_object_multiply));
@@ -30,10 +30,9 @@ namespace XyA
                 this->__type = StringType::get_instance();
             }
 
-            StringObject::StringObject(const std::string& value)
+            StringObject::StringObject(StringView value_) : value(value_)
             {
                 this->__type = StringType::get_instance();
-                this->value = value;
             }
 
             StringType* StringObject::static_type()
@@ -56,8 +55,7 @@ namespace XyA
                     exception_thrown = true;
                     return XyA_Allocate(BuiltinException, "Type Error");
                 }
-                StringObject* result_obj = XyA_Allocate_(StringObject);
-                result_obj->value = self->value + other->value;
+                StringObject* result_obj = XyA_Allocate(StringObject, self->value + other->value);
                 return result_obj;
             }
 
@@ -76,13 +74,12 @@ namespace XyA
                     exception_thrown = true;
                     return XyA_Allocate(BuiltinException, "Type Error");
                 }
-                StringObject* result_obj = XyA_Allocate_(StringObject);
-                result_obj->value = "";
+                StringValue result_string_value = "";
                 for (size_t i = 0; i < other->value; i ++)
                 {
-                    result_obj->value += self->value;
+                    result_string_value += self->value;
                 }
-                return result_obj;
+                return XyA_Allocate(StringObject, result_string_value);
             }
 
             Object* string_object_equal(Object** args, size_t arg_num, bool& exception_thrown)

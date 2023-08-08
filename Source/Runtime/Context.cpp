@@ -11,8 +11,8 @@ namespace XyA
         {
             this->code_obj = code_obj;
 
-            this->local_variables = XyA_Allocate_Array_(Object*, this->code_obj->variable_name_2_index.size());  // delete于Context::~Context()
-            for (size_t i = 0; i < this->code_obj->variable_name_2_index.size(); i ++)
+            this->local_variables = XyA_Allocate_Array_(Object*, this->code_obj->variable_names.size());  // delete于Context::~Context()
+            for (size_t i = 0; i < this->code_obj->variable_names.size(); i ++)
             {
                 this->local_variables[i] = nullptr;
             }
@@ -31,7 +31,7 @@ namespace XyA
             }
 
             /* 离开作用域, 所有变量引用计数减一 */
-            for (size_t i = 0; i < this->code_obj->variable_name_2_index.size(); i ++)
+            for (size_t i = 0; i < this->code_obj->variable_names.size(); i ++)
             {
                 if (this->local_variables[i] != nullptr)
                 {
@@ -41,7 +41,7 @@ namespace XyA
                 }
             }
 
-            XyA_Deallocate_Array(this->local_variables, this->code_obj->variable_name_2_index.size());
+            XyA_Deallocate_Array(this->local_variables, this->code_obj->variable_names.size());
         }
 
         Instruction* Context::cur_instruction() const
@@ -54,7 +54,7 @@ namespace XyA
             return this->code_obj->cls;
         }
 
-        void Context::set_exception(const std::string& exception_message)
+        void Context::set_exception(StringView exception_message)
         {
             this->thrown_exception = XyA_Allocate(Builtin::BuiltinException, exception_message);
         }
@@ -74,28 +74,21 @@ namespace XyA
             return this->local_variables[index];
         }
 
-        void Context::set_variable_at(size_t index, Object* new_object)
+        void Context::set_variable_at(Id variable_id, Object* new_object)
         {
-            Object* old_object = this->local_variables[index];
+            Object* old_object = this->local_variables[variable_id];
             if (old_object != nullptr)
             {
                 old_object->dereference();
             }
 
-            this->local_variables[index] = new_object;
+            this->local_variables[variable_id] = new_object;
             new_object->reference();
         }
 
         StringView Context::get_variable_name_at(size_t index) const
         {
-            for (auto& item : this->code_obj->variable_name_2_index)
-            {
-                if (item.second == index)
-                {
-                    return item.first;
-                }
-            }
-            XyA_Throw_Core_Exception("Index not found");
+            return this->code_obj->variable_names[index];
         }
 
         void Context::push_operand(Object* obj)

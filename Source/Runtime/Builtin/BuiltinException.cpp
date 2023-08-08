@@ -7,12 +7,12 @@ namespace XyA
     {
         namespace Builtin
         {
-            BuiltinException::BuiltinException(std::string message)
+            BuiltinException::BuiltinException(StringView message)
             {
                 this->__message = message;
             }
             
-            std::string_view BuiltinException::message() const
+            StringView BuiltinException::message() const
             {
                 return this->__message;
             }

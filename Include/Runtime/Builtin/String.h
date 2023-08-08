@@ -24,14 +24,16 @@ namespace XyA
 
                 static StringType* get_instance();
             };
+
+            using StringValue = StringSource;
             
             class StringObject : public Object
             {
             public:
-                std::string value;
+                const StringValue value;
 
                 StringObject();
-                StringObject(const std::string& value);
+                StringObject(StringView value);
 
                 static StringType* static_type();
             };

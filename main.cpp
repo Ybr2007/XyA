@@ -5,14 +5,22 @@
 
 using namespace XyA;
 
-int main()
+int main(int arg_num, char* args[])
 {
-    std::ifstream f("Y://C++//XyA//source.xya", std::ios::in);  
+    // if (arg_num != 2)
+    // {
+    //     printf("\033[1;31mError: Expected source file path\033[0m\n");
+    //     return -1;
+    // }
+    // char* source_file_name = args[1];
+    const char* source_file_name = "Y://C++//XyA//source.xya";
+
+    std::ifstream f(source_file_name, std::ios::in);  
 
     if(!f.is_open())
     {
-        printf("Can't open the source file");
-        exit(-1);
+        printf("\033[1;31mError: Can not open the source file '%s'\033[0m\n", source_file_name);
+        return -1;
     }
 
     std::stringstream buffer;  

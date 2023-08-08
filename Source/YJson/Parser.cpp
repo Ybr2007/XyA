@@ -200,9 +200,7 @@ namespace YJson
             throw ParsingException("Right quotation mark not found.", this->__curPos);
         }
 
-        Pos firstCharPos = this->__curPos;
         bool escape = false;
-
         String result = "";
 
         while (this->__curChar() != '"' || escape)

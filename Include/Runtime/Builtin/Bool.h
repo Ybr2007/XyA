@@ -22,10 +22,12 @@ namespace XyA
                 static BoolType* get_instance();
             };
 
+            using BoolValue = bool;
+
             class BoolObject : public Object
             {
             public:
-                const bool value;
+                const BoolValue value;
 
                 static BoolObject* get_instance(bool value);
                 static BoolType* static_type();

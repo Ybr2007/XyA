@@ -9,19 +9,23 @@ namespace XyA
     class TemporarySetter 
     {
     public:
-        TemporarySetter(T& variable, T value) : __variable(variable)
+        TemporarySetter(T& variable_ref, T value) : __variable_ref(variable_ref)
         {
-            this->__originalValue = variable;
-            variable = value;
+            this->__originalValue = variable_ref;
+            variable_ref = value;
         }
+
+        TemporarySetter(const TemporarySetter&) = delete;
+        TemporarySetter(TemporarySetter&&) = delete;
+        TemporarySetter& operator=(const TemporarySetter&) = delete;
 
         ~TemporarySetter() 
         {
-            this->__variable = this->__originalValue;
+            this->__variable_ref = this->__originalValue;
         }
 
     private:
-        T& __variable;
+        T& __variable_ref;
         T __originalValue;
     };
 

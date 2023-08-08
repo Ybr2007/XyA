@@ -63,6 +63,8 @@ namespace XyA
                 return "<SyntaxTreeNodeType: Package>";
             case SyntaxTreeNodeType::Module:
                 return "<SyntaxTreeNodeType: Module>";
+            case SyntaxTreeNodeType::Import:
+                return "<SyntaxTreeNodeType: Import>";
             default:
                 return "<Unknown>";
             }

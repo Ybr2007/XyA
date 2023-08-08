@@ -35,12 +35,15 @@ namespace XyA
                 static FloatType* get_instance();
             };
 
+            using FloatValue = double;
+
             class FloatObject : public Object
             {
             public:
-                double value;
+                const double value;
 
                 FloatObject();
+                FloatObject(double value);
 
                 static FloatType* static_type();
             };

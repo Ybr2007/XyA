@@ -11,7 +11,7 @@ namespace XyA
         {
             BoolType::BoolType()
             {
-                Type::Type("bool");
+                Type("bool");
                 this->ref_count_enabled = false;
                 this->set_attr(MagicMethodNames::equal_method_name_id, XyA_Allocate(BuiltinFunction, bool_object_equal));
                 this->set_attr(MagicMethodNames::str_method_name_id, XyA_Allocate(BuiltinFunction, bool_object_str));
@@ -70,8 +70,7 @@ namespace XyA
                 XyA_Function_Check_Arg_Num(1)
                 XyA_Builtin_Method_Get_Self(BoolObject)
 
-                StringObject* str = XyA_Allocate_(StringObject);
-                str->value = self->value ? "true" : "false";
+                StringObject* str = XyA_Allocate(StringObject, self->value ? "true" : "false");
 
                 return str;
             }

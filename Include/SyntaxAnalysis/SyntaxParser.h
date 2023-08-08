@@ -66,6 +66,8 @@ namespace XyA
             SyntaxTreeNode* __parse_class_definition();
             SyntaxTreeNode* __parse_type_conversion(SyntaxTreeNode* object_expression);
             SyntaxTreeNode* __parse_configuration_command();
+            SyntaxTreeNode* __parse_imported_module();
+            SyntaxTreeNode* __parse_import();
 
             void __throw_exception(std::string_view message, LexicalAnalysis::TokenPos pos) const;
         };

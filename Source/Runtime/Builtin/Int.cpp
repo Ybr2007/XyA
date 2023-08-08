@@ -13,7 +13,7 @@ namespace XyA
         {
             IntType::IntType()
             {
-                Type::Type("int");
+                Type("int");
                 this->ref_count_enabled = false;
                 this->set_attr(MagicMethodNames::add_method_name_id, XyA_Allocate(BuiltinFunction, int_object_add_method));
                 this->set_attr(MagicMethodNames::subtract_method_name_id, XyA_Allocate(BuiltinFunction, int_object_sub_method));
@@ -80,8 +80,7 @@ namespace XyA
                 }
                 else  // float_other != nullptr
                 {
-                    FloatObject* result_obj = XyA_Allocate_(FloatObject);
-                    result_obj->value = self->value + float_other->value;
+                    FloatObject* result_obj = XyA_Allocate(FloatObject, self->value + float_other->value);
                     return result_obj;
                 }   
             }
@@ -114,8 +113,7 @@ namespace XyA
                 }
                 else  // float_other != nullptr
                 {
-                    FloatObject* result_obj = XyA_Allocate_(FloatObject);
-                    result_obj->value = self->value - float_other->value;
+                    FloatObject* result_obj = XyA_Allocate(FloatObject, self->value - float_other->value);
                     return result_obj;
                 }                
             }
@@ -148,8 +146,7 @@ namespace XyA
                 }
                 else  // float_other != nullptr
                 {
-                    FloatObject* result_obj = XyA_Allocate_(FloatObject);
-                    result_obj->value = self->value * float_other->value;
+                    FloatObject* result_obj = XyA_Allocate(FloatObject, self->value * float_other->value);
                     return result_obj;
                 }   
             }
@@ -190,15 +187,14 @@ namespace XyA
                     }
                     else 
                     {
-                        FloatObject* result_obj = XyA_Allocate_(FloatObject);
-                        result_obj->value = self->value * 1.000000000000000 / int_other->value;
+                        FloatObject* result_obj = XyA_Allocate(
+                            FloatObject, self->value * 1.000000000000000 / int_other->value);
                         return result_obj;
                     }
                 }
                 else  // float_other != nullptr
                 {
-                    FloatObject* result_obj = XyA_Allocate_(FloatObject);
-                    result_obj->value = self->value / float_other->value;
+                    FloatObject* result_obj = XyA_Allocate(FloatObject, self->value / float_other->value);
                     return result_obj;
                 }   
             }
@@ -239,8 +235,7 @@ namespace XyA
                 XyA_Function_Check_Arg_Num(1)
                 XyA_Builtin_Method_Get_Self(IntObject)
 
-                StringObject* str = XyA_Allocate_(StringObject);                
-                str->value = std::to_string(self->value);
+                StringObject* str = XyA_Allocate(StringObject, std::to_string(self->value));
 
                 return str;
             }

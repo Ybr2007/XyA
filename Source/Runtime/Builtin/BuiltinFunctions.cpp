@@ -25,8 +25,7 @@ namespace XyA
                         auto result = args[i]->try_get_method(MagicMethodNames::str_method_name_id, str_method, accessibility);
                         if (result == TryGetMethodResult::NotFound || result == TryGetMethodResult::NotCallable)
                         {
-                            string_object = XyA_Allocate_(StringObject);
-                            string_object->value = "<XyA Object at " + std::to_string((unsigned long long)args[i]) + ">";
+                            string_object = XyA_Allocate(StringObject, "<XyA Object at " + std::to_string((unsigned long long)args[i]) + ">");
                             new_string = true;
                         }
                         else

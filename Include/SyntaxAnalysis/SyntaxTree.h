@@ -76,8 +76,10 @@ namespace XyA
             // token: 包名标识符(Identifier)
             Package,
             // token: 模块名(Identifier)
-            // children: 数量不限, 每个child为模块路径上的包名标识符(Identifier), index越小越靠近根目录
+            // children: 数量不限, 每个child为模块路径上的包名标识符(Package), index越小越靠近根目录
             Module,
+            // children: 数量为1, children[0] 为被导入的模块(Module)
+            Import,
         };
 
         #ifdef Debug_Write_AST_To_Json_File
